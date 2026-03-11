@@ -4,6 +4,9 @@
    Sticky header | Hamburger menu | Apply modal
    ===================================================== */
 
+/* ── API endpoint — update this after creating API Gateway ── */
+window.HSS_API_URL = 'https://YOUR_API_ID.execute-api.us-east-2.amazonaws.com/prod/contact';
+
 document.addEventListener('DOMContentLoaded', () => {
   const header    = document.getElementById('header');
   const nav       = document.getElementById('nav');
@@ -79,13 +82,34 @@ document.addEventListener('DOMContentLoaded', () => {
     /* Apply form submit */
     const applyForm = document.getElementById('apply-form');
     if (applyForm) {
-      applyForm.addEventListener('submit', e => {
+      applyForm.addEventListener('submit', async e => {
         e.preventDefault();
+        const btn = applyForm.querySelector('button[type="submit"]');
+        const origText = btn.textContent;
+        btn.textContent = 'Submitting...';
+        btn.disabled = true;
+
         const data = Object.fromEntries(new FormData(applyForm));
-        console.log('Application Submission:', data);
-        applyForm.reset();
-        closeModal();
-        alert('Your application has been submitted. We will review and contact you shortly.');
+        delete data.resume; // file can't be sent via JSON
+        data.formType = 'application';
+
+        try {
+          const res = await fetch(window.HSS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (!res.ok) throw new Error('Server error');
+          applyForm.reset();
+          closeModal();
+          alert('Your application has been submitted! We will review and contact you shortly. Please email your resume to heinrichssoftwaresolutions@gmail.com.');
+        } catch (err) {
+          console.error('Submit error:', err);
+          alert('There was an error submitting your application. Please email us directly at heinrichssoftwaresolutions@gmail.com');
+        } finally {
+          btn.textContent = origText;
+          btn.disabled = false;
+        }
       });
     }
   }
@@ -95,12 +119,32 @@ document.addEventListener('DOMContentLoaded', () => {
      ══════════════════════════════════════ */
   const contactForm = document.getElementById('contact-form');
   if (contactForm) {
-    contactForm.addEventListener('submit', e => {
+    contactForm.addEventListener('submit', async e => {
       e.preventDefault();
+      const btn = contactForm.querySelector('button[type="submit"]');
+      const origText = btn.textContent;
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
       const data = Object.fromEntries(new FormData(contactForm));
-      console.log('Contact Submission:', data);
-      contactForm.reset();
-      alert('Thank you for your inquiry, ' + data.name + '. We will respond within 24 hours.');
+      data.formType = 'contact';
+
+      try {
+        const res = await fetch(window.HSS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Server error');
+        contactForm.reset();
+        alert('Thank you for your inquiry, ' + data.name + '. We will respond within 24 hours.');
+      } catch (err) {
+        console.error('Submit error:', err);
+        alert('There was an error sending your message. Please email us directly at heinrichssoftwaresolutions@gmail.com');
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
     });
   }
 
