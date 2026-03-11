@@ -228,6 +228,7 @@ img { max-width: 100%; height: auto; }
 .why-icon { font-size: 1.6rem; margin-bottom: 8px; }
 .why-card h4 { font-family: 'Oswald', sans-serif; color: var(--gold); font-size: 0.95rem; margin-bottom: 6px; }
 .why-card p { color: var(--mid-gray); font-size: 0.9rem; }
+.why-icon { color: var(--gold); }
 .job-listing {
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.12);
   border-radius: 8px; padding: 20px; margin-bottom: 16px;
