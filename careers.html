@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Careers — Heinrichs Software Solutions LLC</title>
+  <meta name="description" content="Join a veteran-led team building mission-critical software for federal agencies. Remote-first positions in software engineering, cloud, AI, and cybersecurity.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">HSS</div>
+        <div class="logo-text">
+          <span class="logo-name">Heinrichs Software Solutions</span>
+          <span class="logo-tag">SDVOSB &bull; Government IT Solutions</span>
+        </div>
+      </a>
+      <nav id="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="services.html" class="nav-link">Services</a>
+        <a href="contracting.html" class="nav-link">Gov Contracting</a>
+        <a href="careers.html" class="nav-link active">Careers</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== PAGE HERO ========== -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <h1 class="hero-anim hero-anim-1">Careers</h1>
+      <p class="hero-anim hero-anim-2">Join a veteran-led team building mission-critical software.</p>
+    </div>
+  </section>
+
+  <!-- ========== CAREERS ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="careers-grid">
+        <div class="careers-why">
+          <h3 class="reveal reveal-up">Why Work With Us</h3>
+          <div class="why-cards">
+            <div class="why-card reveal reveal-left" style="--reveal-delay: 0ms;">
+              <div class="why-icon">&#127942;</div>
+              <h4>Mission-Driven Culture</h4>
+              <p>Work on software that matters — supporting federal agencies and national security. Every project has a purpose.</p>
+            </div>
+            <div class="why-card reveal reveal-left" style="--reveal-delay: 100ms;">
+              <div class="why-icon">&#9876;</div>
+              <h4>Veteran Leadership</h4>
+              <p>Led by a combat veteran who values integrity, accountability, and taking care of the team. Military values, tech innovation.</p>
+            </div>
+            <div class="why-card reveal reveal-left" style="--reveal-delay: 200ms;">
+              <div class="why-icon">&#128640;</div>
+              <h4>Cutting-Edge Tech</h4>
+              <p>Work with AI/ML, multi-LLM consensus systems, blockchain, cloud architecture, and modern frameworks. No legacy dinosaurs.</p>
+            </div>
+            <div class="why-card reveal reveal-left" style="--reveal-delay: 300ms;">
+              <div class="why-icon">&#127968;</div>
+              <h4>Remote-First</h4>
+              <p>Work from anywhere. We hire talent, not zip codes. Flexible schedules for work-life balance.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="careers-openings">
+          <h3 class="reveal reveal-up">Open Positions</h3>
+          <div class="job-listing reveal reveal-right" style="--reveal-delay: 0ms;">
+            <div class="job-header">
+              <h4>Senior Full-Stack Developer</h4>
+              <span class="job-type">Full-Time &bull; Remote</span>
+            </div>
+            <p>Build production-grade web applications and APIs for federal clients. Node.js, React, PostgreSQL, AWS. Security clearance preferred.</p>
+            <button class="btn btn-gold btn-sm btn-animated apply-btn" data-position="Senior Full-Stack Developer">Apply Now</button>
+          </div>
+          <div class="job-listing reveal reveal-right" style="--reveal-delay: 100ms;">
+            <div class="job-header">
+              <h4>Cloud / DevOps Engineer</h4>
+              <span class="job-type">Full-Time &bull; Remote</span>
+            </div>
+            <p>Design and manage cloud infrastructure on AWS/Azure. CI/CD pipelines, Docker, Kubernetes, infrastructure-as-code. FedRAMP experience a plus.</p>
+            <button class="btn btn-gold btn-sm btn-animated apply-btn" data-position="Cloud / DevOps Engineer">Apply Now</button>
+          </div>
+          <div class="job-listing reveal reveal-right" style="--reveal-delay: 200ms;">
+            <div class="job-header">
+              <h4>AI / Machine Learning Engineer</h4>
+              <span class="job-type">Full-Time &bull; Remote</span>
+            </div>
+            <p>Build AI/ML pipelines, NLP systems, and intelligent automation. Python, TensorFlow/PyTorch, LLM integration. Research-to-production experience needed.</p>
+            <button class="btn btn-gold btn-sm btn-animated apply-btn" data-position="AI / Machine Learning Engineer">Apply Now</button>
+          </div>
+          <div class="job-listing reveal reveal-right" style="--reveal-delay: 300ms;">
+            <div class="job-header">
+              <h4>Cybersecurity Analyst</h4>
+              <span class="job-type">Full-Time &bull; Remote</span>
+            </div>
+            <p>Conduct vulnerability assessments, penetration testing, and STIG compliance reviews. Implement security hardening for government systems.</p>
+            <button class="btn btn-gold btn-sm btn-animated apply-btn" data-position="Cybersecurity Analyst">Apply Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application Modal -->
+      <div id="apply-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <button class="modal-close" id="modal-close">&times;</button>
+          <h3>Apply for <span id="apply-position"></span></h3>
+          <form id="apply-form" class="apply-form">
+            <div class="form-group">
+              <label for="apply-name">Full Name *</label>
+              <input type="text" id="apply-name" name="name" required>
+            </div>
+            <div class="form-group">
+              <label for="apply-email">Email Address *</label>
+              <input type="email" id="apply-email" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="apply-phone">Phone Number</label>
+              <input type="tel" id="apply-phone" name="phone">
+            </div>
+            <div class="form-group">
+              <label for="apply-position-field">Position *</label>
+              <input type="text" id="apply-position-field" name="position" readonly>
+            </div>
+            <div class="form-group">
+              <label for="apply-resume">Resume (PDF) *</label>
+              <input type="file" id="apply-resume" name="resume" accept=".pdf,.doc,.docx" required>
+            </div>
+            <div class="form-group">
+              <label for="apply-cover">Cover Letter</label>
+              <textarea id="apply-cover" name="coverLetter" rows="5" placeholder="Tell us why you're a great fit..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-gold btn-animated">Submit Application</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="section section-dark">
+    <div class="container">
+      <div class="careers-cta reveal reveal-up">
+        <h2 class="section-title light">Don't See Your Role?</h2>
+        <p class="section-subtitle">We're always looking for talented engineers. Send us your resume and we'll keep you in mind for future openings.</p>
+        <a href="contact.html" class="btn btn-gold btn-animated">Send Us Your Resume</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon small">HSS</div>
+        <p>Heinrichs Software Solutions LLC</p>
+        <p class="footer-tag">Service-Disabled Veteran-Owned Small Business</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="contracting.html">Gov Contracting</a>
+        <a href="careers.html">Careers</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Heinrichs Software Solutions LLC. All rights reserved.</p>
+        <p>SDVOSB &bull; SAM.gov Registered &bull; Florida, USA</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

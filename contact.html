@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us — Heinrichs Software Solutions LLC</title>
+  <meta name="description" content="Contact Heinrichs Software Solutions LLC for government contracting inquiries, proposals, capability statements, and partnership opportunities.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">HSS</div>
+        <div class="logo-text">
+          <span class="logo-name">Heinrichs Software Solutions</span>
+          <span class="logo-tag">SDVOSB &bull; Government IT Solutions</span>
+        </div>
+      </a>
+      <nav id="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="services.html" class="nav-link">Services</a>
+        <a href="contracting.html" class="nav-link">Gov Contracting</a>
+        <a href="careers.html" class="nav-link">Careers</a>
+        <a href="contact.html" class="nav-link active">Contact</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== PAGE HERO ========== -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <h1 class="hero-anim hero-anim-1">Contact Us</h1>
+      <p class="hero-anim hero-anim-2">Ready to discuss your next project? Reach out today.</p>
+    </div>
+  </section>
+
+  <!-- ========== CONTACT ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="contact-grid">
+        <div class="contact-info reveal reveal-left">
+          <div class="contact-item">
+            <div class="ci-icon">&#128231;</div>
+            <div>
+              <h4>Email</h4>
+              <a href="mailto:derek@heinrichssoftware.com">derek@heinrichssoftware.com</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon">&#128222;</div>
+            <div>
+              <h4>Phone</h4>
+              <a href="tel:+1234567890">(850) 555-0199</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon">&#128205;</div>
+            <div>
+              <h4>Location</h4>
+              <p>Florida, United States</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon">&#128279;</div>
+            <div>
+              <h4>GitHub</h4>
+              <a href="https://github.com/Drock91" target="_blank" rel="noopener">github.com/Drock91</a>
+            </div>
+          </div>
+          <div class="contact-certs">
+            <h4>Certifications &amp; Registrations</h4>
+            <div class="cert-badges">
+              <span class="cert-badge">SDVOSB Certified</span>
+              <span class="cert-badge">SAM.gov Active</span>
+              <span class="cert-badge">Florida LLC</span>
+            </div>
+          </div>
+        </div>
+        <form id="contact-form" class="contact-form reveal reveal-right">
+          <div class="form-group">
+            <label for="c-name">Full Name *</label>
+            <input type="text" id="c-name" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="c-email">Email Address *</label>
+            <input type="email" id="c-email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="c-org">Organization / Agency</label>
+            <input type="text" id="c-org" name="organization">
+          </div>
+          <div class="form-group">
+            <label for="c-subject">Subject *</label>
+            <select id="c-subject" name="subject" required>
+              <option value="">Select a topic...</option>
+              <option value="contracting">Government Contracting Inquiry</option>
+              <option value="proposal">Request for Proposal</option>
+              <option value="capabilities">Capability Statement Request</option>
+              <option value="partnership">Partnership Opportunity</option>
+              <option value="careers">Career Inquiry</option>
+              <option value="general">General Question</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="c-message">Message *</label>
+            <textarea id="c-message" name="message" rows="5" required placeholder="Tell us about your project or requirements..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-gold btn-animated">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon small">HSS</div>
+        <p>Heinrichs Software Solutions LLC</p>
+        <p class="footer-tag">Service-Disabled Veteran-Owned Small Business</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="contracting.html">Gov Contracting</a>
+        <a href="careers.html">Careers</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Heinrichs Software Solutions LLC. All rights reserved.</p>
+        <p>SDVOSB &bull; SAM.gov Registered &bull; Florida, USA</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
