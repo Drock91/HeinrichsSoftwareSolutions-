@@ -47,3 +47,9 @@ jobs:
             --exclude "*" --include "*.js" \
             --content-type "application/javascript" \
             --metadata-directive REPLACE --recursive
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id EDFH32HJYRYY0 \
+            --paths "/*"
