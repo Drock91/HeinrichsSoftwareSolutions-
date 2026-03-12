@@ -90,8 +90,29 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
 
         const data = Object.fromEntries(new FormData(applyForm));
-        delete data.resume; // file can't be sent via JSON
         data.formType = 'application';
+
+        // Read resume file as base64
+        const fileInput = document.getElementById('apply-resume');
+        if (fileInput && fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          if (file.size > 5 * 1024 * 1024) {
+            alert('Resume file must be under 5 MB.');
+            btn.textContent = origText;
+            btn.disabled = false;
+            return;
+          }
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          data.resumeBase64 = base64;
+          data.resumeFilename = file.name;
+          data.resumeContentType = file.type || 'application/octet-stream';
+        }
+        delete data.resume; // remove the File object (can't serialize)
 
         try {
           const res = await fetch(window.HSS_API_URL, {
@@ -102,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!res.ok) throw new Error('Server error');
           applyForm.reset();
           closeModal();
-          alert('Your application has been submitted! We will review and contact you shortly. Please email your resume to heinrichssoftwaresolutions@gmail.com.');
+          alert('Your application has been submitted with your resume! We will review and contact you shortly.');
         } catch (err) {
           console.error('Submit error:', err);
           alert('There was an error submitting your application. Please email us directly at heinrichssoftwaresolutions@gmail.com');
