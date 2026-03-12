@@ -1,6 +1,8 @@
 {
   "name": "Heinrichs Software Solutions",
   "short_name": "HSS",
+  "description": "SDVOSB Government IT Solutions & AI-Accelerated Development",
+  "start_url": "/",
   "icons": [
     {
       "src": "icon-192.png",

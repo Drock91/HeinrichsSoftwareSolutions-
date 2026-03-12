@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#001028"/>
+      <stop offset="100%" stop-color="#003B5C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Gold border accents -->
+  <rect x="0" y="0" width="1200" height="5" fill="#FFD700"/>
+  <rect x="0" y="625" width="1200" height="5" fill="#FFD700"/>
+  <rect x="0" y="0" width="5" height="630" fill="#FFD700"/>
+  <rect x="1195" y="0" width="5" height="630" fill="#FFD700"/>
+
+  <!-- H Logo Circle -->
+  <circle cx="200" cy="280" r="120" fill="#001F3F" stroke="#FFD700" stroke-width="6"/>
+  <rect x="145" y="195" width="25" height="170" rx="4" fill="#FFD700"/>
+  <rect x="230" y="195" width="25" height="170" rx="4" fill="#FFD700"/>
+  <rect x="145" y="262" width="110" height="28" rx="4" fill="#FFD700"/>
+
+  <!-- Company Name -->
+  <text x="420" y="250" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="52" fill="#FFFFFF" letter-spacing="3">HEINRICHS</text>
+  <text x="420" y="310" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="42" fill="#FFD700" letter-spacing="4">SOFTWARE SOLUTIONS</text>
+
+  <!-- Divider -->
+  <rect x="420" y="340" width="680" height="3" fill="#FFD700" opacity="0.6"/>
+
+  <!-- Tagline -->
+  <text x="420" y="390" font-family="Arial,Helvetica,sans-serif" font-size="26" fill="#CCCCCC" letter-spacing="1">Government IT Solutions &amp; AI-Accelerated Development</text>
+
+  <!-- Badges -->
+  <rect x="420" y="420" width="130" height="40" rx="6" fill="#FFD700"/>
+  <text x="485" y="447" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="17" fill="#001F3F" text-anchor="middle" letter-spacing="2">SDVOSB</text>
+
+  <rect x="570" y="420" width="190" height="40" rx="6" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <text x="665" y="447" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="16" fill="#FFD700" text-anchor="middle" letter-spacing="1">VETERAN-OWNED</text>
+
+  <rect x="780" y="420" width="180" height="40" rx="6" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <text x="870" y="447" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="16" fill="#FFD700" text-anchor="middle" letter-spacing="1">SAM.GOV REG.</text>
+
+  <!-- Website -->
+  <text x="420" y="540" font-family="Arial,Helvetica,sans-serif" font-size="22" fill="#8899AA" letter-spacing="1">heinrichstech.com</text>
+</svg>
