@@ -5,7 +5,7 @@
    ===================================================== */
 
 /* ── API endpoint — update this after creating API Gateway ── */
-window.HSS_API_URL = 'https://YOUR_API_ID.execute-api.us-east-2.amazonaws.com/prod/contact';
+window.HSS_API_URL = 'https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod/contact';
 
 document.addEventListener('DOMContentLoaded', () => {
   const header    = document.getElementById('header');

@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 
 # ─── CONFIG ───
 TO_EMAIL = "heinrichssoftwaresolutions@gmail.com"
-FROM_EMAIL = "heinrichssoftwaresolutions@gmail.com"  # Must be SES-verified
+FROM_EMAIL = "contact@heinrichstech.com"  # SES-verified domain
 REGION = "us-east-2"
 
 ses = boto3.client("ses", region_name=REGION)
