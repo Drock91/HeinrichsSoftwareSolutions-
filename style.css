@@ -494,6 +494,12 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
   .values-grid { grid-template-columns: 1fr 1fr; }
   .service-detail-card { grid-template-columns: 1fr; }
   .sd-icon { text-align: left; }
+  .cap-competency-grid { grid-template-columns: 1fr 1fr; }
+  .cap-tech-grid { grid-template-columns: 1fr 1fr; }
+  .cap-perf-grid { grid-template-columns: 1fr 1fr; }
+  .cap-genie-grid { grid-template-columns: 1fr 1fr; }
+  .cap-diff-grid { grid-template-columns: 1fr; }
+  .cap-info-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 768px) {
   #nav { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--dark-navy); flex-direction: column; padding: 16px; border-top: 2px solid var(--gold); }
@@ -508,4 +514,241 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
   .values-grid { grid-template-columns: 1fr; }
   .cta-banner { padding: 32px 24px; }
   .page-hero { padding: 120px 0 50px; }
+  .cap-header { flex-direction: column; text-align: center; }
+  .cap-overview-grid { grid-template-columns: 1fr 1fr; }
+  .cap-competency-grid { grid-template-columns: 1fr; }
+  .cap-tech-grid { grid-template-columns: 1fr; }
+  .cap-perf-grid { grid-template-columns: 1fr; }
+  .cap-genie-grid { grid-template-columns: 1fr 1fr; }
+  .cap-info-grid { grid-template-columns: 1fr; }
+  .cap-naics-table-wrap { overflow-x: auto; }
 }
+
+/* ── CAPABILITY STATEMENT PAGE ── */
+
+/* Header block */
+.cap-header {
+  display: flex; align-items: center; gap: 32px;
+  margin-bottom: 48px; padding-bottom: 32px;
+  border-bottom: 3px solid var(--gold);
+}
+.cap-header .logo-icon.large {
+  width: 80px; height: 80px; font-size: 1.8rem; line-height: 80px;
+}
+.cap-company-name {
+  font-family: 'Oswald', sans-serif; font-size: 2rem;
+  font-weight: 700; color: var(--dark-navy); margin-bottom: 4px;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.cap-tagline {
+  font-size: 1rem; color: #666; margin-bottom: 12px;
+  font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;
+}
+.cap-badges-inline {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+/* Overview cards */
+.cap-overview-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.cap-overview-card {
+  text-align: center; padding: 32px 20px;
+  background: var(--light-gray); border-radius: 8px;
+  border-top: 4px solid var(--gold);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.cap-overview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.cap-overview-icon { font-size: 2.4rem; margin-bottom: 12px; }
+.cap-overview-card h4 {
+  font-family: 'Oswald', sans-serif; color: var(--navy);
+  font-size: 1.05rem; margin-bottom: 8px;
+}
+.cap-overview-card p { font-size: 0.9rem; color: #555; line-height: 1.5; }
+
+/* Core competency grid */
+.cap-competency-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.cap-competency-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 8px; padding: 28px 24px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.cap-competency-card:hover {
+  border-color: var(--gold); transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.cap-comp-icon { font-size: 2rem; margin-bottom: 12px; }
+.cap-competency-card h3 {
+  font-family: 'Oswald', sans-serif; color: var(--gold);
+  font-size: 1.1rem; margin-bottom: 14px; letter-spacing: 0.5px;
+}
+.cap-competency-card ul {
+  list-style: none; padding: 0; margin: 0;
+}
+.cap-competency-card li {
+  padding: 5px 0 5px 18px; position: relative;
+  color: var(--mid-gray); font-size: 0.88rem; line-height: 1.5;
+}
+.cap-competency-card li::before {
+  content: '▸'; position: absolute; left: 0; color: var(--gold); font-weight: bold;
+}
+
+/* NAICS table wrapper */
+.cap-naics-table-wrap { margin-bottom: 32px; }
+
+/* Set-aside row */
+.cap-setaside-row {
+  display: flex; gap: 24px; justify-content: center;
+  flex-wrap: wrap; margin-top: 32px;
+}
+.cap-setaside-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--light-gray); padding: 12px 20px;
+  border-radius: 6px; font-size: 0.9rem; color: #444;
+}
+
+/* Technology tags */
+.cap-tech-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.cap-tech-category {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 8px; padding: 24px;
+}
+.cap-tech-category h4 {
+  font-family: 'Oswald', sans-serif; color: var(--gold);
+  font-size: 0.95rem; margin-bottom: 14px; text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.cap-tech-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.cap-tag {
+  display: inline-block; padding: 6px 14px;
+  font-size: 0.82rem; font-weight: 500;
+  background: rgba(255,215,0,0.1); color: var(--gold);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 20px; transition: all 0.2s;
+}
+.cap-tag:hover {
+  background: rgba(255,215,0,0.2); border-color: var(--gold);
+}
+.cap-tag.sm { padding: 3px 10px; font-size: 0.75rem; }
+
+/* Past performance cards */
+.cap-perf-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+}
+.cap-perf-card {
+  background: var(--light-gray); border-radius: 8px;
+  padding: 28px; border-left: 4px solid var(--gold);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.cap-perf-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.cap-perf-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+}
+.cap-perf-header h3 {
+  font-family: 'Oswald', sans-serif; font-size: 1.1rem;
+  color: var(--navy); letter-spacing: 0.5px;
+}
+.cap-perf-type {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--gold-dark); font-weight: 600;
+}
+.cap-perf-card > p {
+  font-size: 0.9rem; color: #555; line-height: 1.6; margin-bottom: 14px;
+}
+.cap-perf-tech { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Genie platform section */
+.cap-genie-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+  margin-bottom: 40px;
+}
+.cap-genie-stat {
+  text-align: center; padding: 28px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 8px;
+}
+.cap-genie-number {
+  font-family: 'Oswald', sans-serif; font-size: 2.8rem;
+  font-weight: 700; color: var(--gold); line-height: 1;
+  margin-bottom: 8px;
+}
+.cap-genie-label {
+  font-family: 'Oswald', sans-serif; font-size: 0.9rem;
+  color: var(--white); text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 10px;
+}
+.cap-genie-stat p {
+  font-size: 0.82rem; color: var(--mid-gray); line-height: 1.5;
+}
+.cap-genie-features {
+  max-width: 800px; margin: 0 auto;
+}
+.cap-genie-feature {
+  padding: 14px 20px; margin-bottom: 8px;
+  background: rgba(255,215,0,0.06);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  color: var(--mid-gray); font-size: 0.92rem; line-height: 1.6;
+}
+.cap-genie-feature strong { color: var(--gold); }
+
+/* Differentiators */
+.cap-diff-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+  max-width: 900px; margin: 0 auto;
+}
+.cap-diff-card {
+  display: flex; gap: 20px; align-items: flex-start;
+  padding: 24px; background: var(--light-gray);
+  border-radius: 8px; transition: transform 0.3s;
+}
+.cap-diff-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.cap-diff-number {
+  font-family: 'Oswald', sans-serif; font-size: 2rem;
+  font-weight: 700; color: var(--gold); line-height: 1;
+  min-width: 48px;
+}
+.cap-diff-content h3 {
+  font-family: 'Oswald', sans-serif; font-size: 1rem;
+  color: var(--navy); margin-bottom: 6px;
+}
+.cap-diff-content p { font-size: 0.9rem; color: #555; line-height: 1.5; }
+
+/* Company info grid */
+.cap-info-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.cap-info-block {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 8px; padding: 28px;
+}
+.cap-info-block h4 {
+  font-family: 'Oswald', sans-serif; color: var(--gold);
+  font-size: 1rem; margin-bottom: 16px; text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.cap-info-block ul { list-style: none; padding: 0; margin: 0; }
+.cap-info-block li {
+  padding: 6px 0; color: var(--mid-gray); font-size: 0.88rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cap-info-block li:last-child { border-bottom: none; }
+.cap-info-block a { color: var(--gold); text-decoration: none; }
+.cap-info-block a:hover { text-decoration: underline; }
+.cap-info-block strong { color: var(--white); }
