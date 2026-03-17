@@ -292,11 +292,11 @@
   <script>
   // ──── CONFIG ────
   const API_BASE = 'https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod';
-  const idToken = localStorage.getItem('hss_id_token');
-
-  if (!idToken) {
+  if (!window.hssAuth || !window.hssAuth.isTokenValid()) {
+    if (window.hssAuth) window.hssAuth.clearSession();
     window.location.href = 'login.html';
   }
+  const idToken = localStorage.getItem('hss_id_token');
 
   // ──── STATE ────
   let allClients = [];

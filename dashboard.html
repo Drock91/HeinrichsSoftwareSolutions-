@@ -324,14 +324,14 @@
   const COGNITO_REGION = 'us-east-2';
   const COGNITO_CLIENT_ID = '4349q6k1fa2vmf5mthuj65t44g';
 
-  // ──── AUTH CHECK ────
+  // ──── AUTH CHECK (validate token exists & not expired) ────
+  if (!window.hssAuth || !window.hssAuth.isTokenValid()) {
+    if (window.hssAuth) window.hssAuth.clearSession();
+    window.location.href = 'login.html';
+  }
   const idToken = localStorage.getItem('hss_id_token');
   const accessToken = localStorage.getItem('hss_access_token');
   const userEmail = localStorage.getItem('hss_email');
-
-  if (!idToken) {
-    window.location.href = 'login.html';
-  }
 
   // ──── STATE ────
   let clientData = null;

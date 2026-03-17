@@ -153,9 +153,11 @@
 
   let resetEmail = '';
 
-  // Check if already logged in
-  if (localStorage.getItem('hss_id_token')) {
-    window.location.href = 'dashboard.html';
+  // Check if already logged in (with valid, non-expired token)
+  if (window.hssAuth && window.hssAuth.isTokenValid()) {
+    const payload = window.hssAuth.getPayload();
+    const groups = payload?.['cognito:groups'] || [];
+    window.location.href = groups.includes('admin') ? 'admin.html' : 'dashboard.html';
   }
 
   function showView(id) {

@@ -7,6 +7,39 @@
 /* ── API endpoint — update this after creating API Gateway ── */
 window.HSS_API_URL = 'https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod/contact';
 
+/* ── Token validation helper (shared across all pages) ── */
+window.hssAuth = {
+  isTokenValid() {
+    const token = localStorage.getItem('hss_id_token');
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // exp is in seconds, Date.now() is in ms
+      if (payload.exp && (payload.exp * 1000) < Date.now()) {
+        this.clearSession();
+        return false;
+      }
+      return true;
+    } catch (e) {
+      this.clearSession();
+      return false;
+    }
+  },
+  getPayload() {
+    try {
+      const token = localStorage.getItem('hss_id_token');
+      return token ? JSON.parse(atob(token.split('.')[1])) : null;
+    } catch (e) { return null; }
+  },
+  clearSession() {
+    localStorage.removeItem('hss_id_token');
+    localStorage.removeItem('hss_access_token');
+    localStorage.removeItem('hss_refresh_token');
+    localStorage.removeItem('hss_email');
+    localStorage.removeItem('hss_user_id');
+  }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const header    = document.getElementById('header');
   const nav       = document.getElementById('nav');
@@ -189,21 +222,16 @@ document.addEventListener('DOMContentLoaded', () => {
      AUTH-AWARE NAV (Sign In → My Account)
      ══════════════════════════════════════ */
   const signinLink = document.querySelector('.nav-signin');
-  if (signinLink) {
-    const token = localStorage.getItem('hss_id_token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const groups = payload['cognito:groups'] || [];
-        const isAdmin = groups.includes('admin');
-        signinLink.textContent = 'My Account';
-        signinLink.href = isAdmin ? 'admin.html' : 'dashboard.html';
-        // Handle blog subdirectory links
-        if (window.location.pathname.includes('/blog/')) {
-          signinLink.href = isAdmin ? '../admin.html' : '../dashboard.html';
-        }
-      } catch (e) {
-        // Token invalid/expired — keep Sign In
+  if (signinLink && window.hssAuth.isTokenValid()) {
+    const payload = window.hssAuth.getPayload();
+    if (payload) {
+      const groups = payload['cognito:groups'] || [];
+      const isAdmin = groups.includes('admin');
+      signinLink.textContent = 'My Account';
+      signinLink.href = isAdmin ? 'admin.html' : 'dashboard.html';
+      // Handle blog subdirectory links
+      if (window.location.pathname.includes('/blog/')) {
+        signinLink.href = isAdmin ? '../admin.html' : '../dashboard.html';
       }
     }
   }
