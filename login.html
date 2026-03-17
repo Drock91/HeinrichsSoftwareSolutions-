@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SP20JF1RE"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2SP20JF1RE');</script>
+  <title>Log In — Heinrichs Software Solutions</title>
+  <meta name="description" content="Log in to your Heinrichs Software Solutions dashboard to manage your AI chatbot, view analytics, and update your settings.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="canonical" href="https://heinrichstech.com/login.html">
+</head>
+<body>
+
+  <header id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">HSS</div>
+        <div class="logo-text">
+          <span class="logo-name">Heinrichs Software Solutions</span>
+          <span class="logo-tag">Veteran-Owned &bull; Software &amp; AI Solutions</span>
+        </div>
+      </a>
+      <nav id="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <div class="nav-dropdown">
+          <a href="about.html" class="nav-link">About</a>
+          <div class="nav-dropdown-menu">
+            <a href="about.html">About Us</a>
+            <a href="blog.html">Blog</a>
+          </div>
+        </div>
+        <a href="services.html" class="nav-link">Services</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <h1 class="hero-anim hero-anim-1">Log In</h1>
+      <p class="hero-anim hero-anim-2">Access your dashboard to manage your AI chatbot.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="auth-container">
+
+        <!-- LOGIN FORM -->
+        <div id="login-view" class="auth-step active">
+          <div class="auth-card">
+            <h2>Welcome Back</h2>
+            <p class="auth-subtitle">Don't have an account? <a href="signup.html">Start a free trial</a></p>
+
+            <form id="login-form" autocomplete="on">
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+              </div>
+              <div id="login-error" class="form-error" style="display:none;"></div>
+              <button type="submit" class="btn btn-gold btn-animated btn-full">Log In</button>
+              <p class="auth-resend" style="margin-top:16px;"><a href="#" id="forgot-link">Forgot your password?</a></p>
+            </form>
+          </div>
+        </div>
+
+        <!-- FORGOT PASSWORD -->
+        <div id="forgot-view" class="auth-step">
+          <div class="auth-card">
+            <h2>Reset Password</h2>
+            <p class="auth-subtitle">Enter your email and we'll send a reset code.</p>
+
+            <form id="forgot-form">
+              <div class="form-group">
+                <label for="forgot-email">Email Address</label>
+                <input type="email" id="forgot-email" name="email" required>
+              </div>
+              <div id="forgot-error" class="form-error" style="display:none;"></div>
+              <button type="submit" class="btn btn-gold btn-animated btn-full">Send Reset Code</button>
+              <p class="auth-resend" style="margin-top:16px;"><a href="#" id="back-to-login">Back to login</a></p>
+            </form>
+          </div>
+        </div>
+
+        <!-- RESET PASSWORD -->
+        <div id="reset-view" class="auth-step">
+          <div class="auth-card">
+            <h2>Enter New Password</h2>
+            <p class="auth-subtitle">Check your email for the 6-digit reset code.</p>
+
+            <form id="reset-form">
+              <div class="form-group">
+                <label for="reset-code">Reset Code</label>
+                <input type="text" id="reset-code" name="code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" style="text-align:center; font-size:1.5rem; letter-spacing:8px;">
+              </div>
+              <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password" name="password" required minlength="8">
+                <span class="form-hint">Minimum 8 characters, include a number and uppercase letter</span>
+              </div>
+              <div id="reset-error" class="form-error" style="display:none;"></div>
+              <button type="submit" class="btn btn-gold btn-animated btn-full">Reset Password</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon small">HSS</div>
+        <p>Heinrichs Software Solutions LLC</p>
+        <p class="footer-tag">Veteran-Owned Software &amp; AI Company</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="chatbot.html">AI Chatbot</a>
+        <a href="blog.html">Blog</a>
+        <a href="capabilities.html">Capabilities</a>
+        <a href="careers.html">Careers</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Heinrichs Software Solutions LLC. All rights reserved.</p>
+        <p>SDVOSB Certified &bull; Veteran-Owned &bull; Florida, USA</p>
+        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  const COGNITO_REGION = 'us-east-2';
+  const COGNITO_CLIENT_ID = 'YOUR_CLIENT_ID';
+
+  let resetEmail = '';
+
+  // Check if already logged in
+  if (localStorage.getItem('hss_id_token')) {
+    window.location.href = 'dashboard.html';
+  }
+
+  function showView(id) {
+    document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ─── LOGIN ───
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Logging in...';
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
+        body: JSON.stringify({
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          ClientId: COGNITO_CLIENT_ID,
+          AuthParameters: { USERNAME: email, PASSWORD: password },
+        }),
+      });
+
+      const data = await resp.json();
+      if (data.__type) throw new Error(data.message || 'Login failed');
+
+      if (data.AuthenticationResult) {
+        localStorage.setItem('hss_id_token', data.AuthenticationResult.IdToken);
+        localStorage.setItem('hss_access_token', data.AuthenticationResult.AccessToken);
+        localStorage.setItem('hss_refresh_token', data.AuthenticationResult.RefreshToken);
+        localStorage.setItem('hss_email', email);
+
+        const payload = JSON.parse(atob(data.AuthenticationResult.IdToken.split('.')[1]));
+        localStorage.setItem('hss_user_id', payload.sub);
+
+        // Check if admin
+        const groups = payload['cognito:groups'] || [];
+        if (groups.includes('admin')) {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Log In';
+      btn.disabled = false;
+    }
+  });
+
+  // ─── FORGOT PASSWORD ───
+  document.getElementById('forgot-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    showView('forgot-view');
+  });
+  document.getElementById('back-to-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    showView('login-view');
+  });
+
+  document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('forgot-error');
+    errEl.style.display = 'none';
+
+    resetEmail = document.getElementById('forgot-email').value.trim();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ForgotPassword',
+        },
+        body: JSON.stringify({
+          ClientId: COGNITO_CLIENT_ID,
+          Username: resetEmail,
+        }),
+      });
+
+      const data = await resp.json();
+      if (data.__type) throw new Error(data.message || 'Failed to send reset code');
+
+      showView('reset-view');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Send Reset Code';
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('reset-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('reset-error');
+    errEl.style.display = 'none';
+
+    const code = document.getElementById('reset-code').value.trim();
+    const newPassword = document.getElementById('new-password').value;
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Resetting...';
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ConfirmForgotPassword',
+        },
+        body: JSON.stringify({
+          ClientId: COGNITO_CLIENT_ID,
+          Username: resetEmail,
+          ConfirmationCode: code,
+          Password: newPassword,
+        }),
+      });
+
+      const data = await resp.json();
+      if (data.__type) throw new Error(data.message || 'Password reset failed');
+
+      alert('Password reset successful! Please log in with your new password.');
+      showView('login-view');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Reset Password';
+      btn.disabled = false;
+    }
+  });
+  </script>
+</body>
+</html>

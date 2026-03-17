@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SP20JF1RE"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2SP20JF1RE');</script>
+  <title>Start Free Trial — AI Chatbot | Heinrichs Software Solutions</title>
+  <meta name="description" content="Sign up for a free 14-day AI chatbot trial. No credit card required. Get a custom chatbot on your website in 24 hours.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="canonical" href="https://heinrichstech.com/signup.html">
+</head>
+<body>
+
+  <header id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">HSS</div>
+        <div class="logo-text">
+          <span class="logo-name">Heinrichs Software Solutions</span>
+          <span class="logo-tag">Veteran-Owned &bull; Software &amp; AI Solutions</span>
+        </div>
+      </a>
+      <nav id="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <div class="nav-dropdown">
+          <a href="about.html" class="nav-link">About</a>
+          <div class="nav-dropdown-menu">
+            <a href="about.html">About Us</a>
+            <a href="blog.html">Blog</a>
+          </div>
+        </div>
+        <a href="services.html" class="nav-link">Services</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <h1 class="hero-anim hero-anim-1">Start Your Free Trial</h1>
+      <p class="hero-anim hero-anim-2">Get a custom AI chatbot on your website in 24 hours. No credit card required.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="auth-container">
+
+        <!-- STEP 1: Create Account -->
+        <div id="step-1" class="auth-step active">
+          <div class="auth-card">
+            <div class="auth-step-indicator">
+              <div class="step-dot active">1</div>
+              <div class="step-line"></div>
+              <div class="step-dot">2</div>
+              <div class="step-line"></div>
+              <div class="step-dot">3</div>
+            </div>
+            <h2>Create Your Account</h2>
+            <p class="auth-subtitle">Already have an account? <a href="login.html">Log in</a></p>
+
+            <form id="signup-form" autocomplete="on">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="firstName">First Name</label>
+                  <input type="text" id="firstName" name="firstName" required autocomplete="given-name">
+                </div>
+                <div class="form-group">
+                  <label for="lastName">Last Name</label>
+                  <input type="text" id="lastName" name="lastName" required autocomplete="family-name">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+                <span class="form-hint">Minimum 8 characters, include a number and uppercase letter</span>
+              </div>
+              <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+              </div>
+              <div id="signup-error" class="form-error" style="display:none;"></div>
+              <button type="submit" class="btn btn-gold btn-animated btn-full">Create Account</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- STEP 2: Verify Email -->
+        <div id="step-2" class="auth-step">
+          <div class="auth-card">
+            <div class="auth-step-indicator">
+              <div class="step-dot completed">&#10003;</div>
+              <div class="step-line active"></div>
+              <div class="step-dot active">2</div>
+              <div class="step-line"></div>
+              <div class="step-dot">3</div>
+            </div>
+            <h2>Verify Your Email</h2>
+            <p class="auth-subtitle">We sent a 6-digit code to <strong id="verify-email-display"></strong></p>
+
+            <form id="verify-form">
+              <div class="form-group">
+                <label for="verifyCode">Verification Code</label>
+                <input type="text" id="verifyCode" name="verifyCode" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" style="text-align:center; font-size:1.5rem; letter-spacing:8px;">
+              </div>
+              <div id="verify-error" class="form-error" style="display:none;"></div>
+              <button type="submit" class="btn btn-gold btn-animated btn-full">Verify Email</button>
+              <p class="auth-resend">Didn't get the code? <a href="#" id="resend-code">Resend</a></p>
+            </form>
+          </div>
+        </div>
+
+        <!-- STEP 3: Business Info (Trial Setup) -->
+        <div id="step-3" class="auth-step">
+          <div class="auth-card" style="max-width:640px;">
+            <div class="auth-step-indicator">
+              <div class="step-dot completed">&#10003;</div>
+              <div class="step-line active"></div>
+              <div class="step-dot completed">&#10003;</div>
+              <div class="step-line active"></div>
+              <div class="step-dot active">3</div>
+            </div>
+            <h2>Tell Us About Your Business</h2>
+            <p class="auth-subtitle">We'll use this to train your custom AI chatbot.</p>
+
+            <form id="business-form">
+              <div class="form-group">
+                <label for="businessName">Business Name *</label>
+                <input type="text" id="businessName" name="businessName" required placeholder="e.g. Joe's Pizza">
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="website">Website URL</label>
+                  <input type="url" id="website" name="website" placeholder="https://yourwebsite.com">
+                </div>
+                <div class="form-group">
+                  <label for="phone">Business Phone</label>
+                  <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567" autocomplete="tel">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="industry">Industry *</label>
+                <select id="industry" name="industry" required>
+                  <option value="">Select your industry...</option>
+                  <option value="restaurant">Restaurant / Food Service</option>
+                  <option value="dental">Dental / Medical Office</option>
+                  <option value="legal">Law Firm / Legal Services</option>
+                  <option value="real estate">Real Estate</option>
+                  <option value="contractor">Contractor / Home Services</option>
+                  <option value="ecommerce">E-Commerce / Online Store</option>
+                  <option value="general">Other / General Business</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="businessInfo">Tell us about your business</label>
+                <textarea id="businessInfo" name="businessInfo" rows="5" placeholder="What services do you offer? What are your hours? What questions do customers most frequently ask? The more you share, the smarter your chatbot will be."></textarea>
+                <span class="form-hint">This info trains your chatbot. You can always update it later.</span>
+              </div>
+              <div id="business-error" class="form-error" style="display:none;"></div>
+              <button type="submit" class="btn btn-gold btn-animated btn-full">Launch My Free Chatbot</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- STEP 4: Success -->
+        <div id="step-4" class="auth-step">
+          <div class="auth-card" style="text-align:center;">
+            <div class="success-icon">&#127881;</div>
+            <h2>Your Chatbot is Ready!</h2>
+            <p class="auth-subtitle">Check your email for installation instructions.</p>
+
+            <div class="embed-code-box">
+              <label>Your Embed Code:</label>
+              <pre id="embed-code-display"></pre>
+              <button type="button" class="btn btn-outline-dark btn-animated" id="copy-embed" style="margin-top:12px;">Copy Code</button>
+            </div>
+
+            <div class="success-details">
+              <div class="success-detail">
+                <strong>Trial Period:</strong> 14 days
+              </div>
+              <div class="success-detail">
+                <strong>Conversations:</strong> Up to 100
+              </div>
+              <div class="success-detail">
+                <strong>Config ID:</strong> <span id="config-id-display"></span>
+              </div>
+            </div>
+
+            <div style="margin-top:32px;">
+              <a href="dashboard.html" class="btn btn-gold btn-animated">Go to Dashboard</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon small">HSS</div>
+        <p>Heinrichs Software Solutions LLC</p>
+        <p class="footer-tag">Veteran-Owned Software &amp; AI Company</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="chatbot.html">AI Chatbot</a>
+        <a href="blog.html">Blog</a>
+        <a href="capabilities.html">Capabilities</a>
+        <a href="careers.html">Careers</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Heinrichs Software Solutions LLC. All rights reserved.</p>
+        <p>SDVOSB Certified &bull; Veteran-Owned &bull; Florida, USA</p>
+        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  // ─── CONFIG ───
+  // TODO: Replace these with your actual Cognito and API values after AWS setup
+  const COGNITO_REGION = 'us-east-2';
+  const COGNITO_USER_POOL_ID = 'YOUR_USER_POOL_ID';          // e.g. us-east-2_aBcDeFgHi
+  const COGNITO_CLIENT_ID = 'YOUR_CLIENT_ID';                 // App client ID (no secret)
+  const API_BASE = 'https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod';
+
+  let pendingEmail = '';
+  let pendingPassword = '';
+  let cognitoUser = null;
+
+  // ─── STEP NAVIGATION ───
+  function showStep(n) {
+    document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step-${n}`).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── STEP 1: SIGNUP ───
+  document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('signup-error');
+    errEl.style.display = 'none';
+
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (password !== confirmPassword) {
+      errEl.textContent = 'Passwords do not match.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      errEl.textContent = 'Password must be at least 8 characters with an uppercase letter and number.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Creating Account...';
+    btn.disabled = true;
+
+    try {
+      // Cognito signup via AWS SDK or fetch to Cognito endpoint
+      const resp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.SignUp',
+        },
+        body: JSON.stringify({
+          ClientId: COGNITO_CLIENT_ID,
+          Username: email,
+          Password: password,
+          UserAttributes: [
+            { Name: 'email', Value: email },
+            { Name: 'given_name', Value: firstName },
+            { Name: 'family_name', Value: lastName },
+          ],
+        }),
+      });
+
+      const data = await resp.json();
+      if (data.__type && data.__type.includes('Exception')) {
+        throw new Error(data.message || data.Message || 'Signup failed');
+      }
+
+      pendingEmail = email;
+      pendingPassword = password;
+      document.getElementById('verify-email-display').textContent = email;
+      showStep(2);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Create Account';
+      btn.disabled = false;
+    }
+  });
+
+  // ─── STEP 2: VERIFY EMAIL ───
+  document.getElementById('verify-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('verify-error');
+    errEl.style.display = 'none';
+
+    const code = document.getElementById('verifyCode').value.trim();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Verifying...';
+    btn.disabled = true;
+
+    try {
+      // Confirm signup
+      const resp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ConfirmSignUp',
+        },
+        body: JSON.stringify({
+          ClientId: COGNITO_CLIENT_ID,
+          Username: pendingEmail,
+          ConfirmationCode: code,
+        }),
+      });
+
+      const data = await resp.json();
+      if (data.__type && data.__type.includes('Exception')) {
+        throw new Error(data.message || data.Message || 'Verification failed');
+      }
+
+      // Auto-login after verification
+      const loginResp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
+        body: JSON.stringify({
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          ClientId: COGNITO_CLIENT_ID,
+          AuthParameters: {
+            USERNAME: pendingEmail,
+            PASSWORD: pendingPassword,
+          },
+        }),
+      });
+
+      const loginData = await loginResp.json();
+      if (loginData.AuthenticationResult) {
+        localStorage.setItem('hss_id_token', loginData.AuthenticationResult.IdToken);
+        localStorage.setItem('hss_access_token', loginData.AuthenticationResult.AccessToken);
+        localStorage.setItem('hss_refresh_token', loginData.AuthenticationResult.RefreshToken);
+        localStorage.setItem('hss_email', pendingEmail);
+
+        // Parse user ID from token
+        const payload = JSON.parse(atob(loginData.AuthenticationResult.IdToken.split('.')[1]));
+        localStorage.setItem('hss_user_id', payload.sub);
+      }
+
+      showStep(3);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Verify Email';
+      btn.disabled = false;
+    }
+  });
+
+  // Resend code
+  document.getElementById('resend-code').addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ResendConfirmationCode',
+        },
+        body: JSON.stringify({
+          ClientId: COGNITO_CLIENT_ID,
+          Username: pendingEmail,
+        }),
+      });
+      e.target.textContent = 'Code sent!';
+      setTimeout(() => e.target.textContent = 'Resend', 3000);
+    } catch (err) {
+      alert('Failed to resend code. Please try again.');
+    }
+  });
+
+  // ─── STEP 3: BUSINESS INFO & TRIAL CREATION ───
+  document.getElementById('business-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('business-error');
+    errEl.style.display = 'none';
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Setting up your chatbot...';
+    btn.disabled = true;
+
+    const userId = localStorage.getItem('hss_user_id');
+    const token = localStorage.getItem('hss_id_token');
+
+    try {
+      const resp = await fetch(`${API_BASE}/trial/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token || '',
+        },
+        body: JSON.stringify({
+          userId,
+          email: localStorage.getItem('hss_email') || pendingEmail,
+          businessName: document.getElementById('businessName').value.trim(),
+          website: document.getElementById('website').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          industry: document.getElementById('industry').value,
+          businessInfo: document.getElementById('businessInfo').value.trim(),
+        }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to create trial');
+
+      // Show success
+      document.getElementById('embed-code-display').textContent = data.embedCode;
+      document.getElementById('config-id-display').textContent = data.configId;
+      showStep(4);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Launch My Free Chatbot';
+      btn.disabled = false;
+    }
+  });
+
+  // Copy embed code
+  document.getElementById('copy-embed')?.addEventListener('click', () => {
+    const code = document.getElementById('embed-code-display').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      document.getElementById('copy-embed').textContent = 'Copied!';
+      setTimeout(() => document.getElementById('copy-embed').textContent = 'Copy Code', 2000);
+    });
+  });
+  </script>
+</body>
+</html>

@@ -64,7 +64,7 @@ We're a veteran-owned software company based in Florida, and we've built chatbot
 
 Would you be open to a quick 10-minute call this week? Or if you'd rather just see it in action, I can set up a free demo on your site — takes about a day.
 
-Try it free: ${SITE_URL}/contact.html?subject=free-trial
+Try it free: ${SITE_URL}/signup.html
 
 Best,
 Daniel Heinrich
@@ -103,7 +103,7 @@ One of our ${prospect.industry || "small business"} clients saw a 3x increase in
 We offer a completely free 14-day trial — we'll build a custom chatbot trained on ${prospect.businessName} and deploy it on your site. If you love it, great. If not, no hard feelings.
 
 Interested? Just reply to this email or book a quick call:
-${SITE_URL}/contact.html?subject=free-trial
+${SITE_URL}/signup.html
 
 Best,
 Daniel Heinrich

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SP20JF1RE"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2SP20JF1RE');</script>
+  <title>Admin Dashboard — Heinrichs Software Solutions</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+
+  <header id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">HSS</div>
+        <div class="logo-text">
+          <span class="logo-name">Heinrichs Software Solutions</span>
+          <span class="logo-tag">Admin Dashboard</span>
+        </div>
+      </a>
+      <nav id="nav">
+        <a href="index.html" class="nav-link">Site</a>
+        <a href="#" id="logout-link" class="nav-link" style="color:var(--gold);">Log Out</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <section class="page-hero" style="padding:80px 0 40px;">
+    <div class="container page-hero-content">
+      <h1 class="hero-anim hero-anim-1">Admin Dashboard</h1>
+      <p class="hero-anim hero-anim-2">Manage clients, trials, and subscriptions.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+
+      <div class="dash-tabs">
+        <button class="dash-tab active" data-tab="stats">Stats</button>
+        <button class="dash-tab" data-tab="clients">Clients</button>
+        <button class="dash-tab" data-tab="trials">Trials</button>
+        <button class="dash-tab" data-tab="revenue">Revenue</button>
+      </div>
+
+      <!-- ─── STATS TAB ─── -->
+      <div class="dash-panel active" id="tab-stats">
+        <div class="dash-cards">
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Total Clients</div>
+            <div class="dash-stat-value" id="stat-total-clients">—</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Active Trials</div>
+            <div class="dash-stat-value" id="stat-active-trials">—</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Paid Subscribers</div>
+            <div class="dash-stat-value" id="stat-paid">—</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Monthly Revenue</div>
+            <div class="dash-stat-value" id="stat-revenue">—</div>
+          </div>
+        </div>
+
+        <div class="dash-cards" style="margin-top:20px;">
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Standard Plans</div>
+            <div class="dash-stat-value" id="stat-standard">—</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Pro Plans</div>
+            <div class="dash-stat-value" id="stat-pro">—</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Expired Trials</div>
+            <div class="dash-stat-value" id="stat-expired">—</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-label">Conversion Rate</div>
+            <div class="dash-stat-value" id="stat-conversion">—</div>
+          </div>
+        </div>
+
+        <div class="dash-section" style="margin-top:32px;">
+          <h3>Recent Activity</h3>
+          <div id="recent-activity" class="admin-activity-list">
+            <p class="text-muted">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── CLIENTS TAB ─── -->
+      <div class="dash-panel" id="tab-clients">
+        <div class="dash-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <h3>All Clients</h3>
+            <div class="admin-filters">
+              <select id="filter-plan" class="admin-select">
+                <option value="">All Plans</option>
+                <option value="trial">Trial</option>
+                <option value="standard">Standard</option>
+                <option value="pro">Pro</option>
+                <option value="expired">Expired</option>
+              </select>
+              <input type="text" id="filter-search" placeholder="Search by name or email..." class="admin-search">
+            </div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Business</th>
+                  <th>Email</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Industry</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clients-tbody">
+                <tr><td colspan="7" class="text-muted">Loading clients...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── TRIALS TAB ─── -->
+      <div class="dash-panel" id="tab-trials">
+        <div class="dash-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <h3>All Trials</h3>
+            <select id="filter-trial-status" class="admin-select">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="converted">Converted</option>
+            </select>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Status</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Conversations</th>
+                  <th>Days Left</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="trials-tbody">
+                <tr><td colspan="7" class="text-muted">Loading trials...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── REVENUE TAB ─── -->
+      <div class="dash-panel" id="tab-revenue">
+        <div class="dash-section">
+          <h3>Revenue Summary</h3>
+          <div class="dash-cards">
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Setup Fees Earned</div>
+              <div class="dash-stat-value" id="rev-setup">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Monthly Recurring</div>
+              <div class="dash-stat-value" id="rev-monthly">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Annual Projected</div>
+              <div class="dash-stat-value" id="rev-annual">—</div>
+            </div>
+          </div>
+
+          <h3 style="margin-top:32px;">Paid Clients</h3>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Business</th>
+                  <th>Plan</th>
+                  <th>Monthly</th>
+                  <th>Setup Fee</th>
+                  <th>Status</th>
+                  <th>Since</th>
+                </tr>
+              </thead>
+              <tbody id="revenue-tbody">
+                <tr><td colspan="6" class="text-muted">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- EDIT CLIENT MODAL -->
+  <div class="modal-overlay" id="edit-modal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Edit Client</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <form id="edit-client-form">
+        <input type="hidden" id="edit-clientId">
+        <div class="form-group">
+          <label for="edit-businessName">Business Name</label>
+          <input type="text" id="edit-businessName">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-plan">Plan</label>
+            <select id="edit-plan">
+              <option value="trial">Trial</option>
+              <option value="standard">Standard</option>
+              <option value="pro">Pro</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-subscriptionStatus">Subscription Status</label>
+            <select id="edit-subscriptionStatus">
+              <option value="none">None</option>
+              <option value="active">Active</option>
+              <option value="canceling">Canceling</option>
+              <option value="canceled">Canceled</option>
+              <option value="past_due">Past Due</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-industry">Industry</label>
+            <select id="edit-industry">
+              <option value="general">General</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="dental">Dental</option>
+              <option value="legal">Legal</option>
+              <option value="realestate">Real Estate</option>
+              <option value="contractor">Contractor</option>
+              <option value="ecommerce">E-Commerce</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-email">Email</label>
+            <input type="email" id="edit-email" readonly style="opacity:0.6;">
+          </div>
+        </div>
+        <div id="edit-error" class="form-error" style="display:none;"></div>
+        <div style="display:flex;gap:12px;margin-top:16px;">
+          <button type="submit" class="btn btn-gold btn-animated">Save Changes</button>
+          <button type="button" class="btn btn-outline btn-animated" id="modal-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon small">HSS</div>
+        <p>Heinrichs Software Solutions LLC</p>
+        <p class="footer-tag">Admin Portal</p>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Heinrichs Software Solutions LLC. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  // ──── CONFIG ────
+  const API_BASE = 'https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod';
+  const idToken = localStorage.getItem('hss_id_token');
+
+  if (!idToken) {
+    window.location.href = 'login.html';
+  }
+
+  // ──── STATE ────
+  let allClients = [];
+  let allTrials = [];
+
+  // ──── INIT ────
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadAdminData();
+  });
+
+  async function loadAdminData() {
+    try {
+      const [clientsResp, trialsResp, statsResp] = await Promise.all([
+        fetch(`${API_BASE}/admin/clients`, { headers: { 'Authorization': idToken } }),
+        fetch(`${API_BASE}/admin/trials`, { headers: { 'Authorization': idToken } }),
+        fetch(`${API_BASE}/admin/stats`, { headers: { 'Authorization': idToken } }),
+      ]);
+
+      if (clientsResp.ok) allClients = (await clientsResp.json()).clients || [];
+      if (trialsResp.ok) allTrials = (await trialsResp.json()).trials || [];
+
+      let stats = {};
+      if (statsResp.ok) stats = await statsResp.json();
+
+      renderStats(stats);
+      renderClients();
+      renderTrials();
+      renderRevenue();
+      renderActivity();
+    } catch (err) {
+      console.error('Admin load error:', err);
+    }
+  }
+
+  function renderStats(stats) {
+    const totalClients = allClients.length;
+    const activeTrials = allTrials.filter(t => t.status === 'active').length;
+    const paidClients = allClients.filter(c => c.plan === 'standard' || c.plan === 'pro').length;
+    const standardClients = allClients.filter(c => c.plan === 'standard').length;
+    const proClients = allClients.filter(c => c.plan === 'pro').length;
+    const expiredTrials = allTrials.filter(t => t.status === 'expired').length;
+    const convertedTrials = allTrials.filter(t => t.status === 'converted').length;
+
+    const monthlyRevenue = (standardClients * 49) + (proClients * 99);
+    const conversionRate = allTrials.length > 0 ? ((convertedTrials / allTrials.length) * 100).toFixed(1) : '0';
+
+    document.getElementById('stat-total-clients').textContent = totalClients;
+    document.getElementById('stat-active-trials').textContent = activeTrials;
+    document.getElementById('stat-paid').textContent = paidClients;
+    document.getElementById('stat-revenue').textContent = `$${monthlyRevenue.toLocaleString()}`;
+    document.getElementById('stat-standard').textContent = standardClients;
+    document.getElementById('stat-pro').textContent = proClients;
+    document.getElementById('stat-expired').textContent = expiredTrials;
+    document.getElementById('stat-conversion').textContent = `${conversionRate}%`;
+
+    // Revenue tab
+    const setupFees = (standardClients * 499) + (proClients * 999);
+    document.getElementById('rev-setup').textContent = `$${setupFees.toLocaleString()}`;
+    document.getElementById('rev-monthly').textContent = `$${monthlyRevenue.toLocaleString()}/mo`;
+    document.getElementById('rev-annual').textContent = `$${(monthlyRevenue * 12).toLocaleString()}/yr`;
+  }
+
+  function renderClients(filter = '', search = '') {
+    const tbody = document.getElementById('clients-tbody');
+    let filtered = allClients;
+
+    if (filter) filtered = filtered.filter(c => c.plan === filter);
+    if (search) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(c =>
+        (c.businessName || '').toLowerCase().includes(s) ||
+        (c.email || '').toLowerCase().includes(s)
+      );
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-muted">No clients found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(c => {
+      const planBadge = getPlanBadge(c.plan || 'trial');
+      const statusBadge = getStatusBadge(c.subscriptionStatus || 'none');
+      const joined = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—';
+
+      return `<tr>
+        <td><strong>${esc(c.businessName || '—')}</strong></td>
+        <td>${esc(c.email || '—')}</td>
+        <td>${planBadge}</td>
+        <td>${statusBadge}</td>
+        <td>${esc(c.industry || '—')}</td>
+        <td>${joined}</td>
+        <td><button class="admin-btn" onclick="editClient('${c.clientId}')">Edit</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderTrials(filter = '') {
+    const tbody = document.getElementById('trials-tbody');
+    let filtered = allTrials;
+
+    if (filter) filtered = filtered.filter(t => t.status === filter);
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-muted">No trials found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(t => {
+      const client = allClients.find(c => c.clientId === t.clientId);
+      const statusBadge = getTrialBadge(t.status);
+      const start = t.startDate ? new Date(t.startDate).toLocaleDateString() : '—';
+      const end = t.endDate ? new Date(t.endDate).toLocaleDateString() : '—';
+      const daysLeft = t.endDate ? Math.max(0, Math.ceil((new Date(t.endDate) - new Date()) / 86400000)) : '—';
+
+      return `<tr>
+        <td><strong>${esc(client?.businessName || t.clientId)}</strong></td>
+        <td>${statusBadge}</td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${t.conversationsUsed || 0} / ${t.conversationLimit || 50}</td>
+        <td>${t.status === 'active' ? daysLeft : '—'}</td>
+        <td>
+          ${t.status === 'active' ? `<button class="admin-btn" onclick="extendTrial('${t.trialId}')">Extend</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderRevenue() {
+    const tbody = document.getElementById('revenue-tbody');
+    const paidClients = allClients.filter(c => c.plan === 'standard' || c.plan === 'pro');
+
+    if (paidClients.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-muted">No paid subscribers yet</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = paidClients.map(c => {
+      const monthly = c.plan === 'pro' ? '$99' : '$49';
+      const setup = c.plan === 'pro' ? '$999' : '$499';
+      const since = c.paidAt ? new Date(c.paidAt).toLocaleDateString() : '—';
+      const status = c.cancelAtPeriodEnd ? 'Canceling' : (c.subscriptionStatus || 'active');
+
+      return `<tr>
+        <td><strong>${esc(c.businessName || '—')}</strong></td>
+        <td>${getPlanBadge(c.plan)}</td>
+        <td>${monthly}</td>
+        <td>${setup}</td>
+        <td>${getStatusBadge(status)}</td>
+        <td>${since}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderActivity() {
+    const container = document.getElementById('recent-activity');
+    // Show recent clients sorted by creation date
+    const recent = [...allClients]
+      .filter(c => c.createdAt)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 10);
+
+    if (recent.length === 0) {
+      container.innerHTML = '<p class="text-muted">No activity yet</p>';
+      return;
+    }
+
+    container.innerHTML = recent.map(c => {
+      const date = new Date(c.createdAt).toLocaleDateString();
+      const action = c.plan === 'standard' || c.plan === 'pro'
+        ? `subscribed to ${c.plan}`
+        : c.plan === 'expired' ? 'trial expired' : 'started a trial';
+
+      return `<div class="activity-item">
+        <span class="activity-dot" style="background:${c.plan === 'pro' ? 'var(--gold)' : c.plan === 'standard' ? '#2ecc71' : '#95a5a6'};"></span>
+        <span><strong>${esc(c.businessName || c.email)}</strong> ${action}</span>
+        <span class="activity-date">${date}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ──── FILTERS ────
+  document.getElementById('filter-plan')?.addEventListener('change', (e) => {
+    renderClients(e.target.value, document.getElementById('filter-search').value);
+  });
+
+  document.getElementById('filter-search')?.addEventListener('input', (e) => {
+    renderClients(document.getElementById('filter-plan').value, e.target.value);
+  });
+
+  document.getElementById('filter-trial-status')?.addEventListener('change', (e) => {
+    renderTrials(e.target.value);
+  });
+
+  // ──── EDIT CLIENT ────
+  function editClient(clientId) {
+    const client = allClients.find(c => c.clientId === clientId);
+    if (!client) return;
+
+    document.getElementById('edit-clientId').value = client.clientId;
+    document.getElementById('edit-businessName').value = client.businessName || '';
+    document.getElementById('edit-plan').value = client.plan || 'trial';
+    document.getElementById('edit-subscriptionStatus').value = client.subscriptionStatus || 'none';
+    document.getElementById('edit-industry').value = client.industry || 'general';
+    document.getElementById('edit-email').value = client.email || '';
+    document.getElementById('edit-error').style.display = 'none';
+    document.getElementById('edit-modal').style.display = 'flex';
+  }
+
+  document.getElementById('edit-client-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('edit-error');
+    errEl.style.display = 'none';
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(`${API_BASE}/admin/update-client`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({
+          clientId: document.getElementById('edit-clientId').value,
+          businessName: document.getElementById('edit-businessName').value,
+          plan: document.getElementById('edit-plan').value,
+          subscriptionStatus: document.getElementById('edit-subscriptionStatus').value,
+          industry: document.getElementById('edit-industry').value,
+        }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Update failed');
+
+      document.getElementById('edit-modal').style.display = 'none';
+      await loadAdminData();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Save Changes';
+      btn.disabled = false;
+    }
+  });
+
+  // ──── EXTEND TRIAL ────
+  async function extendTrial(trialId) {
+    const days = prompt('Extend trial by how many days?', '7');
+    if (!days || isNaN(days)) return;
+
+    try {
+      const trial = allTrials.find(t => t.trialId === trialId);
+      const newEnd = new Date(trial.endDate);
+      newEnd.setDate(newEnd.getDate() + parseInt(days));
+
+      const resp = await fetch(`${API_BASE}/admin/update-trial`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({
+          trialId: trialId,
+          endDate: newEnd.toISOString(),
+          status: 'active',
+        }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Update failed');
+
+      alert(`Trial extended by ${days} days`);
+      await loadAdminData();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  // ──── MODAL ────
+  document.getElementById('modal-close')?.addEventListener('click', () => {
+    document.getElementById('edit-modal').style.display = 'none';
+  });
+  document.getElementById('modal-cancel')?.addEventListener('click', () => {
+    document.getElementById('edit-modal').style.display = 'none';
+  });
+  document.getElementById('edit-modal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.style.display = 'none';
+  });
+
+  // ──── TAB SWITCHING ────
+  document.querySelectorAll('.dash-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+
+  // ──── HELPERS ────
+  function getPlanBadge(plan) {
+    const colors = { trial: '#3498db', standard: '#2ecc71', pro: '#f39c12', expired: '#e74c3c' };
+    return `<span class="admin-badge" style="background:${colors[plan] || '#95a5a6'}">${plan}</span>`;
+  }
+
+  function getStatusBadge(status) {
+    const colors = { active: '#2ecc71', canceling: '#f39c12', canceled: '#e74c3c', past_due: '#e74c3c', none: '#95a5a6' };
+    return `<span class="admin-badge" style="background:${colors[status] || '#95a5a6'}">${status}</span>`;
+  }
+
+  function getTrialBadge(status) {
+    const colors = { active: '#2ecc71', expired: '#e74c3c', converted: '#3498db' };
+    return `<span class="admin-badge" style="background:${colors[status] || '#95a5a6'}">${status}</span>`;
+  }
+
+  function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ──── LOGOUT ────
+  document.getElementById('logout-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('hss_id_token');
+    localStorage.removeItem('hss_access_token');
+    localStorage.removeItem('hss_refresh_token');
+    localStorage.removeItem('hss_email');
+    localStorage.removeItem('hss_user_id');
+    window.location.href = 'login.html';
+  });
+  </script>
+</body>
+</html>

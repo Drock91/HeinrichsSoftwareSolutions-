@@ -45,7 +45,13 @@
       </a>
       <nav id="nav">
         <a href="index.html" class="nav-link">Home</a>
-        <a href="about.html" class="nav-link">About</a>
+        <div class="nav-dropdown">
+          <a href="about.html" class="nav-link">About</a>
+          <div class="nav-dropdown-menu">
+            <a href="about.html">About Us</a>
+            <a href="blog.html">Blog</a>
+          </div>
+        </div>
         <a href="services.html" class="nav-link active">Services</a>
         <a href="contact.html" class="nav-link">Contact</a>
       </nav>
@@ -83,13 +89,21 @@
           </ul>
           <div style="margin-top:16px;">
             <a href="chatbot.html" class="btn btn-gold btn-animated">Learn More &amp; See Pricing</a>
-            <a href="contact.html?subject=free-trial" class="btn btn-outline btn-animated" style="margin-left:8px;">Start Free Trial</a>
+            <a href="signup.html" class="btn btn-outline btn-animated" style="margin-left:8px;">Start Free Trial</a>
           </div>
         </div>
       </div>
 
-      <!-- Pricing Tiers -->
-      <div class="pricing-grid" style="margin-bottom:48px;">
+    </div>
+  </section>
+
+  <!-- ========== PRICING TIERS ========== -->
+  <section class="section section-dark">
+    <div class="container">
+      <h2 class="section-title light reveal reveal-up">Simple, Transparent Pricing</h2>
+      <p class="section-subtitle reveal reveal-up">No hidden fees. No long-term contracts. Cancel anytime.</p>
+
+      <div class="pricing-grid">
         <!-- FREE TRIAL -->
         <div class="pricing-card reveal reveal-up" style="--reveal-delay: 0ms;">
           <div class="pricing-badge free-badge">Free Trial</div>
@@ -103,7 +117,7 @@
             <li>&#10003; No credit card required</li>
           </ul>
           <div class="pricing-card-footer">
-            <a href="contact.html?subject=free-trial" class="btn btn-outline btn-animated btn-full">Start Free Trial</a>
+            <a href="signup.html" class="btn btn-outline btn-animated btn-full">Start Free Trial</a>
             <p class="pricing-note">No obligation. See exactly how it works on your site.</p>
           </div>
         </div>
@@ -152,7 +166,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </section>
 
@@ -258,7 +271,7 @@
   </section>
 
   <!-- ========== GOVERNMENT CONTRACTING ========== -->
-  <section class="section">
+  <section class="section section-dark">
     <div class="container">
       <div class="careers-cta reveal reveal-up">
         <h2 class="section-title light">Government Contracting</h2>
