@@ -121,3 +121,117 @@ bash deploy.sh
 # Check site
 curl -I http://heinrichssoftware.com.s3-website-us-east-1.amazonaws.com
 ```
+
+---
+
+## AI Chatbot Deployment
+
+The site includes an AI chatbot powered by Anthropic Claude. Here's how to deploy the backend:
+
+### 1. API Keys (already in GitHub Secrets)
+Your repo already has these secrets configured:
+- `GOOGLE_API_KEY` — **Primary** (Gemini 2.0 Flash, free tier: 15 req/min, 1M tokens/day)
+- `GROQ_API_KEY` — **Fallback #1** (Llama 3.3 70B, free tier: 30 req/min)
+- `MISTRAL_API_KEY` — Fallback #2
+- `OPENAI_API_KEY` — Fallback #3
+- `ANTHROPIC_API_KEY` — Fallback #4
+
+The Lambda tries each provider in order. If Google is down or rate-limited, it automatically falls through to Groq, then Mistral, then OpenAI, then Anthropic.
+
+### 2. Create the Chat Lambda Function
+
+```bash
+# Create a zip of the handler (no external dependencies needed — uses urllib)
+cd lambda
+zip chat_handler.zip chat_handler.py
+```
+
+```bash
+# Create the Lambda function
+aws lambda create-function \
+  --function-name hss-chat-handler \
+  --runtime python3.12 \
+  --handler chat_handler.lambda_handler \
+  --role arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_LAMBDA_ROLE \
+  --zip-file fileb://chat_handler.zip \
+  --timeout 30 \
+  --memory-size 256 \
+  --environment "Variables={ANTHROPIC_API_KEY=sk-ant-YOUR_KEY_HERE}" \
+  --region us-east-2
+```
+
+### 3. Add API Gateway Route
+
+Using the existing API Gateway (`pd30lkyyof`):
+
+```bash
+# Get the API ID
+aws apigateway get-rest-apis --region us-east-2
+
+# Create /chat resource
+aws apigateway create-resource \
+  --rest-api-id pd30lkyyof \
+  --parent-id YOUR_ROOT_RESOURCE_ID \
+  --path-part chat \
+  --region us-east-2
+
+# Create POST method
+aws apigateway put-method \
+  --rest-api-id pd30lkyyof \
+  --resource-id YOUR_CHAT_RESOURCE_ID \
+  --http-method POST \
+  --authorization-type NONE \
+  --region us-east-2
+
+# Create OPTIONS method (for CORS)
+aws apigateway put-method \
+  --rest-api-id pd30lkyyof \
+  --resource-id YOUR_CHAT_RESOURCE_ID \
+  --http-method OPTIONS \
+  --authorization-type NONE \
+  --region us-east-2
+
+# Link POST to Lambda
+aws apigateway put-integration \
+  --rest-api-id pd30lkyyof \
+  --resource-id YOUR_CHAT_RESOURCE_ID \
+  --http-method POST \
+  --type AWS_PROXY \
+  --integration-http-method POST \
+  --uri "arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-2:YOUR_ACCOUNT_ID:function:hss-chat-handler/invocations" \
+  --region us-east-2
+
+# Grant API Gateway permission to invoke Lambda
+aws lambda add-permission \
+  --function-name hss-chat-handler \
+  --statement-id apigateway-chat \
+  --action lambda:InvokeFunction \
+  --principal apigateway.amazonaws.com \
+  --region us-east-2
+
+# Deploy to prod stage
+aws apigateway create-deployment \
+  --rest-api-id pd30lkyyof \
+  --stage-name prod \
+  --region us-east-2
+```
+
+### 4. Update Lambda Code (future changes)
+
+```bash
+cd lambda
+zip chat_handler.zip chat_handler.py
+aws lambda update-function-code \
+  --function-name hss-chat-handler \
+  --zip-file fileb://chat_handler.zip \
+  --region us-east-2
+```
+
+### Chatbot Cost Estimate
+
+| Component       | Cost              |
+|----------------|-------------------|
+| Anthropic API   | ~$0.01-0.03/chat  |
+| Lambda          | Free tier covers it|
+| API Gateway     | Free tier covers it|
+| **Per 1,000 chats** | **~$10-30**    |
