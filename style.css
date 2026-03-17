@@ -506,6 +506,9 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
   #nav { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--dark-navy); flex-direction: column; padding: 16px; border-top: 2px solid var(--gold); }
   #nav.open { display: flex; }
   .hamburger { display: flex; }
+  .logo-name { font-size: 14px; }
+  .logo-tag { font-size: 9px; }
+  .logo-icon { width: 36px; height: 36px; font-size: 13px; }
   .services-grid { grid-template-columns: 1fr; }
   .naics-grid { grid-template-columns: 1fr; }
   .hero-stats { gap: 24px; }
