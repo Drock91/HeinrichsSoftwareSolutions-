@@ -298,6 +298,15 @@
   }
   const idToken = localStorage.getItem('hss_id_token');
 
+  // Verify this user is actually an admin
+  const _adminPayload = window.hssAuth.getPayload() || {};
+  const _adminGroups = _adminPayload['cognito:groups'] || [];
+  const _isAdmin = Array.isArray(_adminGroups) ? _adminGroups.includes('admin') : String(_adminGroups).includes('admin');
+  if (!_isAdmin) {
+    // Not an admin — send to client dashboard
+    window.location.href = 'dashboard.html';
+  }
+
   // ──── STATE ────
   let allClients = [];
   let allTrials = [];

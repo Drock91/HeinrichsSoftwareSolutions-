@@ -331,7 +331,18 @@
   }
   const idToken = localStorage.getItem('hss_id_token');
   const accessToken = localStorage.getItem('hss_access_token');
-  const userEmail = localStorage.getItem('hss_email');
+
+  // Derive email from JWT (don't rely on localStorage alone)
+  const _payload = window.hssAuth.getPayload() || {};
+  const userEmail = _payload.email || localStorage.getItem('hss_email') || '';
+  // Backfill localStorage if missing
+  if (userEmail && !localStorage.getItem('hss_email')) localStorage.setItem('hss_email', userEmail);
+
+  // If this is an admin, redirect them to admin page
+  const _groups = _payload['cognito:groups'] || [];
+  if (Array.isArray(_groups) ? _groups.includes('admin') : String(_groups).includes('admin')) {
+    window.location.href = 'admin.html';
+  }
 
   // ──── STATE ────
   let clientData = null;
@@ -341,8 +352,8 @@
 
   // ──── INIT ────
   document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('welcome-msg').textContent = `Welcome back, ${userEmail}!`;
-    document.getElementById('set-email').textContent = userEmail;
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${userEmail || 'User'}!`;
+    document.getElementById('set-email').textContent = userEmail || '—';
 
     // Check URL for payment result
     const params = new URLSearchParams(window.location.search);
