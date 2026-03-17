@@ -184,4 +184,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { threshold: 0.5 });
     statNums.forEach(el => counterObserver.observe(el));
   }
+
+  /* ══════════════════════════════════════
+     AUTH-AWARE NAV (Sign In → My Account)
+     ══════════════════════════════════════ */
+  const signinLink = document.querySelector('.nav-signin');
+  if (signinLink) {
+    const token = localStorage.getItem('hss_id_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const groups = payload['cognito:groups'] || [];
+        const isAdmin = groups.includes('admin');
+        signinLink.textContent = 'My Account';
+        signinLink.href = isAdmin ? 'admin.html' : 'dashboard.html';
+        // Handle blog subdirectory links
+        if (window.location.pathname.includes('/blog/')) {
+          signinLink.href = isAdmin ? '../admin.html' : '../dashboard.html';
+        }
+      } catch (e) {
+        // Token invalid/expired — keep Sign In
+      }
+    }
+  }
 });
