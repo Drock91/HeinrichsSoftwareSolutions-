@@ -356,25 +356,37 @@
   });
 
   async function loadDashboard() {
+    const dbg = []; // debug info
+
     // Load client profile
     try {
       const profileResp = await fetch(`${API_BASE}/client/profile`, {
         headers: { 'Authorization': idToken },
       });
+      dbg.push(`Profile: ${profileResp.status} ${profileResp.statusText}`);
       if (profileResp.ok) {
         clientData = await profileResp.json();
+        dbg.push(`clientData.plan=${clientData.plan}, clientId=${clientData.clientId}`);
+      } else {
+        const errText = await profileResp.text();
+        dbg.push(`Profile error body: ${errText.substring(0, 200)}`);
       }
-    } catch (err) { console.warn('Profile load error:', err); }
+    } catch (err) { dbg.push(`Profile exception: ${err.message}`); }
 
     // Load trial status
     try {
       const trialResp = await fetch(`${API_BASE}/trial/status`, {
         headers: { 'Authorization': idToken },
       });
+      dbg.push(`Trial: ${trialResp.status} ${trialResp.statusText}`);
       if (trialResp.ok) {
         trialData = await trialResp.json();
+        dbg.push(`trialData.daysLeft=${trialData.daysLeft}, conv=${trialData.conversationCount}/${trialData.maxConversations}`);
+      } else {
+        const errText = await trialResp.text();
+        dbg.push(`Trial error body: ${errText.substring(0, 200)}`);
       }
-    } catch (err) { console.warn('Trial load error:', err); }
+    } catch (err) { dbg.push(`Trial exception: ${err.message}`); }
 
     // Load subscription status
     try {
@@ -384,11 +396,14 @@
           headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
           body: JSON.stringify({ clientId: clientData.clientId }),
         });
+        dbg.push(`Sub: ${subResp.status}`);
         if (subResp.ok) {
           subData = await subResp.json();
         }
+      } else {
+        dbg.push('Sub: skipped (no clientId)');
       }
-    } catch (err) { console.warn('Subscription load error:', err); }
+    } catch (err) { dbg.push(`Sub exception: ${err.message}`); }
 
     // Load chatbot config
     try {
@@ -396,8 +411,22 @@
         const cfgResp = await fetch(`${API_BASE}/client/chatbot-config?configId=${clientData.configId}`, {
           headers: { 'Authorization': idToken },
         });
+        dbg.push(`Config: ${cfgResp.status}`);
         if (cfgResp.ok) {
           configData = await cfgResp.json();
+        }
+      } else {
+        dbg.push('Config: skipped (no configId)');
+      }
+    } catch (err) { dbg.push(`Config exception: ${err.message}`); }
+
+    // Show debug info temporarily
+    dbg.unshift(`Token (first 30): ${idToken ? idToken.substring(0, 30) + '...' : 'NULL'}`);
+    console.log('Dashboard debug:', dbg);
+    const dbgEl = document.createElement('div');
+    dbgEl.style.cssText = 'background:#111;color:#0f0;padding:16px;margin:16px;font-family:monospace;font-size:12px;border-radius:8px;white-space:pre-wrap;';
+    dbgEl.textContent = 'DEBUG:\n' + dbg.join('\n');
+    document.getElementById('tab-overview').appendChild(dbgEl);
         }
       }
     } catch (err) { console.warn('Config load error:', err); }
