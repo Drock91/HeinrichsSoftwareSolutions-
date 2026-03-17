@@ -62,7 +62,7 @@ img { max-width: 100%; height: auto; }
 .logo-icon.small { width: 36px; height: 36px; font-size: 13px; }
 .logo-name { color: var(--white); font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 18px; display: block; text-transform: uppercase; letter-spacing: 1px; }
 .logo-tag { color: var(--gold); font-size: 11px; display: block; letter-spacing: 0.5px; text-transform: uppercase; }
-#nav { display: flex; gap: 8px; }
+#nav { display: flex; gap: 8px; align-items: center; }
 .nav-link {
   color: var(--text-light); font-family: 'Oswald', sans-serif;
   font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
@@ -88,8 +88,8 @@ img { max-width: 100%; height: auto; }
 /* Nav Dropdown */
 .nav-dropdown {
   position: relative;
-  display: inline-block;
-  vertical-align: middle;
+  display: flex;
+  align-items: center;
 }
 .nav-dropdown > .nav-link {
   cursor: pointer;
