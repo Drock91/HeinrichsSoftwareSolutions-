@@ -1,0 +1,52 @@
+[
+  {
+    "email": "owner@example-restaurant.com",
+    "contactName": "John Smith",
+    "businessName": "Smith's Bistro",
+    "industry": "restaurant",
+    "website": "https://smithsbistro.com",
+    "phone": "(555) 123-4567",
+    "notes": "Found on Google Maps, high review count but no chat on site",
+    "source": "manual"
+  },
+  {
+    "email": "info@example-dental.com",
+    "contactName": "Dr. Jane Doe",
+    "businessName": "Doe Family Dentistry",
+    "industry": "dental",
+    "website": "https://doefamilydentistry.com",
+    "phone": "(555) 234-5678",
+    "notes": "Website has contact form only, no live chat",
+    "source": "manual"
+  },
+  {
+    "email": "partner@example-law.com",
+    "contactName": "Robert Lee",
+    "businessName": "Lee & Associates Law",
+    "industry": "legal",
+    "website": "https://leeassociateslaw.com",
+    "phone": "(555) 345-6789",
+    "notes": "Personal injury firm, high ad spend, no after-hours support",
+    "source": "manual"
+  },
+  {
+    "email": "agent@example-realty.com",
+    "contactName": "Sarah Johnson",
+    "businessName": "Johnson Realty Group",
+    "industry": "real estate",
+    "website": "https://johnsonrealtygroup.com",
+    "phone": "(555) 456-7890",
+    "notes": "Solo agent, busy listings page, no chat widget",
+    "source": "manual"
+  },
+  {
+    "email": "owner@example-hvac.com",
+    "contactName": "Mike Torres",
+    "businessName": "Torres Heating & Cooling",
+    "industry": "contractor",
+    "website": "https://torreshvac.com",
+    "phone": "(555) 567-8901",
+    "notes": "Emergency services listed, only phone number for contact",
+    "source": "manual"
+  }
+]
