@@ -853,6 +853,10 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,215,0,0.15);
   border-radius: 12px; padding: 36px 28px; text-align: center;
   position: relative; transition: all 0.3s;
+  display: flex; flex-direction: column;
+}
+.pricing-card-footer {
+  margin-top: auto; padding-top: 16px;
 }
 .pricing-card.featured {
   border: 2px solid var(--gold); transform: scale(1.04);
@@ -892,7 +896,7 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .pricing-features li:last-child { border-bottom: none; }
-.btn-full { width: 100%; text-align: center; margin-top: 16px; }
+.btn-full { width: 100%; text-align: center; }
 .pricing-note {
   font-size: 0.78rem; color: #888; margin-top: 12px; font-style: italic;
 }

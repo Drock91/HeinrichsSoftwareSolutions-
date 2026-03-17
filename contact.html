@@ -44,9 +44,6 @@
         <a href="index.html" class="nav-link">Home</a>
         <a href="about.html" class="nav-link">About</a>
         <a href="services.html" class="nav-link">Services</a>
-        <a href="chatbot.html" class="nav-link">AI Chatbot</a>
-        <a href="capabilities.html" class="nav-link">Capabilities</a>
-        <a href="careers.html" class="nav-link">Careers</a>
         <a href="contact.html" class="nav-link active">Contact</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu">
@@ -122,7 +119,10 @@
             <label for="c-subject">Subject *</label>
             <select id="c-subject" name="subject" required>
               <option value="">Select a topic...</option>
-              <option value="ai-chatbot">AI Chatbot for My Business</option>
+              <option value="free-trial">AI Chatbot — Free Trial</option>
+              <option value="chatbot-standard">AI Chatbot — Standard Plan</option>
+              <option value="chatbot-pro">AI Chatbot — Pro Plan</option>
+              <option value="ai-chatbot">AI Chatbot — General Inquiry</option>
               <option value="software">Custom Software Development</option>
               <option value="cloud">Cloud &amp; DevOps</option>
               <option value="contracting">Government Contracting Inquiry</option>
@@ -169,6 +169,21 @@
   </footer>
 
   <script src="app.js"></script>
+  <script>
+    // Auto-select subject from URL ?subject= param
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const subject = params.get('subject');
+      if (subject) {
+        const sel = document.getElementById('c-subject');
+        if (sel) {
+          for (const opt of sel.options) {
+            if (opt.value === subject) { sel.value = subject; break; }
+          }
+        }
+      }
+    })();
+  </script>
   <script src="chatbot.js"></script>
 </body>
 </html>
