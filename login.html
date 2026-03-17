@@ -157,7 +157,7 @@
   if (window.hssAuth && window.hssAuth.isTokenValid()) {
     const payload = window.hssAuth.getPayload();
     const groups = payload?.['cognito:groups'] || [];
-    window.location.href = groups.includes('admin') ? 'admin.html' : 'dashboard.html';
+    window.location.replace(groups.includes('admin') ? 'admin.html' : 'dashboard.html');
   }
 
   function showView(id) {

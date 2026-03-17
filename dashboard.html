@@ -327,7 +327,8 @@
   // ──── AUTH CHECK (validate token exists & not expired) ────
   if (!window.hssAuth || !window.hssAuth.isTokenValid()) {
     if (window.hssAuth) window.hssAuth.clearSession();
-    window.location.href = 'login.html';
+    window.location.replace('login.html');
+    throw new Error('redirect');
   }
   const idToken = localStorage.getItem('hss_id_token');
   const accessToken = localStorage.getItem('hss_access_token');
@@ -340,8 +341,11 @@
 
   // If this is an admin, redirect them to admin page
   const _groups = _payload['cognito:groups'] || [];
-  if (Array.isArray(_groups) ? _groups.includes('admin') : String(_groups).includes('admin')) {
-    window.location.href = 'admin.html';
+  const _isAdminUser = Array.isArray(_groups) ? _groups.includes('admin') : String(_groups).includes('admin');
+  if (_isAdminUser) {
+    window.location.replace('admin.html');
+    // stop further execution
+    throw new Error('redirect');
   }
 
   // ──── STATE ────
@@ -775,12 +779,8 @@
   // ──── LOGOUT ────
   document.getElementById('logout-link')?.addEventListener('click', (e) => {
     e.preventDefault();
-    localStorage.removeItem('hss_id_token');
-    localStorage.removeItem('hss_access_token');
-    localStorage.removeItem('hss_refresh_token');
-    localStorage.removeItem('hss_email');
-    localStorage.removeItem('hss_user_id');
-    window.location.href = 'login.html';
+    window.hssAuth.clearSession();
+    window.location.replace('login.html');
   });
   </script>
 </body>
