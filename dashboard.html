@@ -71,6 +71,10 @@
             <div class="dash-stat-label">Trial Days Left</div>
             <div class="dash-stat-value" id="stat-trial-days">—</div>
           </div>
+          <div class="dash-stat-card" id="stat-conversations-card" style="display:none;">
+            <div class="dash-stat-label">Conversations</div>
+            <div class="dash-stat-value" id="stat-conversations">—</div>
+          </div>
           <div class="dash-stat-card">
             <div class="dash-stat-label">Next Billing</div>
             <div class="dash-stat-value" id="stat-billing-date">—</div>
@@ -352,24 +356,28 @@
   });
 
   async function loadDashboard() {
+    // Load client profile
     try {
-      // Load client profile
       const profileResp = await fetch(`${API_BASE}/client/profile`, {
         headers: { 'Authorization': idToken },
       });
       if (profileResp.ok) {
         clientData = await profileResp.json();
       }
+    } catch (err) { console.warn('Profile load error:', err); }
 
-      // Load trial status
-      const trialResp = await fetch(`${API_BASE}/trial/status?clientId=${clientData?.clientId || ''}`, {
+    // Load trial status
+    try {
+      const trialResp = await fetch(`${API_BASE}/trial/status`, {
         headers: { 'Authorization': idToken },
       });
       if (trialResp.ok) {
         trialData = await trialResp.json();
       }
+    } catch (err) { console.warn('Trial load error:', err); }
 
-      // Load subscription status
+    // Load subscription status
+    try {
       if (clientData?.clientId) {
         const subResp = await fetch(`${API_BASE}/payment/subscription`, {
           method: 'POST',
@@ -380,8 +388,10 @@
           subData = await subResp.json();
         }
       }
+    } catch (err) { console.warn('Subscription load error:', err); }
 
-      // Load chatbot config
+    // Load chatbot config
+    try {
       if (clientData?.configId) {
         const cfgResp = await fetch(`${API_BASE}/client/chatbot-config?configId=${clientData.configId}`, {
           headers: { 'Authorization': idToken },
@@ -390,11 +400,9 @@
           configData = await cfgResp.json();
         }
       }
+    } catch (err) { console.warn('Config load error:', err); }
 
-      renderDashboard();
-    } catch (err) {
-      console.error('Dashboard load error:', err);
-    }
+    renderDashboard();
   }
 
   function renderDashboard() {
@@ -411,12 +419,22 @@
     document.getElementById('stat-status').textContent = isPaid ? 'Active' : isTrial ? 'Trial' : isExpired ? 'Expired' : 'Inactive';
     document.getElementById('stat-status').style.color = isPaid ? '#2ecc71' : isTrial ? 'var(--gold)' : '#e74c3c';
 
-    if (isTrial && trialData.daysRemaining !== undefined) {
-      document.getElementById('stat-trial-days').textContent = trialData.daysRemaining;
+    if (isTrial && trialData.daysLeft !== undefined) {
+      document.getElementById('stat-trial-days').textContent = trialData.daysLeft;
       document.getElementById('trial-banner').style.display = 'flex';
-      document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysRemaining} days remaining. Upgrade to keep your chatbot running with unlimited conversations.`;
+      document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysLeft} days remaining. Upgrade to keep your chatbot running with unlimited conversations.`;
     } else {
       document.getElementById('stat-trial-days').textContent = isPaid ? 'N/A' : '0';
+    }
+
+    // ── Conversations Remaining (trial users) ──
+    if (isTrial && trialData.maxConversations) {
+      const used = trialData.conversationCount || 0;
+      const max = trialData.maxConversations;
+      const remaining = Math.max(0, max - used);
+      document.getElementById('stat-conversations-card').style.display = '';
+      document.getElementById('stat-conversations').textContent = `${remaining} / ${max}`;
+      document.getElementById('stat-conversations').style.color = remaining <= 10 ? '#e74c3c' : remaining <= 25 ? 'var(--gold)' : '#2ecc71';
     }
 
     if (subData?.currentPeriodEnd) {
