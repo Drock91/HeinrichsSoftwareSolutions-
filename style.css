@@ -755,6 +755,219 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
 .cap-info-block strong { color: var(--white); }
 
 /* =====================================================
+   CHATBOT PRODUCT LANDING PAGE
+   ===================================================== */
+
+/* ── Problem Cards ── */
+.problem-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 48px;
+}
+.problem-card {
+  text-align: center; padding: 36px 24px;
+  background: var(--white); border-radius: 8px;
+  border: 1px solid #eee; transition: all 0.3s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.problem-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: var(--gold); }
+.problem-icon { font-size: 2.8rem; margin-bottom: 16px; }
+.problem-card h3 { font-size: 1.1rem; color: var(--navy); margin-bottom: 12px; }
+.problem-card p { color: #555; font-size: 0.95rem; line-height: 1.6; }
+
+/* ── Steps / How It Works ── */
+.steps-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+}
+.step-card {
+  text-align: center; padding: 40px 28px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 8px; position: relative;
+}
+.step-number {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--gold); color: var(--dark-navy);
+  font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.step-card h3 { font-size: 1rem; color: var(--gold); margin-bottom: 12px; }
+.step-card p { color: var(--mid-gray); font-size: 0.95rem; line-height: 1.6; }
+
+/* ── Demo Prompts ── */
+.demo-prompts {
+  max-width: 700px; margin: 48px auto 0; text-align: center;
+  background: var(--light-gray); border-radius: 12px; padding: 40px 32px;
+  border: 2px dashed var(--gold);
+}
+.demo-prompts-title {
+  font-family: 'Oswald', sans-serif; font-size: 1.1rem;
+  color: var(--navy); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;
+}
+.demo-prompt-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;
+}
+.demo-prompt {
+  background: var(--white); padding: 12px 16px;
+  border-radius: 20px; font-size: 0.9rem; color: var(--navy);
+  border: 1px solid #ddd; font-style: italic;
+}
+.demo-note {
+  font-size: 0.85rem; color: #888; margin-top: 8px;
+}
+
+/* ── Features Grid ── */
+.features-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.feature-card {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 8px; padding: 28px 20px; text-align: center;
+  transition: all 0.3s;
+}
+.feature-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+.feature-icon { font-size: 2rem; margin-bottom: 12px; }
+.feature-card h4 { font-family: 'Oswald', sans-serif; color: var(--gold); font-size: 0.95rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.feature-card p { color: var(--mid-gray); font-size: 0.9rem; line-height: 1.5; }
+
+/* ── Industry Grid ── */
+.industry-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+}
+.industry-card {
+  text-align: center; padding: 28px 16px;
+  background: var(--white); border-radius: 8px;
+  border: 1px solid #eee; transition: all 0.3s;
+}
+.industry-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.industry-icon { font-size: 2.2rem; margin-bottom: 12px; }
+.industry-card h4 { font-family: 'Oswald', sans-serif; color: var(--navy); font-size: 0.9rem; margin-bottom: 8px; text-transform: uppercase; }
+.industry-card p { color: #666; font-size: 0.85rem; line-height: 1.5; }
+
+/* ── Pricing Grid ── */
+.pricing-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 16px;
+}
+.pricing-card {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 12px; padding: 36px 28px; text-align: center;
+  position: relative; transition: all 0.3s;
+}
+.pricing-card.featured {
+  border: 2px solid var(--gold); transform: scale(1.04);
+  box-shadow: 0 8px 40px rgba(255,215,0,0.15);
+}
+.pricing-badge {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: var(--gold); color: var(--dark-navy);
+  font-family: 'Oswald', sans-serif; font-weight: 700;
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+  padding: 6px 20px; border-radius: 20px; white-space: nowrap;
+}
+.pricing-badge.free-badge { background: #4ADE80; color: #1A1A2E; }
+.pricing-plan {
+  font-family: 'Oswald', sans-serif; color: var(--gold);
+  font-size: 1.3rem; margin: 20px 0 16px; text-transform: uppercase;
+}
+.pricing-price { margin-bottom: 4px; }
+.price-big {
+  font-family: 'Oswald', sans-serif; font-weight: 700;
+  font-size: 2.8rem; color: var(--white);
+}
+.price-sub {
+  display: block; font-size: 0.85rem; color: var(--mid-gray);
+  margin-top: -4px;
+}
+.pricing-monthly {
+  font-family: 'Oswald', sans-serif; font-size: 1.2rem;
+  color: var(--gold); margin-bottom: 20px;
+}
+.pricing-monthly span { font-size: 0.8rem; color: var(--mid-gray); }
+.pricing-features {
+  list-style: none; padding: 0; margin: 20px 0; text-align: left;
+}
+.pricing-features li {
+  padding: 8px 0; color: var(--mid-gray); font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.pricing-features li:last-child { border-bottom: none; }
+.btn-full { width: 100%; text-align: center; margin-top: 16px; }
+.pricing-note {
+  font-size: 0.78rem; color: #888; margin-top: 12px; font-style: italic;
+}
+.pricing-compare {
+  text-align: center; color: var(--mid-gray); font-size: 1rem;
+  margin-top: 48px; max-width: 600px; margin-left: auto; margin-right: auto;
+}
+.pricing-compare strong { color: var(--gold); }
+
+/* ── FAQ ── */
+.faq-grid {
+  max-width: 800px; margin: 48px auto 0;
+}
+.faq-item {
+  padding: 24px 0; border-bottom: 1px solid #eee;
+}
+.faq-item:first-child { border-top: 1px solid #eee; }
+.faq-item h4 {
+  font-family: 'Oswald', sans-serif; font-size: 1rem;
+  color: var(--navy); margin-bottom: 8px; text-transform: uppercase;
+}
+.faq-item p { color: #555; font-size: 0.95rem; line-height: 1.6; }
+
+/* ── CTA Banner ── */
+.cta-section { padding: 80px 0; }
+.cta-banner {
+  background: linear-gradient(135deg, var(--dark-navy) 0%, var(--navy) 100%);
+  border-radius: 12px; padding: 56px 48px;
+  display: flex; align-items: center; gap: 48px;
+  border: 2px solid rgba(255,215,0,0.2);
+}
+.cta-content { flex: 1; }
+.cta-content h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); color: var(--white); margin-bottom: 16px; }
+.cta-content p { color: var(--mid-gray); font-size: 1.05rem; line-height: 1.6; margin-bottom: 24px; }
+.cta-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+.btn-outline-dark { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.4); }
+.btn-outline-dark:hover { background: var(--white); color: var(--dark-navy); border-color: var(--white); }
+.cta-badges { display: flex; flex-direction: column; gap: 16px; }
+.cta-badge-item {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--gold); font-family: 'Oswald', sans-serif;
+  font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;
+}
+.cta-badge-icon { font-size: 1.4rem; }
+
+/* ── Service Detail Cards ── */
+.services-detail-grid { display: grid; gap: 28px; }
+.service-detail-card {
+  display: flex; gap: 28px; padding: 32px;
+  background: var(--white); border-radius: 8px;
+  border: 1px solid #eee; transition: border-color 0.3s;
+}
+.service-detail-card:hover { border-color: var(--gold); }
+.sd-icon { font-size: 2.4rem; flex-shrink: 0; }
+.sd-content h3 { font-size: 1.2rem; color: var(--navy); margin-bottom: 12px; }
+.sd-content p { color: #555; margin-bottom: 12px; line-height: 1.6; }
+.sd-features { padding: 0; }
+.sd-features li {
+  padding: 6px 0 6px 20px; position: relative;
+  color: #444; font-size: 0.92rem;
+}
+.sd-features li::before { content: '▸'; position: absolute; left: 0; color: var(--gold); }
+
+/* ── Chatbot Landing Page Responsive ── */
+@media (max-width: 900px) {
+  .problem-grid, .steps-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+  .industry-grid { grid-template-columns: repeat(2, 1fr); }
+  .cta-banner { flex-direction: column; text-align: center; padding: 40px 24px; }
+  .cta-actions { justify-content: center; }
+  .cta-badges { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .demo-prompt-grid { grid-template-columns: 1fr; }
+  .pricing-card.featured { transform: none; }
+}
+@media (max-width: 600px) {
+  .industry-grid { grid-template-columns: 1fr; }
+}
+
+/* =====================================================
    AI CHATBOT WIDGET
    ===================================================== */
 
