@@ -71,9 +71,25 @@ img { max-width: 100%; height: auto; }
 }
 .nav-link:hover, .nav-link.active { color: var(--gold); background: rgba(255,215,0,0.08); }
 
+/* Nav Sign In Button */
+.nav-signin {
+  background: var(--gold);
+  color: var(--dark-navy) !important;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+.nav-signin:hover {
+  background: #fff;
+  color: var(--dark-navy) !important;
+}
+
 /* Nav Dropdown */
 .nav-dropdown {
   position: relative;
+  display: inline-block;
+  vertical-align: middle;
 }
 .nav-dropdown > .nav-link {
   cursor: pointer;
