@@ -442,9 +442,6 @@
     dbgEl.style.cssText = 'background:#111;color:#0f0;padding:16px;margin:16px;font-family:monospace;font-size:12px;border-radius:8px;white-space:pre-wrap;';
     dbgEl.textContent = 'DEBUG:\n' + dbg.join('\n');
     document.getElementById('tab-overview').appendChild(dbgEl);
-        }
-      }
-    } catch (err) { console.warn('Config load error:', err); }
 
     renderDashboard();
   }
