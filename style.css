@@ -2398,7 +2398,7 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
 .cost-stat-label {
   display: block;
   font-size: 0.85rem;
-  color: var(--mid-gray);
+  color: var(--white);
   margin-top: 8px;
   line-height: 1.3;
 }
