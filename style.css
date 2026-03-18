@@ -228,6 +228,7 @@ img { max-width: 100%; height: auto; }
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,215,0,0.12);
   border-radius: 8px; padding: 32px 24px;
   transition: all 0.3s;
+  display: flex; flex-direction: column;
 }
 .service-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
 .service-icon { font-size: 2.4rem; margin-bottom: 16px; }
@@ -452,7 +453,8 @@ img { max-width: 100%; height: auto; }
   display: inline-block;
   font-size: 1.2rem;
   color: var(--gold);
-  margin-top: 12px;
+  margin-top: auto;
+  padding-top: 16px;
   transition: transform 0.3s ease;
 }
 .service-card:hover .card-arrow { transform: translateX(6px); }
@@ -544,7 +546,7 @@ img { max-width: 100%; height: auto; }
 .sd-features li::before { content: '▸'; position: absolute; left: 0; color: var(--gold); font-weight: bold; }
 
 /* ── LINK SERVICE CARDS ── */
-a.service-card { display: block; text-decoration: none; cursor: pointer; }
+a.service-card { display: flex; flex-direction: column; text-decoration: none; cursor: pointer; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 968px) {

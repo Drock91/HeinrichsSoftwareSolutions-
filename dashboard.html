@@ -50,6 +50,7 @@
       <div class="dash-tabs">
         <button class="dash-tab active" data-tab="overview">Overview</button>
         <button class="dash-tab" data-tab="products">Products</button>
+        <button class="dash-tab" data-tab="analytics" id="analytics-tab" style="display:none;">Analytics</button>
         <button class="dash-tab" data-tab="billing">Billing</button>
         <button class="dash-tab" data-tab="settings">Settings</button>
       </div>
@@ -67,12 +68,12 @@
             <div class="dash-stat-label">Status</div>
             <div class="dash-stat-value" id="stat-status">—</div>
           </div>
-          <div class="dash-stat-card">
-            <div class="dash-stat-label">Trial Days Left</div>
+          <div class="dash-stat-card" id="stat-trial-card">
+            <div class="dash-stat-label" id="stat-trial-label">Trial Days Left</div>
             <div class="dash-stat-value" id="stat-trial-days">—</div>
           </div>
           <div class="dash-stat-card" id="stat-conversations-card" style="display:none;">
-            <div class="dash-stat-label">Conversations Left</div>
+            <div class="dash-stat-label" id="stat-conversations-label">Conversations Left</div>
             <div class="dash-stat-value" id="stat-conversations">—</div>
           </div>
           <div class="dash-stat-card">
@@ -176,6 +177,54 @@
             <h3>No Active Products</h3>
             <p style="margin:12px 0 24px;opacity:0.7;">You don't have any active products yet. Start a free trial or contact us for a custom project.</p>
             <a href="services.html" class="btn btn-gold btn-animated">View Our Services</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── ANALYTICS TAB (Pro Only) ─── -->
+      <div class="dash-panel" id="tab-analytics">
+        <div class="dash-section">
+          <h3>📊 Analytics Dashboard</h3>
+          <p style="opacity:0.7;margin-bottom:24px;">Conversation insights for the last 30 days</p>
+          
+          <!-- Analytics Summary Cards -->
+          <div class="dash-stats" style="margin-bottom:32px;">
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Total Conversations</div>
+              <div class="dash-stat-value" id="analytics-total-conversations">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Avg. Message Length</div>
+              <div class="dash-stat-value" id="analytics-avg-length">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Peak Hours</div>
+              <div class="dash-stat-value" id="analytics-peak-hours" style="font-size:1.1rem;">—</div>
+            </div>
+          </div>
+
+          <!-- Conversations by Day Chart -->
+          <div class="dash-section" style="background:#0a1628;padding:24px;border-radius:12px;margin-bottom:24px;">
+            <h4 style="margin-bottom:16px;color:#fff;">Conversations Over Time</h4>
+            <div id="analytics-chart" style="height:200px;display:flex;align-items:flex-end;gap:4px;"></div>
+            <div id="analytics-chart-labels" style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.75rem;opacity:0.6;"></div>
+          </div>
+
+          <!-- Hourly Distribution -->
+          <div class="dash-section" style="background:#0a1628;padding:24px;border-radius:12px;margin-bottom:24px;">
+            <h4 style="margin-bottom:16px;color:#fff;">Hourly Distribution</h4>
+            <div id="analytics-hourly-chart" style="height:100px;display:flex;align-items:flex-end;gap:2px;"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.7rem;opacity:0.5;">
+              <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
+            </div>
+          </div>
+
+          <!-- Recent Conversations -->
+          <div class="dash-section" style="background:#0a1628;padding:24px;border-radius:12px;">
+            <h4 style="margin-bottom:16px;color:#fff;">Recent Conversations</h4>
+            <div id="analytics-recent" style="max-height:300px;overflow-y:auto;">
+              <p style="opacity:0.5;text-align:center;">Loading...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -460,24 +509,42 @@
     const isPaid = (status === 'active' || status === 'canceling') && plan !== 'trial';
     const isTrial = plan === 'trial' && trialData;
     const isExpired = plan === 'expired' || trialData?.status === 'expired';
+    
+    // Check for complimentary plan (comped)
+    const isComped = clientData?.compedPlan && clientData?.compedUntil && new Date(clientData.compedUntil) > new Date();
+    const compedPlan = clientData?.compedPlan; // 'standard' or 'pro'
+    const compedUntil = clientData?.compedUntil ? new Date(clientData.compedUntil) : null;
 
     // ── Overview Stats ──
-    document.getElementById('stat-plan').textContent = isPaid ? (plan === 'pro' ? 'Pro' : 'Standard') : isTrial ? 'Free Trial' : 'No Plan';
-    document.getElementById('stat-plan').style.color = isPaid ? '#2ecc71' : isTrial ? 'var(--gold)' : '#e74c3c';
+    const effectivePlan = isComped ? compedPlan : plan;
+    const planLabel = (isPaid || isComped) ? (effectivePlan === 'pro' ? 'Pro' : 'Standard') : isTrial ? 'Free Trial' : 'No Plan';
+    document.getElementById('stat-plan').textContent = planLabel + (isComped ? ' (Comp)' : '');
+    document.getElementById('stat-plan').style.color = (isPaid || isComped) ? '#2ecc71' : isTrial ? 'var(--gold)' : '#e74c3c';
 
-    document.getElementById('stat-status').textContent = isPaid ? 'Active' : isTrial ? 'Trial' : isExpired ? 'Expired' : 'Inactive';
-    document.getElementById('stat-status').style.color = isPaid ? '#2ecc71' : isTrial ? 'var(--gold)' : '#e74c3c';
+    document.getElementById('stat-status').textContent = (isPaid || isComped) ? 'Active' : isTrial ? 'Trial' : isExpired ? 'Expired' : 'Inactive';
+    document.getElementById('stat-status').style.color = (isPaid || isComped) ? '#2ecc71' : isTrial ? 'var(--gold)' : '#e74c3c';
 
-    if (isTrial && trialData.daysLeft !== undefined) {
+    // Trial days — hide for paid/comped users
+    if (isPaid || isComped) {
+      // Hide trial days card for paid users
+      document.getElementById('stat-trial-card').style.display = 'none';
+    } else if (isTrial && trialData.daysLeft !== undefined) {
+      document.getElementById('stat-trial-card').style.display = '';
       document.getElementById('stat-trial-days').textContent = trialData.daysLeft;
       document.getElementById('trial-banner').style.display = 'flex';
       document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysLeft} days remaining. Upgrade to keep your products running with unlimited access.`;
     } else {
-      document.getElementById('stat-trial-days').textContent = isPaid ? 'N/A' : '0';
+      document.getElementById('stat-trial-days').textContent = '0';
     }
 
-    // ── Conversations Remaining (trial users) ──
-    if (isTrial && trialData.maxConversations) {
+    // ── Conversations Remaining (trial users only) ──
+    if (isPaid || isComped) {
+      // Paid/comped users have unlimited
+      document.getElementById('stat-conversations-card').style.display = '';
+      document.getElementById('stat-conversations-label').textContent = 'Conversations';
+      document.getElementById('stat-conversations').textContent = 'Unlimited';
+      document.getElementById('stat-conversations').style.color = '#2ecc71';
+    } else if (isTrial && trialData.maxConversations) {
       const used = trialData.conversationCount || 0;
       const max = trialData.maxConversations;
       const remaining = Math.max(0, max - used);
@@ -493,13 +560,23 @@
     }
 
     // Show upgrade button for trial/expired users
-    if (!isPaid) {
+    if (!isPaid && !isComped) {
       document.getElementById('action-upgrade').style.display = 'inline-flex';
       document.getElementById('action-upgrade').onclick = () => switchTab('billing');
     }
 
     // ── Billing Tab ──
-    if (isPaid) {
+    if (isComped) {
+      // Complimentary plan
+      const planName = compedPlan === 'pro' ? 'Pro' : 'Standard';
+      document.getElementById('billing-plan-name').textContent = planName;
+      document.getElementById('billing-plan-price').textContent = 'Complimentary';
+      document.getElementById('billing-plan-desc').textContent = `Free access until ${compedUntil.toLocaleDateString()}`;
+      document.getElementById('billing-plan-badge').textContent = 'Comp';
+      document.getElementById('billing-plan-badge').style.background = '#9b59b6';
+      document.getElementById('upgrade-section').style.display = 'none';
+      document.getElementById('subscription-section').style.display = 'none';
+    } else if (isPaid) {
       const planName = plan === 'pro' ? 'Pro' : 'Standard';
       const price = plan === 'pro' ? '$99/month' : '$49/month';
       document.getElementById('billing-plan-name').textContent = planName;
@@ -550,6 +627,13 @@
       document.getElementById('cfg-business-info').value = configData.systemPrompt || '';
     }
 
+    // ── Analytics Tab (Pro only) ──
+    const isPro = (effectivePlan === 'pro' && (isPaid || isComped));
+    if (isPro) {
+      document.getElementById('analytics-tab').style.display = '';
+      loadAnalytics();
+    }
+
     // ── Settings Tab ──
     if (clientData) {
       document.getElementById('set-business-name').value = clientData.businessName || '';
@@ -570,6 +654,92 @@
   document.querySelectorAll('.dash-tab').forEach(tab => {
     tab.addEventListener('click', () => switchTab(tab.dataset.tab));
   });
+
+  // ──── ANALYTICS ────
+  async function loadAnalytics() {
+    try {
+      const resp = await fetch(`${API_BASE}/client/analytics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({ days: 30 }),
+      });
+      
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.warn('Analytics load failed:', resp.status, errText);
+        document.getElementById('analytics-recent').innerHTML = `<p style="color:#e74c3c;text-align:center;">Failed to load analytics: ${resp.status}</p>`;
+        return;
+      }
+      
+      const data = await resp.json();
+      console.log('Analytics data:', data);
+      renderAnalytics(data);
+    } catch (err) {
+      console.warn('Analytics error:', err);
+      document.getElementById('analytics-recent').innerHTML = `<p style="color:#e74c3c;text-align:center;">Error: ${err.message}</p>`;
+    }
+  }
+
+  function renderAnalytics(data) {
+    // Summary cards
+    document.getElementById('analytics-total-conversations').textContent = data.totalConversations || 0;
+    document.getElementById('analytics-avg-length').textContent = `${data.avgUserMsgLength || 0} chars`;
+    document.getElementById('analytics-peak-hours').textContent = data.peakHours?.join(', ') || 'N/A';
+    
+    // Conversations by day chart
+    const chartEl = document.getElementById('analytics-chart');
+    const labelsEl = document.getElementById('analytics-chart-labels');
+    const byDay = data.conversationsByDay || {};
+    const days = Object.keys(byDay).sort();
+    
+    if (days.length === 0) {
+      chartEl.innerHTML = '<p style="opacity:0.5;text-align:center;width:100%;color:#fff;">No data yet. Start some conversations!</p>';
+    } else {
+      const maxCount = Math.max(...Object.values(byDay), 1);
+      chartEl.innerHTML = days.map(day => {
+        const count = byDay[day];
+        const height = Math.max((count / maxCount) * 180, 8);
+        return `<div style="flex:0 0 auto;width:${Math.max(100/Math.max(days.length,7), 8)}%;max-width:60px;background:var(--gold);border-radius:4px 4px 0 0;height:${height}px;" title="${day}: ${count} conversations"></div>`;
+      }).join('');
+      
+      // Show first, middle, last date labels
+      const first = days[0]?.slice(5) || '';
+      const last = days[days.length - 1]?.slice(5) || '';
+      labelsEl.innerHTML = `<span>${first}</span><span>${last}</span>`;
+    }
+    
+    // Hourly distribution chart
+    const hourlyEl = document.getElementById('analytics-hourly-chart');
+    const byHour = data.conversationsByHour || Array(24).fill(0);
+    const maxHour = Math.max(...byHour, 1);
+    hourlyEl.innerHTML = byHour.map((count, i) => {
+      const height = Math.max((count / maxHour) * 80, 3);
+      const color = count > 0 ? 'var(--gold)' : 'rgba(255,255,255,0.15)';
+      return `<div style="flex:1;min-width:8px;margin:0 1px;background:${color};border-radius:2px 2px 0 0;height:${height}px;" title="${i}:00 - ${count} conversations"></div>`;
+    }).join('');
+    
+    // Recent conversations
+    const recentEl = document.getElementById('analytics-recent');
+    const recent = data.recentConversations || [];
+    
+    if (recent.length === 0) {
+      recentEl.innerHTML = '<p style="opacity:0.5;text-align:center;color:#fff;">No conversations yet</p>';
+    } else {
+      recentEl.innerHTML = recent.map(conv => {
+        const date = new Date(conv.timestamp).toLocaleString();
+        const preview = conv.preview || '(empty)';
+        return `
+          <div style="padding:12px;border-bottom:1px solid rgba(255,255,255,0.2);">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="color:rgba(255,255,255,0.7);font-size:0.8rem;">${date}</span>
+              <span style="font-size:0.7rem;background:var(--gold);color:#001F3F;padding:2px 8px;border-radius:10px;font-weight:600;">${conv.provider}</span>
+            </div>
+            <p style="margin:0;font-size:0.9rem;color:#fff;">"${preview.slice(0, 100)}${preview.length > 100 ? '...' : ''}"</p>
+          </div>
+        `;
+      }).join('');
+    }
+  }
 
   // ──── STRIPE CHECKOUT ────
   async function startCheckout(plan) {

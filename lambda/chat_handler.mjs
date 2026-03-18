@@ -5,14 +5,15 @@
  * Priority: Google Gemini (free) → Groq (free) → Mistral → OpenAI → Anthropic
  */
 
-import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, GetItemCommand, UpdateItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
 const REGION = process.env.AWS_REGION || "us-east-2";
 const ddb = new DynamoDBClient({ region: REGION });
 
-const TABLE_CONFIGS = process.env.TABLE_CONFIGS || "HSS-CHATBOT-CONFIGS";
-const TABLE_CLIENTS = process.env.TABLE_CLIENTS || "HSS-CLIENTS";
-const TABLE_TRIALS  = process.env.TABLE_TRIALS  || "HSS-TRIALS";
+const TABLE_CONFIGS   = process.env.TABLE_CONFIGS   || "HSS-CHATBOT-CONFIGS";
+const TABLE_CLIENTS   = process.env.TABLE_CLIENTS   || "HSS-CLIENTS";
+const TABLE_TRIALS    = process.env.TABLE_TRIALS    || "HSS-TRIALS";
+const TABLE_ANALYTICS = process.env.TABLE_ANALYTICS || "HSS-ANALYTICS";
 
 // ── API Keys (from Lambda env vars) ──
 const GOOGLE_API_KEY    = process.env.GOOGLE_API_KEY || "";
@@ -199,6 +200,18 @@ async function resolveClientConfig(configId, sessionId) {
   // 3. Paid plans — no limits, just use their prompt
   if (client.plan !== "trial") return { systemPrompt };
 
+  // 3.5. Comped/Free plans — check if still valid
+  if (client.compedPlan && client.compedUntil) {
+    const compedExpires = new Date(client.compedUntil);
+    if (new Date() < compedExpires) {
+      // Still within free period, treat as paid
+      console.log(`Comped ${client.compedPlan} plan active until ${client.compedUntil} for client ${client.clientId}`);
+      return { systemPrompt };
+    } else {
+      console.log(`Comped plan expired for client ${client.clientId}`);
+    }
+  }
+
   // 4. Trial plan — enforce limits
   if (!client.trialId) return { systemPrompt };
 
@@ -339,6 +352,7 @@ export const handler = async (event) => {
 
   // ── Try each provider in priority order (failover chain) ──
   const errors = [];
+  const userMessage = cleanMessages.find(m => m.role === 'user')?.content || '';
 
   for (const provider of PROVIDERS) {
     const apiKey = getKey(provider.keyEnv);
@@ -347,6 +361,12 @@ export const handler = async (event) => {
     try {
       console.log(`Trying provider: ${provider.name} (${provider.model})`);
       const reply = await callProvider(provider.name, provider.model, apiKey, cleanMessages, systemPrompt);
+      
+      // Log analytics event (fire and forget)
+      if (configId) {
+        logAnalyticsEvent(configId, userMessage, reply, provider.name).catch(e => console.warn('Analytics log failed:', e.message));
+      }
+      
       return respond(200, { reply });
     } catch (err) {
       const errMsg = `${provider.name}: ${err.message}`;
@@ -512,4 +532,41 @@ async function doRequest(url, options) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+// ══════════════════════════════════════════════════════
+//  ANALYTICS LOGGING
+// ══════════════════════════════════════════════════════
+async function logAnalyticsEvent(configId, userMessage, aiReply, provider) {
+  // Look up clientId from configId
+  const configRes = await ddb.send(new GetItemCommand({
+    TableName: TABLE_CONFIGS,
+    Key: { configId: { S: configId } },
+  }));
+  
+  const clientId = configRes.Item?.clientId?.S;
+  if (!clientId) return;
+  
+  const timestamp = new Date().toISOString();
+  const hour = new Date().getHours();
+  const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
+  
+  await ddb.send(new PutItemCommand({
+    TableName: TABLE_ANALYTICS,
+    Item: {
+      clientId: { S: clientId },
+      timestamp: { S: timestamp },
+      eventType: { S: "conversation" },
+      configId: { S: configId },
+      provider: { S: provider },
+      userMessageLength: { N: String(userMessage.length) },
+      aiReplyLength: { N: String(aiReply.length) },
+      hour: { N: String(hour) },
+      dayOfWeek: { N: String(dayOfWeek) },
+      // Store first 200 chars for topic analysis (optional)
+      userMessagePreview: { S: userMessage.slice(0, 200) },
+    },
+  }));
+  
+  console.log(`Analytics logged for client ${clientId}`);
 }
