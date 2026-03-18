@@ -284,7 +284,7 @@ The chatbot is already trained on your business type (${industry || "general"}).
 Questions? Reply to this email or call (619) 770-7306.
 
 HSS Team
-Heinrichs Software Solutions LLC
+Heinrichs Software Solutions Company
 ${SITE_URL}`,
           },
         },
@@ -669,7 +669,7 @@ async function checkExpirations() {
             Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions LLC`,
+                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions Company`,
               },
             },
           },

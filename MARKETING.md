@@ -24,7 +24,7 @@ We're offering a **free 14-day trial** — no credit card, no commitment. If you
 Worth a quick chat?
 
 Derek Heinrichs
-Heinrichs Software Solutions LLC
+Heinrichs Software Solutions Company
 (619) 770-7306
 heinrichstech.com
 
@@ -78,7 +78,7 @@ Setup: $499 one-time | Monthly: $49
 Cancel anytime. No long-term contracts.
 
 Derek Heinrichs
-Heinrichs Software Solutions LLC
+Heinrichs Software Solutions Company
 (619) 770-7306
 
 ---
@@ -126,7 +126,7 @@ We build these for law firms. Custom-trained on your practice. Branded to your s
 $499 setup + $49/month. No contracts.
 
 Derek Heinrichs
-Heinrichs Software Solutions LLC
+Heinrichs Software Solutions Company
 (619) 770-7306
 
 ---
@@ -248,10 +248,10 @@ heinrichstech.com
 ## GOOGLE BUSINESS PROFILE / DIRECTORY LISTINGS
 
 ### Business Description (short):
-Heinrichs Software Solutions LLC builds custom AI chatbots for businesses. Our AI assistants answer customer questions 24/7, capture leads, and cost a fraction of hiring support staff. Veteran-owned. Free 14-day trial.
+Heinrichs Software Solutions Company builds custom AI chatbots for businesses. Our AI assistants answer customer questions 24/7, capture leads, and cost a fraction of hiring support staff. Veteran-owned. Free 14-day trial.
 
 ### Business Description (long):
-Heinrichs Software Solutions LLC is a veteran-owned software company specializing in AI chatbots, custom software development, cloud architecture, and cybersecurity. Our flagship product is a custom AI chatbot that lives on your business website and answers customer questions 24/7 — trained on your services, pricing, hours, and FAQs. Starting at $499 setup + $49/month. We offer a free 14-day trial with no credit card required. Based in Florida, serving clients nationwide. Visit heinrichstech.com to try our live demo.
+Heinrichs Software Solutions Company is a veteran-owned software company specializing in AI chatbots, custom software development, cloud architecture, and cybersecurity. Our flagship product is a custom AI chatbot that lives on your business website and answers customer questions 24/7 — trained on your services, pricing, hours, and FAQs. Starting at $499 setup + $49/month. We offer a free 14-day trial with no credit card required. Based in Florida, serving clients nationwide. Visit heinrichstech.com to try our live demo.
 
 ---
 

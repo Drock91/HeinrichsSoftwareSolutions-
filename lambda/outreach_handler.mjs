@@ -68,7 +68,7 @@ Try it free: ${SITE_URL}/signup.html
 
 Best,
 HSS Team
-Heinrichs Software Solutions LLC
+Heinrichs Software Solutions Company
 (619) 770-7306
 ${SITE_URL}`,
   }),
@@ -107,7 +107,7 @@ ${SITE_URL}/signup.html
 
 Best,
 HSS Team
-Heinrichs Software Solutions LLC
+Heinrichs Software Solutions Company
 (619) 770-7306`,
     };
   },

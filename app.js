@@ -1,5 +1,5 @@
 /* =====================================================
-   HEINRICHS SOFTWARE SOLUTIONS LLC — App Logic
+   HEINRICHS SOFTWARE SOLUTIONS COMPANY — App Logic
    Multi-page nav | Scroll reveal animations
    Sticky header | Hamburger menu | Apply modal
    ===================================================== */
