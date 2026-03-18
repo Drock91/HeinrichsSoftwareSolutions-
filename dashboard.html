@@ -51,6 +51,7 @@
         <button class="dash-tab active" data-tab="overview">Overview</button>
         <button class="dash-tab" data-tab="products">Products</button>
         <button class="dash-tab" data-tab="analytics" id="analytics-tab" style="display:none;">Analytics</button>
+        <button class="dash-tab" data-tab="leads" id="leads-tab" style="display:none;">Leads</button>
         <button class="dash-tab" data-tab="billing">Billing</button>
         <button class="dash-tab" data-tab="settings">Settings</button>
       </div>
@@ -223,6 +224,42 @@
           <div class="dash-section" style="background:#0a1628;padding:24px;border-radius:12px;">
             <h4 style="margin-bottom:16px;color:#fff;">Recent Conversations</h4>
             <div id="analytics-recent" style="max-height:300px;overflow-y:auto;color:#fff;">
+              <p style="opacity:0.5;text-align:center;">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── LEADS TAB (Pro Only) ─── -->
+      <div class="dash-panel" id="tab-leads">
+        <div class="dash-section">
+          <h3 style="color:#fff;">🔥 Lead Capture</h3>
+          <p style="color:rgba(255,255,255,0.7);margin-bottom:24px;">Contact information captured from chatbot conversations</p>
+          
+          <!-- Leads Summary Cards -->
+          <div class="dash-stats" style="margin-bottom:32px;">
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">Total Leads</div>
+              <div class="dash-stat-value" id="leads-total">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">New Leads</div>
+              <div class="dash-stat-value" id="leads-new" style="color:var(--gold);">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">With Email</div>
+              <div class="dash-stat-value" id="leads-with-email">—</div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-label">With Phone</div>
+              <div class="dash-stat-value" id="leads-with-phone">—</div>
+            </div>
+          </div>
+
+          <!-- Leads List -->
+          <div class="dash-section" style="background:#0a1628;padding:24px;border-radius:12px;">
+            <h4 style="margin-bottom:16px;color:#fff;">Recent Leads</h4>
+            <div id="leads-list" style="max-height:500px;overflow-y:auto;color:#fff;">
               <p style="opacity:0.5;text-align:center;">Loading...</p>
             </div>
           </div>
@@ -631,7 +668,9 @@
     const isPro = (effectivePlan === 'pro' && (isPaid || isComped));
     if (isPro) {
       document.getElementById('analytics-tab').style.display = '';
+      document.getElementById('leads-tab').style.display = '';
       loadAnalytics();
+      loadLeads();
     }
 
     // ── Settings Tab ──
@@ -735,6 +774,73 @@
               <span style="font-size:0.7rem;background:var(--gold);color:#001F3F;padding:2px 8px;border-radius:10px;font-weight:600;">${conv.provider}</span>
             </div>
             <p style="margin:0;font-size:0.9rem;color:#fff;">"${preview.slice(0, 100)}${preview.length > 100 ? '...' : ''}"</p>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // ──── LEADS ────
+  async function loadLeads() {
+    try {
+      const resp = await fetch(`${API_BASE}/client/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({ days: 30 }),
+      });
+      
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.warn('Leads load failed:', resp.status, errText);
+        document.getElementById('leads-list').innerHTML = `<p style="color:#e74c3c;text-align:center;">Failed to load leads: ${resp.status}</p>`;
+        return;
+      }
+      
+      const data = await resp.json();
+      console.log('Leads data:', data);
+      renderLeads(data);
+    } catch (err) {
+      console.warn('Leads error:', err);
+      document.getElementById('leads-list').innerHTML = `<p style="color:#e74c3c;text-align:center;">Error: ${err.message}</p>`;
+    }
+  }
+
+  function renderLeads(data) {
+    // Summary cards
+    document.getElementById('leads-total').textContent = data.totalLeads || 0;
+    document.getElementById('leads-new').textContent = data.newLeads || 0;
+    document.getElementById('leads-with-email').textContent = data.withEmail || 0;
+    document.getElementById('leads-with-phone').textContent = data.withPhone || 0;
+    
+    // Leads list
+    const listEl = document.getElementById('leads-list');
+    const leads = data.leads || [];
+    
+    if (leads.length === 0) {
+      listEl.innerHTML = '<p style="opacity:0.5;text-align:center;color:#fff;">No leads captured yet. When visitors share their contact info with your chatbot, they\'ll appear here!</p>';
+    } else {
+      listEl.innerHTML = leads.map(lead => {
+        const date = new Date(lead.timestamp).toLocaleString();
+        const statusColor = lead.status === 'new' ? 'var(--gold)' : 'rgba(255,255,255,0.5)';
+        const statusText = lead.status === 'new' ? '🔥 NEW' : lead.status.toUpperCase();
+        
+        return `
+          <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.2);background:${lead.status === 'new' ? 'rgba(212,175,55,0.1)' : 'transparent'};">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:0.8rem;color:rgba(255,255,255,0.7);">${date}</span>
+              <span style="font-size:0.75rem;background:${statusColor};color:#001F3F;padding:2px 10px;border-radius:10px;font-weight:600;">${statusText}</span>
+            </div>
+            <div style="display:grid;gap:8px;">
+              ${lead.name ? `<div style="display:flex;align-items:center;gap:8px;"><span style="opacity:0.7;">👤</span> <strong style="color:#fff;">${lead.name}</strong></div>` : ''}
+              ${lead.email ? `<div style="display:flex;align-items:center;gap:8px;"><span style="opacity:0.7;">📧</span> <a href="mailto:${lead.email}" style="color:var(--gold);">${lead.email}</a></div>` : ''}
+              ${lead.phone ? `<div style="display:flex;align-items:center;gap:8px;"><span style="opacity:0.7;">📞</span> <a href="tel:${lead.phone}" style="color:var(--gold);">${lead.phone}</a></div>` : ''}
+            </div>
+            ${lead.conversationPreview ? `
+              <div style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.3);border-radius:6px;font-size:0.85rem;">
+                <span style="opacity:0.5;">Conversation:</span>
+                <p style="margin:4px 0 0;color:rgba(255,255,255,0.9);">"${lead.conversationPreview.slice(0, 150)}${lead.conversationPreview.length > 150 ? '...' : ''}"</p>
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');

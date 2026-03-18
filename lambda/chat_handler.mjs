@@ -6,14 +6,17 @@
  */
 
 import { DynamoDBClient, GetItemCommand, UpdateItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
 const REGION = process.env.AWS_REGION || "us-east-2";
 const ddb = new DynamoDBClient({ region: REGION });
+const ses = new SESClient({ region: REGION });
 
 const TABLE_CONFIGS   = process.env.TABLE_CONFIGS   || "HSS-CHATBOT-CONFIGS";
 const TABLE_CLIENTS   = process.env.TABLE_CLIENTS   || "HSS-CLIENTS";
 const TABLE_TRIALS    = process.env.TABLE_TRIALS    || "HSS-TRIALS";
 const TABLE_ANALYTICS = process.env.TABLE_ANALYTICS || "HSS-ANALYTICS";
+const TABLE_LEADS     = process.env.TABLE_LEADS     || "HSS-LEADS";
 
 // ── API Keys (from Lambda env vars) ──
 const GOOGLE_API_KEY    = process.env.GOOGLE_API_KEY || "";
@@ -365,6 +368,10 @@ export const handler = async (event) => {
       // Log analytics event (fire and forget)
       if (configId) {
         logAnalyticsEvent(configId, userMessage, reply, provider.name).catch(e => console.warn('Analytics log failed:', e.message));
+        
+        // Check for lead capture (fire and forget)
+        const conversationContext = cleanMessages.map(m => `${m.role}: ${m.content}`).join('\n');
+        checkAndSaveLead(configId, cleanMessages, conversationContext).catch(e => console.warn('Lead capture failed:', e.message));
       }
       
       return respond(200, { reply });
@@ -569,4 +576,175 @@ async function logAnalyticsEvent(configId, userMessage, aiReply, provider) {
   }));
   
   console.log(`Analytics logged for client ${clientId}`);
+}
+
+// ══════════════════════════════════════════════════════
+//  LEAD CAPTURE & EMAIL NOTIFICATIONS
+// ══════════════════════════════════════════════════════
+
+// Regex patterns for contact info extraction
+const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+const PHONE_REGEX = /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}\b/g;
+const NAME_PATTERNS = [
+  /(?:my name is|i'm|i am|this is|call me)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
+  /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+here/i,
+];
+
+function extractContactInfo(messages) {
+  const allText = messages
+    .filter(m => m.role === 'user')
+    .map(m => m.content)
+    .join(' ');
+  
+  const emails = allText.match(EMAIL_REGEX) || [];
+  const phones = allText.match(PHONE_REGEX) || [];
+  
+  let name = null;
+  for (const pattern of NAME_PATTERNS) {
+    const match = allText.match(pattern);
+    if (match && match[1]) {
+      name = match[1].trim();
+      break;
+    }
+  }
+  
+  // Return null if no contact info found
+  if (!emails.length && !phones.length) {
+    return null;
+  }
+  
+  return {
+    email: emails[0] || null,
+    phone: phones[0] || null,
+    name: name,
+  };
+}
+
+async function checkAndSaveLead(configId, messages, conversationContext) {
+  const contactInfo = extractContactInfo(messages);
+  if (!contactInfo) return;
+  
+  // Look up client info
+  const configRes = await ddb.send(new GetItemCommand({
+    TableName: TABLE_CONFIGS,
+    Key: { configId: { S: configId } },
+  }));
+  
+  const config = configRes.Item ? {
+    clientId: configRes.Item.clientId?.S,
+    businessName: configRes.Item.businessName?.S || 'Your Business',
+  } : null;
+  
+  if (!config?.clientId) return;
+  
+  // Get client record for notification email and plan check
+  const clientRes = await ddb.send(new GetItemCommand({
+    TableName: TABLE_CLIENTS,
+    Key: { clientId: { S: config.clientId } },
+  }));
+  
+  const client = clientRes.Item ? {
+    plan: clientRes.Item.plan?.S,
+    notificationEmail: clientRes.Item.notificationEmail?.S || clientRes.Item.email?.S,
+    compedPlan: clientRes.Item.compedPlan?.S,
+  } : null;
+  
+  // Only Pro plan (or comped pro) gets lead capture
+  const effectivePlan = client?.compedPlan || client?.plan;
+  if (effectivePlan !== 'pro') {
+    console.log(`Lead capture skipped - client ${config.clientId} is not on Pro plan (plan: ${effectivePlan})`);
+    return;
+  }
+  
+  const timestamp = new Date().toISOString();
+  const leadId = `lead-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  
+  // Save lead to DynamoDB
+  await ddb.send(new PutItemCommand({
+    TableName: TABLE_LEADS,
+    Item: {
+      clientId: { S: config.clientId },
+      timestamp: { S: timestamp },
+      leadId: { S: leadId },
+      configId: { S: configId },
+      email: contactInfo.email ? { S: contactInfo.email } : { NULL: true },
+      phone: contactInfo.phone ? { S: contactInfo.phone } : { NULL: true },
+      name: contactInfo.name ? { S: contactInfo.name } : { NULL: true },
+      conversationPreview: { S: conversationContext.slice(0, 500) },
+      status: { S: 'new' },
+    },
+  }));
+  
+  console.log(`Lead saved: ${leadId} for client ${config.clientId}`);
+  
+  // Send email notification
+  if (client?.notificationEmail) {
+    await sendLeadNotification(
+      client.notificationEmail,
+      config.businessName,
+      contactInfo,
+      conversationContext
+    );
+  }
+}
+
+async function sendLeadNotification(toEmail, businessName, contactInfo, conversationContext) {
+  const subject = `🔥 New Lead from ${businessName} AI Chatbot`;
+  
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">New Lead Captured!</h2>
+      <p>Your AI chatbot just captured a potential customer's contact information:</p>
+      
+      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        ${contactInfo.name ? `<p><strong>Name:</strong> ${contactInfo.name}</p>` : ''}
+        ${contactInfo.email ? `<p><strong>Email:</strong> <a href="mailto:${contactInfo.email}">${contactInfo.email}</a></p>` : ''}
+        ${contactInfo.phone ? `<p><strong>Phone:</strong> <a href="tel:${contactInfo.phone}">${contactInfo.phone}</a></p>` : ''}
+      </div>
+      
+      <h3 style="color: #666;">Conversation Summary:</h3>
+      <div style="background: #fafafa; padding: 15px; border-left: 3px solid #d4af37; margin: 15px 0;">
+        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${conversationContext.slice(0, 1000)}</pre>
+      </div>
+      
+      <p style="color: #888; font-size: 12px; margin-top: 30px;">
+        This lead was captured by your AI chatbot powered by Heinrichs Software Solutions.<br>
+        <a href="https://heinrichstech.com/dashboard.html">View all leads in your dashboard</a>
+      </p>
+    </div>
+  `;
+  
+  const textBody = `
+New Lead Captured!
+
+Your AI chatbot just captured a potential customer's contact information:
+
+${contactInfo.name ? `Name: ${contactInfo.name}\n` : ''}${contactInfo.email ? `Email: ${contactInfo.email}\n` : ''}${contactInfo.phone ? `Phone: ${contactInfo.phone}\n` : ''}
+
+Conversation Summary:
+${conversationContext.slice(0, 1000)}
+
+---
+This lead was captured by your AI chatbot powered by Heinrichs Software Solutions.
+View all leads at: https://heinrichstech.com/dashboard.html
+  `;
+  
+  try {
+    await ses.send(new SendEmailCommand({
+      Source: 'HSS AI Chatbot <noreply@heinrichstech.com>',
+      Destination: {
+        ToAddresses: [toEmail],
+      },
+      Message: {
+        Subject: { Data: subject },
+        Body: {
+          Html: { Data: htmlBody },
+          Text: { Data: textBody },
+        },
+      },
+    }));
+    console.log(`Lead notification sent to ${toEmail}`);
+  } catch (err) {
+    console.error(`Failed to send lead notification: ${err.message}`);
+  }
 }

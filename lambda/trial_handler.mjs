@@ -38,6 +38,7 @@ const CLIENTS_TABLE = process.env.CLIENTS_TABLE || "HSS-CLIENTS";
 const TRIALS_TABLE = process.env.TRIALS_TABLE || "HSS-TRIALS";
 const CONFIGS_TABLE = process.env.CONFIGS_TABLE || "HSS-CHATBOT-CONFIGS";
 const ANALYTICS_TABLE = process.env.ANALYTICS_TABLE || "HSS-ANALYTICS";
+const LEADS_TABLE = process.env.LEADS_TABLE || "HSS-LEADS";
 const SITE_URL = "https://heinrichstech.com";
 const API_URL = process.env.API_URL || "https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod";
 
@@ -115,6 +116,9 @@ export const handler = async (event) => {
     }
     if (path.endsWith("/client/analytics")) {
       return await getClientAnalytics(userId || body.userId, body);
+    }
+    if (path.endsWith("/client/leads")) {
+      return await getClientLeads(userId || body.userId, body);
     }
 
     // ─── ADMIN ROUTES ───
@@ -540,6 +544,66 @@ async function getClientAnalytics(userId, params = {}) {
     providerUsage: providers,
     peakHours,
     recentConversations,
+  });
+}
+
+// ───────────────────────────────────────
+// CLIENT: GET LEADS (Pro feature)
+// ───────────────────────────────────────
+async function getClientLeads(userId, params = {}) {
+  if (!userId) return respond(400, { error: "userId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  // Check if client has Pro plan (paid or comped)
+  const isProPaid = client.plan === 'pro' || client.subscriptionStatus === 'active';
+  const isCompedPro = client.compedPlan === 'pro' && client.compedUntil && new Date(client.compedUntil) > new Date();
+  
+  if (!isProPaid && !isCompedPro) {
+    return respond(403, { error: "Lead capture requires Pro plan" });
+  }
+  
+  // Query leads for this client
+  const days = parseInt(params.days) || 30;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  
+  const result = await ddb.send(new QueryCommand({
+    TableName: LEADS_TABLE,
+    KeyConditionExpression: "clientId = :cid AND #ts >= :start",
+    ExpressionAttributeNames: { "#ts": "timestamp" },
+    ExpressionAttributeValues: {
+      ":cid": client.clientId,
+      ":start": startDate.toISOString(),
+    },
+    ScanIndexForward: false, // newest first
+    Limit: 100,
+  }));
+  
+  const leads = (result.Items || []).map(lead => ({
+    leadId: lead.leadId,
+    timestamp: lead.timestamp,
+    name: lead.name || null,
+    email: lead.email || null,
+    phone: lead.phone || null,
+    conversationPreview: lead.conversationPreview || '',
+    status: lead.status || 'new',
+  }));
+  
+  // Summary stats
+  const totalLeads = leads.length;
+  const newLeads = leads.filter(l => l.status === 'new').length;
+  const withEmail = leads.filter(l => l.email).length;
+  const withPhone = leads.filter(l => l.phone).length;
+  
+  return respond(200, {
+    period: `Last ${days} days`,
+    totalLeads,
+    newLeads,
+    withEmail,
+    withPhone,
+    leads,
   });
 }
 
