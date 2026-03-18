@@ -1885,6 +1885,12 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
   padding: 28px 24px;
   position: relative;
   transition: border-color 0.3s, transform 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.pricing-card-dash .btn {
+  margin-top: auto;
 }
 
 .pricing-card-dash:hover {
