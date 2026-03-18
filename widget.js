@@ -261,22 +261,14 @@
   // Load chatbot config
   async function loadConfig() {
     try {
-      const resp = await fetch(`${API_BASE}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'get-config',
-          configId: options.configId 
-        })
-      });
+      const resp = await fetch(`${API_BASE}/chatbot/config?configId=${options.configId}`);
+      if (!resp.ok) throw new Error('Config not found');
       const data = await resp.json();
-      if (data.config) {
-        chatConfig = data.config;
-        headerTitle.textContent = chatConfig.headerText || chatConfig.businessName || 'Chat with us';
-        // Add welcome message
-        if (chatConfig.welcomeMessage) {
-          addMessage(chatConfig.welcomeMessage, 'bot');
-        }
+      chatConfig = data;
+      headerTitle.textContent = chatConfig.headerText || chatConfig.businessName || 'Chat with us';
+      // Add welcome message
+      if (chatConfig.welcomeMessage) {
+        addMessage(chatConfig.welcomeMessage, 'bot');
       }
     } catch (err) {
       console.error('HSS Chatbot: Failed to load config', err);
