@@ -1,8 +1,18 @@
 /**
  * HSS AI Chatbot — Lambda Handler (Node.js)
  * Multi-provider AI with automatic failover.
+ * Client-aware: loads custom config, enforces trial limits, tracks conversations.
  * Priority: Google Gemini (free) → Groq (free) → Mistral → OpenAI → Anthropic
  */
+
+import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+
+const REGION = process.env.AWS_REGION || "us-east-2";
+const ddb = new DynamoDBClient({ region: REGION });
+
+const TABLE_CONFIGS = process.env.TABLE_CONFIGS || "HSS-CHATBOT-CONFIGS";
+const TABLE_CLIENTS = process.env.TABLE_CLIENTS || "HSS-CLIENTS";
+const TABLE_TRIALS  = process.env.TABLE_TRIALS  || "HSS-TRIALS";
 
 // ── API Keys (from Lambda env vars) ──
 const GOOGLE_API_KEY    = process.env.GOOGLE_API_KEY || "";
@@ -42,8 +52,8 @@ const PROVIDERS = [
   },
 ];
 
-// ── System prompt loaded with HSS info ──
-const SYSTEM_PROMPT = `You are the HSS AI Assistant — the official AI chatbot for Heinrichs Software Solutions LLC (heinrichstech.com). You are a live product demo: the exact kind of chatbot HSS builds and sells to businesses.
+// ── Default system prompt (HSS website chatbot — no configId) ──
+const DEFAULT_SYSTEM_PROMPT = `You are the HSS AI Assistant — the official AI chatbot for Heinrichs Software Solutions LLC (heinrichstech.com). You are a live product demo: the exact kind of chatbot HSS builds and sells to businesses.
 
 COMPANY OVERVIEW:
 - Heinrichs Software Solutions LLC (HSS)
@@ -123,9 +133,129 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
+// ── Simple DynamoDB item → JS object ──
+function unmarshal(item) {
+  const obj = {};
+  for (const [k, v] of Object.entries(item)) {
+    if (v.S  !== undefined) obj[k] = v.S;
+    else if (v.N  !== undefined) obj[k] = Number(v.N);
+    else if (v.BOOL !== undefined) obj[k] = v.BOOL;
+    else if (v.SS !== undefined) obj[k] = new Set(v.SS);
+    else if (v.NULL) obj[k] = null;
+  }
+  return obj;
+}
+
+// ── Convenience response builder ──
+function respond(statusCode, body) {
+  return {
+    statusCode,
+    headers: CORS_HEADERS,
+    body: typeof body === "string" ? body : JSON.stringify(body),
+  };
+}
+
 // ── Get API key by env var name ──
 function getKey(envName) {
   return process.env[envName] || "";
+}
+
+// ══════════════════════════════════════════════════════
+//  CLIENT CONFIG + TRIAL ENFORCEMENT
+// ══════════════════════════════════════════════════════
+
+async function resolveClientConfig(configId, sessionId) {
+  // 1. Fetch chatbot config
+  const cfgRes = await ddb.send(new GetItemCommand({
+    TableName: TABLE_CONFIGS,
+    Key: { configId: { S: configId } },
+  }));
+
+  if (!cfgRes.Item) {
+    return { reply: "I'm sorry, this chatbot could not be found. Please contact the business for assistance." };
+  }
+
+  const config = unmarshal(cfgRes.Item);
+
+  if (!config.active) {
+    return {
+      reply: "I'm sorry, this chatbot is currently offline. The free trial may have expired — please contact the business for more information.",
+    };
+  }
+
+  const systemPrompt = config.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+
+  // 2. Fetch client record
+  if (!config.clientId) return { systemPrompt };
+
+  const clientRes = await ddb.send(new GetItemCommand({
+    TableName: TABLE_CLIENTS,
+    Key: { clientId: { S: config.clientId } },
+  }));
+
+  if (!clientRes.Item) return { systemPrompt };
+  const client = unmarshal(clientRes.Item);
+
+  // 3. Paid plans — no limits, just use their prompt
+  if (client.plan !== "trial") return { systemPrompt };
+
+  // 4. Trial plan — enforce limits
+  if (!client.trialId) return { systemPrompt };
+
+  const trialRes = await ddb.send(new GetItemCommand({
+    TableName: TABLE_TRIALS,
+    Key: { trialId: { S: client.trialId } },
+  }));
+
+  if (!trialRes.Item) return { systemPrompt };
+  const trial = unmarshal(trialRes.Item);
+
+  // Check expiration
+  if (trial.status === "expired" || new Date() > new Date(trial.expiresDate)) {
+    return {
+      reply: "I'm sorry, this chatbot's free trial has ended. Please contact the business to continue using this service.",
+    };
+  }
+
+  // Check conversation limit
+  const count = trial.conversationCount || 0;
+  const max   = trial.maxConversations  || 100;
+
+  if (count >= max) {
+    return {
+      reply: "I'm sorry, this chatbot has reached its free trial conversation limit. Please contact the business to continue using this service.",
+    };
+  }
+
+  // 5. Track unique session as one conversation
+  if (sessionId) {
+    try {
+      await ddb.send(new UpdateItemCommand({
+        TableName: TABLE_TRIALS,
+        Key: { trialId: { S: client.trialId } },
+        UpdateExpression:
+          "SET conversationCount = if_not_exists(conversationCount, :zero) + :one " +
+          "ADD countedSessions :sessSet",
+        ConditionExpression:
+          "attribute_not_exists(countedSessions) OR NOT contains(countedSessions, :sid)",
+        ExpressionAttributeValues: {
+          ":zero":    { N: "0" },
+          ":one":     { N: "1" },
+          ":sessSet": { SS: [sessionId] },
+          ":sid":     { S: sessionId },
+        },
+      }));
+      console.log(`New conversation tracked: session=${sessionId} count=${count + 1}/${max} trial=${client.trialId}`);
+    } catch (err) {
+      if (err.name === "ConditionalCheckFailedException") {
+        // Session already counted — that's fine, continue
+      } else {
+        console.error("Session tracking error:", err.message);
+      }
+    }
+  }
+
+  return { systemPrompt };
 }
 
 // ══════════════════════════════════════════════════════
@@ -138,7 +268,7 @@ export const handler = async (event) => {
     || event?.requestContext?.http?.method
     || "";
   if (method === "OPTIONS") {
-    return { statusCode: 200, headers: CORS_HEADERS, body: "" };
+    return respond(200, "");
   }
 
   // Parse request body
@@ -150,31 +280,25 @@ export const handler = async (event) => {
     } else if (typeof rawBody === "object" && rawBody !== null) {
       body = rawBody;
     } else {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Missing request body" }),
-      };
+      return respond(400, { error: "Missing request body" });
     }
   } catch {
-    return {
-      statusCode: 400,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: "Invalid JSON" }),
-    };
+    return respond(400, { error: "Invalid JSON" });
   }
 
-  const messages = body.messages || [];
-  if (!messages.length) {
-    return {
-      statusCode: 400,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: "No messages provided" }),
-    };
+  // ── Extract fields ──
+  // chatbot.js sends: { messages: [{role,content}] }
+  // chatbot-embed.js sends: { configId, sessionId, history: [{role,content}], message }
+  const configId  = body.configId  || null;
+  const sessionId = body.sessionId || null;
+  const rawMessages = body.messages || body.history || [];
+
+  if (!rawMessages.length) {
+    return respond(400, { error: "No messages provided" });
   }
 
   // Validate and sanitize messages (keep last 20)
-  const cleanMessages = messages
+  const cleanMessages = rawMessages
     .slice(-20)
     .filter(
       (msg) =>
@@ -188,72 +312,82 @@ export const handler = async (event) => {
     }));
 
   if (!cleanMessages.length) {
-    return {
-      statusCode: 400,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: "No valid messages" }),
-    };
+    return respond(400, { error: "No valid messages" });
   }
 
-  // Try each provider in priority order (failover chain)
+  // ── Resolve system prompt + enforce trial limits ──
+  let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+
+  if (configId) {
+    try {
+      const resolved = await resolveClientConfig(configId, sessionId);
+
+      // If the resolver returned a canned reply (inactive/expired/over-limit),
+      // send it directly without calling any AI provider
+      if (resolved.reply) {
+        return respond(200, { reply: resolved.reply });
+      }
+
+      if (resolved.systemPrompt) {
+        systemPrompt = resolved.systemPrompt;
+      }
+    } catch (err) {
+      console.error("Config/trial lookup failed:", err.message);
+      // Don't block the chat — fall back to default prompt
+    }
+  }
+
+  // ── Try each provider in priority order (failover chain) ──
   const errors = [];
 
   for (const provider of PROVIDERS) {
     const apiKey = getKey(provider.keyEnv);
-    if (!apiKey) continue; // Skip providers without keys
+    if (!apiKey) continue;
 
     try {
       console.log(`Trying provider: ${provider.name} (${provider.model})`);
-      const reply = await callProvider(provider.name, provider.model, apiKey, cleanMessages);
-      return {
-        statusCode: 200,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ reply }),
-      };
+      const reply = await callProvider(provider.name, provider.model, apiKey, cleanMessages, systemPrompt);
+      return respond(200, { reply });
     } catch (err) {
       const errMsg = `${provider.name}: ${err.message}`;
       console.log(`Provider failed — ${errMsg}`);
       errors.push(errMsg);
-      continue; // Try next provider
+      continue;
     }
   }
 
   // All providers failed
   console.log(`ALL PROVIDERS FAILED: ${JSON.stringify(errors)}`);
-  return {
-    statusCode: 500,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({
-      error: "All AI providers are currently unavailable. Please try again later.",
-    }),
-  };
+  return respond(500, {
+    error: "All AI providers are currently unavailable. Please try again later.",
+  });
 };
 
 // ══════════════════════════════════════════════════════
 //  PROVIDER DISPATCH
 // ══════════════════════════════════════════════════════
 
-async function callProvider(name, model, apiKey, messages) {
+async function callProvider(name, model, apiKey, messages, systemPrompt) {
   switch (name) {
     case "google":
-      return callGoogle(model, apiKey, messages);
+      return callGoogle(model, apiKey, messages, systemPrompt);
     case "groq":
       return callOpenAICompatible(
         "https://api.groq.com/openai/v1/chat/completions",
-        model, apiKey, messages
+        model, apiKey, messages, systemPrompt
       );
     case "mistral":
       return callOpenAICompatible(
         "https://api.mistral.ai/v1/chat/completions",
-        model, apiKey, messages
+        model, apiKey, messages, systemPrompt
       );
     case "openai":
       return callOpenAICompatible(
         "https://api.openai.com/v1/chat/completions",
-        model, apiKey, messages
+        model, apiKey, messages, systemPrompt
       );
     case "anthropic":
-      return callAnthropic(model, apiKey, messages);
+      return callAnthropic(model, apiKey, messages, systemPrompt);
     default:
       throw new Error(`Unknown provider: ${name}`);
   }
@@ -263,8 +397,7 @@ async function callProvider(name, model, apiKey, messages) {
 //  GOOGLE GEMINI (primary — free tier)
 // ══════════════════════════════════════════════════════
 
-async function callGoogle(model, apiKey, messages) {
-  // Convert chat messages to Gemini format (uses "user" and "model" roles)
+async function callGoogle(model, apiKey, messages, systemPrompt) {
   const geminiContents = messages.map((msg) => ({
     role: msg.role === "assistant" ? "model" : "user",
     parts: [{ text: msg.content }],
@@ -276,7 +409,7 @@ async function callGoogle(model, apiKey, messages) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: geminiContents,
       generationConfig: {
         maxOutputTokens: MAX_TOKENS,
@@ -285,7 +418,6 @@ async function callGoogle(model, apiKey, messages) {
     }),
   });
 
-  // Parse Gemini response
   const candidates = data.candidates || [];
   if (!candidates.length) throw new Error("No candidates in Gemini response");
 
@@ -298,10 +430,9 @@ async function callGoogle(model, apiKey, messages) {
 //  OPENAI-COMPATIBLE (Groq, Mistral, OpenAI)
 // ══════════════════════════════════════════════════════
 
-async function callOpenAICompatible(url, model, apiKey, messages) {
-  // Prepend system message
+async function callOpenAICompatible(url, model, apiKey, messages, systemPrompt) {
   const apiMessages = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: systemPrompt },
     ...messages,
   ];
 
@@ -319,7 +450,6 @@ async function callOpenAICompatible(url, model, apiKey, messages) {
     }),
   });
 
-  // Parse OpenAI-compatible response
   const choices = data.choices || [];
   if (!choices.length) throw new Error("No choices in response");
   return (choices[0]?.message?.content || "").trim();
@@ -329,7 +459,7 @@ async function callOpenAICompatible(url, model, apiKey, messages) {
 //  ANTHROPIC
 // ══════════════════════════════════════════════════════
 
-async function callAnthropic(model, apiKey, messages) {
+async function callAnthropic(model, apiKey, messages, systemPrompt) {
   const data = await doRequest("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -340,12 +470,11 @@ async function callAnthropic(model, apiKey, messages) {
     body: JSON.stringify({
       model,
       max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages,
     }),
   });
 
-  // Parse Anthropic response
   const contentBlocks = data.content || [];
   const textParts = contentBlocks
     .filter((b) => b.type === "text")
