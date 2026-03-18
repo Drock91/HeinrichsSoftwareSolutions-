@@ -373,6 +373,7 @@ async function updateClientProfile(userId, data) {
   if (data.businessName) { expr.push("#bn = :bn"); names["#bn"] = "businessName"; values[":bn"] = data.businessName; }
   if (data.website) { expr.push("#ws = :ws"); names["#ws"] = "website"; values[":ws"] = data.website; }
   if (data.phone) { expr.push("#ph = :ph"); names["#ph"] = "phone"; values[":ph"] = data.phone; }
+  if (data.industry) { expr.push("#ind = :ind"); names["#ind"] = "industry"; values[":ind"] = data.industry; }
   if (data.businessInfo) { expr.push("#bi = :bi"); names["#bi"] = "businessInfo"; values[":bi"] = data.businessInfo; }
 
   if (expr.length === 0) return respond(400, { error: "Nothing to update" });
