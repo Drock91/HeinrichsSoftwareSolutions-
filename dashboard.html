@@ -220,7 +220,7 @@
             </div>
 
             <div class="pricing-card-dash featured" id="plan-pro">
-              <div class="pricing-popular-tag">Most Popular</div>
+              <div class="pricing-popular-tag">Most Value</div>
               <div class="pricing-card-dash-header">
                 <h4>Pro</h4>
                 <div class="pricing-card-dash-price">$99<span>/month</span></div>
@@ -402,8 +402,12 @@
       const profileResp = await fetch(`${API_BASE}/client/profile`, {
         headers: { 'Authorization': idToken },
       });
+      console.log('Profile response:', profileResp.status);
       if (profileResp.ok) {
         clientData = await profileResp.json();
+        console.log('clientData:', clientData);
+      } else {
+        console.warn('Profile resp not ok:', await profileResp.text());
       }
     } catch (err) { console.warn('Profile load error:', err); }
 
@@ -412,8 +416,12 @@
       const trialResp = await fetch(`${API_BASE}/trial/status`, {
         headers: { 'Authorization': idToken },
       });
+      console.log('Trial response:', trialResp.status);
       if (trialResp.ok) {
         trialData = await trialResp.json();
+        console.log('trialData:', trialData);
+      } else {
+        console.warn('Trial resp not ok:', await trialResp.text());
       }
     } catch (err) { console.warn('Trial load error:', err); }
 
