@@ -219,7 +219,7 @@ async function resolveClientConfig(configId, sessionId) {
 
   // Check conversation limit
   const count = trial.conversationCount || 0;
-  const max   = trial.maxConversations  || 100;
+  const max   = trial.maxConversations  || 50;
 
   if (count >= max) {
     return {

@@ -224,7 +224,7 @@ async function signupTrial(data) {
       startDate: now.toISOString(),
       expiresDate: expiresDate.toISOString(),
       conversationCount: 0,
-      maxConversations: 100,
+      maxConversations: 50,
       createdAt: now.toISOString(),
     },
   }));
