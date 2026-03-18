@@ -419,15 +419,15 @@
       const client = allClients.find(c => c.clientId === t.clientId);
       const statusBadge = getTrialBadge(t.status);
       const start = t.startDate ? new Date(t.startDate).toLocaleDateString() : '—';
-      const end = t.endDate ? new Date(t.endDate).toLocaleDateString() : '—';
-      const daysLeft = t.endDate ? Math.max(0, Math.ceil((new Date(t.endDate) - new Date()) / 86400000)) : '—';
+      const end = t.expiresDate ? new Date(t.expiresDate).toLocaleDateString() : '—';
+      const daysLeft = t.expiresDate ? Math.max(0, Math.ceil((new Date(t.expiresDate) - new Date()) / 86400000)) : '—';
 
       return `<tr>
         <td><strong>${esc(client?.businessName || t.clientId)}</strong></td>
         <td>${statusBadge}</td>
         <td>${start}</td>
         <td>${end}</td>
-        <td>${t.conversationsUsed || 0} / ${t.conversationLimit || 50}</td>
+        <td>${t.conversationCount || 0} / ${t.maxConversations || 100}</td>
         <td>${t.status === 'active' ? daysLeft : '—'}</td>
         <td>
           ${t.status === 'active' ? `<button class="admin-btn" onclick="extendTrial('${t.trialId}')">Extend</button>` : ''}
@@ -560,7 +560,7 @@
 
     try {
       const trial = allTrials.find(t => t.trialId === trialId);
-      const newEnd = new Date(trial.endDate);
+      const newEnd = new Date(trial.expiresDate);
       newEnd.setDate(newEnd.getDate() + parseInt(days));
 
       const resp = await fetch(`${API_BASE}/admin/update-trial`, {
@@ -568,7 +568,7 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
         body: JSON.stringify({
           trialId: trialId,
-          endDate: newEnd.toISOString(),
+          expiresDate: newEnd.toISOString(),
           status: 'active',
         }),
       });

@@ -1006,8 +1006,8 @@ a.service-card { display: block; text-decoration: none; cursor: pointer; }
 .cta-content h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); color: var(--white); margin-bottom: 16px; }
 .cta-content p { color: var(--mid-gray); font-size: 1.05rem; line-height: 1.6; margin-bottom: 24px; }
 .cta-actions { display: flex; gap: 16px; flex-wrap: wrap; }
-.btn-outline-dark { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.4); }
-.btn-outline-dark:hover { background: var(--white); color: var(--dark-navy); border-color: var(--white); }
+.cta-banner .btn-outline-dark { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.4); }
+.cta-banner .btn-outline-dark:hover { background: var(--white); color: var(--dark-navy); border-color: var(--white); }
 .cta-badges { display: flex; flex-direction: column; gap: 16px; }
 .cta-badge-item {
   display: flex; align-items: center; gap: 10px;

@@ -49,7 +49,7 @@
 
   // ──── BUILD WIDGET ────
   function buildWidget() {
-    const primaryColor = colorOverride || config.primaryColor || '#001F3F';
+    const primaryColor = colorOverride || config.brandColor || '#001F3F';
     const position = posOverride || config.position || 'bottom-right';
     const welcomeMsg = config.welcomeMessage || "Hi! How can I help you today?";
     const businessName = config.businessName || 'AI Assistant';

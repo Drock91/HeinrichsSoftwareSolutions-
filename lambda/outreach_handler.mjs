@@ -67,7 +67,7 @@ Would you be open to a quick 10-minute call this week? Or if you'd rather just s
 Try it free: ${SITE_URL}/signup.html
 
 Best,
-Daniel Heinrich
+HSS Team
 Heinrichs Software Solutions LLC
 (619) 770-7306
 ${SITE_URL}`,
@@ -106,7 +106,7 @@ Interested? Just reply to this email or book a quick call:
 ${SITE_URL}/signup.html
 
 Best,
-Daniel Heinrich
+HSS Team
 Heinrichs Software Solutions LLC
 (619) 770-7306`,
     };
@@ -126,7 +126,7 @@ ${SITE_URL}/blog.html
 
 Worth a shot?
 
-Daniel Heinrich
+HSS Team
 (619) 770-7306`,
   }),
 };

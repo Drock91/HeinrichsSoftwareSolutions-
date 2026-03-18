@@ -6,7 +6,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SP20JF1RE"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2SP20JF1RE');</script>
   <title>Dashboard — Heinrichs Software Solutions</title>
-  <meta name="description" content="Manage your AI chatbot, view usage analytics, and handle your subscription from your Heinrichs Software Solutions dashboard.">
+  <meta name="description" content="Manage your products, view usage analytics, and handle your subscription from your Heinrichs Software Solutions dashboard.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -49,7 +49,7 @@
 
       <div class="dash-tabs">
         <button class="dash-tab active" data-tab="overview">Overview</button>
-        <button class="dash-tab" data-tab="chatbot">Chatbot</button>
+        <button class="dash-tab" data-tab="products">Products</button>
         <button class="dash-tab" data-tab="billing">Billing</button>
         <button class="dash-tab" data-tab="settings">Settings</button>
       </div>
@@ -86,7 +86,7 @@
           <h3>Quick Actions</h3>
           <div class="dash-actions">
             <button class="btn btn-gold btn-animated" id="action-upgrade" style="display:none;">Upgrade Plan</button>
-            <button class="btn btn-outline btn-animated" onclick="switchTab('chatbot')">Configure Chatbot</button>
+            <button class="btn btn-outline btn-animated" onclick="switchTab('products')">Manage Products</button>
             <button class="btn btn-outline btn-animated" onclick="switchTab('billing')">Manage Billing</button>
           </div>
         </div>
@@ -96,7 +96,7 @@
           <div class="dash-banner-icon">&#9200;</div>
           <div class="dash-banner-content">
             <h4>Your free trial is active!</h4>
-            <p id="trial-banner-text">You have X days remaining. Upgrade to keep your chatbot running.</p>
+            <p id="trial-banner-text">You have X days remaining. Upgrade to keep your products running.</p>
           </div>
           <button class="btn btn-gold btn-animated" id="trial-upgrade-btn">Upgrade Now</button>
         </div>
@@ -106,51 +106,77 @@
           <div class="dash-banner-icon">&#10003;</div>
           <div class="dash-banner-content">
             <h4>Payment successful!</h4>
-            <p>Your plan is now active. Your chatbot has unlimited conversations.</p>
+            <p>Your plan is now active. Enjoy full access to all your products.</p>
           </div>
         </div>
       </div>
 
-      <!-- ─── CHATBOT TAB ─── -->
-      <div class="dash-panel" id="tab-chatbot">
+      <!-- ─── PRODUCTS TAB ─── -->
+      <div class="dash-panel" id="tab-products">
 
-        <div class="dash-section">
-          <h3>Embed Code</h3>
-          <p>Add this snippet to your website, just before the closing <code>&lt;/body&gt;</code> tag:</p>
-          <div class="embed-code-box">
-            <pre id="embed-code-display">Loading...</pre>
-            <button class="btn btn-outline" id="copy-embed-dash" style="margin-top:12px;">Copy Code</button>
+        <!-- AI Chatbot Product -->
+        <div class="dash-section" id="product-chatbot" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <h3 style="margin:0;">&#129302; AI Chatbot</h3>
+            <span class="admin-badge" id="chatbot-product-status" style="background:#2ecc71;">Active</span>
+          </div>
+
+          <div class="dash-section" style="margin-bottom:24px;">
+            <h4>Embed Code</h4>
+            <p>Add this snippet to your website, just before the closing <code>&lt;/body&gt;</code> tag:</p>
+            <div class="embed-code-box">
+              <pre id="embed-code-display">Loading...</pre>
+              <button class="btn btn-outline" id="copy-embed-dash" style="margin-top:12px;">Copy Code</button>
+            </div>
+          </div>
+
+          <div class="dash-section">
+            <h4>Chatbot Configuration</h4>
+            <form id="chatbot-config-form">
+              <div class="form-group">
+                <label for="cfg-welcome">Welcome Message</label>
+                <input type="text" id="cfg-welcome" placeholder="Hi! How can I help you today?">
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="cfg-primary-color">Primary Color</label>
+                  <input type="color" id="cfg-primary-color" value="#001F3F" style="height:44px;width:100%;">
+                </div>
+                <div class="form-group">
+                  <label for="cfg-position">Widget Position</label>
+                  <select id="cfg-position">
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="bottom-left">Bottom Left</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cfg-business-info">Business Info (AI Context)</label>
+                <textarea id="cfg-business-info" rows="4" placeholder="Tell the chatbot about your business, services, hours, FAQs..."></textarea>
+              </div>
+              <div id="config-error" class="form-error" style="display:none;"></div>
+              <div id="config-success" class="form-success" style="display:none;">Configuration saved!</div>
+              <button type="submit" class="btn btn-gold btn-animated">Save Configuration</button>
+            </form>
           </div>
         </div>
 
-        <div class="dash-section">
-          <h3>Configuration</h3>
-          <form id="chatbot-config-form">
-            <div class="form-group">
-              <label for="cfg-welcome">Welcome Message</label>
-              <input type="text" id="cfg-welcome" placeholder="Hi! How can I help you today?">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="cfg-primary-color">Primary Color</label>
-                <input type="color" id="cfg-primary-color" value="#001F3F" style="height:44px;width:100%;">
-              </div>
-              <div class="form-group">
-                <label for="cfg-position">Widget Position</label>
-                <select id="cfg-position">
-                  <option value="bottom-right">Bottom Right</option>
-                  <option value="bottom-left">Bottom Left</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="cfg-business-info">Business Info (AI Context)</label>
-              <textarea id="cfg-business-info" rows="4" placeholder="Tell the chatbot about your business, services, hours, FAQs..."></textarea>
-            </div>
-            <div id="config-error" class="form-error" style="display:none;"></div>
-            <div id="config-success" class="form-success" style="display:none;">Configuration saved!</div>
-            <button type="submit" class="btn btn-gold btn-animated">Save Configuration</button>
-          </form>
+        <!-- Other Products Placeholder -->
+        <div class="dash-section" id="product-other" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <h3 style="margin:0;">&#128736; Custom Software / Services</h3>
+            <span class="admin-badge" style="background:#2ecc71;">Active</span>
+          </div>
+          <p>Your custom project details and deliverables will appear here.</p>
+        </div>
+
+        <!-- No Products State -->
+        <div class="dash-section" id="product-none">
+          <div style="text-align:center;padding:40px 20px;">
+            <h3>No Active Products</h3>
+            <p style="margin:12px 0 24px;opacity:0.7;">You don't have any active products yet. Start a free trial or contact us for a custom project.</p>
+            <a href="services.html" class="btn btn-gold btn-animated">View Our Services</a>
+          </div>
         </div>
       </div>
 
@@ -184,11 +210,11 @@
                 <div class="pricing-card-dash-setup">+ $499 one-time setup</div>
               </div>
               <ul class="pricing-features-dash">
-                <li>&#10003; Custom AI chatbot</li>
-                <li>&#10003; Unlimited conversations</li>
+                <li>&#10003; AI chatbot with unlimited conversations</li>
                 <li>&#10003; Your branding &amp; colors</li>
                 <li>&#10003; Email support</li>
                 <li>&#10003; Monthly analytics report</li>
+                <li>&#10003; Basic AI automation</li>
               </ul>
               <button class="btn btn-gold btn-animated btn-full" onclick="startCheckout('standard')">Get Standard</button>
             </div>
@@ -203,10 +229,10 @@
               <ul class="pricing-features-dash">
                 <li>&#10003; Everything in Standard</li>
                 <li>&#10003; Priority support</li>
-                <li>&#10003; Advanced analytics</li>
-                <li>&#10003; Multi-page support</li>
+                <li>&#10003; Advanced analytics dashboard</li>
+                <li>&#10003; Multi-page chatbot support</li>
                 <li>&#10003; Lead capture &amp; notifications</li>
-                <li>&#10003; Custom integrations</li>
+                <li>&#10003; Custom integrations &amp; AI workflows</li>
               </ul>
               <button class="btn btn-gold btn-animated btn-full" onclick="startCheckout('pro')">Get Pro</button>
             </div>
@@ -224,7 +250,7 @@
           <div id="cancel-confirm" style="display:none;margin-top:20px;" class="dash-banner dash-banner-warn">
             <div class="dash-banner-content">
               <h4>Are you sure?</h4>
-              <p>Your chatbot will remain active until the end of your billing period. After that, it will be deactivated.</p>
+              <p>Your products will remain active until the end of your billing period. After that, they will be deactivated.</p>
             </div>
             <div style="display:flex;gap:12px;margin-top:12px;">
               <button class="btn btn-gold btn-animated" id="btn-confirm-cancel">Yes, Cancel</button>
@@ -238,7 +264,7 @@
           <div class="dash-banner dash-banner-warn">
             <div class="dash-banner-content">
               <h4>Subscription ending soon</h4>
-              <p id="reactivate-text">Your plan will cancel on [date]. Reactivate to keep your chatbot running.</p>
+              <p id="reactivate-text">Your plan will cancel on [date]. Reactivate to keep your products running.</p>
             </div>
             <button class="btn btn-gold btn-animated" id="btn-reactivate">Reactivate</button>
           </div>
@@ -437,7 +463,7 @@
     if (isTrial && trialData.daysLeft !== undefined) {
       document.getElementById('stat-trial-days').textContent = trialData.daysLeft;
       document.getElementById('trial-banner').style.display = 'flex';
-      document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysLeft} days remaining. Upgrade to keep your chatbot running with unlimited conversations.`;
+      document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysLeft} days remaining. Upgrade to keep your products running with unlimited access.`;
     } else {
       document.getElementById('stat-trial-days').textContent = isPaid ? 'N/A' : '0';
     }
@@ -470,14 +496,14 @@
       const price = plan === 'pro' ? '$99/month' : '$49/month';
       document.getElementById('billing-plan-name').textContent = planName;
       document.getElementById('billing-plan-price').textContent = price;
-      document.getElementById('billing-plan-desc').textContent = 'Unlimited conversations, full AI chatbot features';
+      document.getElementById('billing-plan-desc').textContent = 'Unlimited conversations, full access to all products';
 
       if (subData?.cancelAtPeriodEnd) {
         document.getElementById('billing-plan-badge').textContent = 'Canceling';
         document.getElementById('billing-plan-badge').style.background = '#e74c3c';
         document.getElementById('subscription-section').style.display = 'none';
         document.getElementById('reactivate-section').style.display = 'block';
-        document.getElementById('reactivate-text').textContent = `Your plan will cancel on ${new Date(subData.currentPeriodEnd).toLocaleDateString()}. Reactivate to keep your chatbot running.`;
+        document.getElementById('reactivate-text').textContent = `Your plan will cancel on ${new Date(subData.currentPeriodEnd).toLocaleDateString()}. Reactivate to keep your products running.`;
       } else {
         document.getElementById('billing-plan-badge').textContent = 'Active';
         document.getElementById('billing-plan-badge').style.background = '#2ecc71';
@@ -491,11 +517,19 @@
       document.getElementById('billing-plan-badge').textContent = 'Expired';
       document.getElementById('billing-plan-badge').style.background = '#e74c3c';
       document.getElementById('billing-plan-price').textContent = '$0';
-      document.getElementById('billing-plan-desc').textContent = 'Your trial has ended. Subscribe to reactivate your chatbot.';
+      document.getElementById('billing-plan-desc').textContent = 'Your trial has ended. Subscribe to reactivate your products.';
     }
 
-    // ── Chatbot Tab ──
+    // ── Chatbot Tab → Products Tab ──
     if (clientData?.configId) {
+      document.getElementById('product-chatbot').style.display = 'block';
+      document.getElementById('product-none').style.display = 'none';
+
+      const chatbotStatus = isExpired ? 'Inactive' : 'Active';
+      const chatbotStatusColor = isExpired ? '#e74c3c' : '#2ecc71';
+      document.getElementById('chatbot-product-status').textContent = chatbotStatus;
+      document.getElementById('chatbot-product-status').style.background = chatbotStatusColor;
+
       const embedCode = `<script src="https://heinrichstech.com/chatbot-embed.js" data-config="${clientData.configId}"><\/script>`;
       document.getElementById('embed-code-display').textContent = embedCode;
       document.getElementById('set-client-id').textContent = clientData.clientId;
@@ -503,9 +537,9 @@
 
     if (configData) {
       document.getElementById('cfg-welcome').value = configData.welcomeMessage || '';
-      document.getElementById('cfg-primary-color').value = configData.primaryColor || '#001F3F';
+      document.getElementById('cfg-primary-color').value = configData.brandColor || '#001F3F';
       document.getElementById('cfg-position').value = configData.position || 'bottom-right';
-      document.getElementById('cfg-business-info').value = configData.businessInfo || '';
+      document.getElementById('cfg-business-info').value = configData.systemPrompt || '';
     }
 
     // ── Settings Tab ──
@@ -668,7 +702,7 @@
         body: JSON.stringify({
           configId: clientData.configId,
           welcomeMessage: document.getElementById('cfg-welcome').value.trim(),
-          primaryColor: document.getElementById('cfg-primary-color').value,
+          brandColor: document.getElementById('cfg-primary-color').value,
           position: document.getElementById('cfg-position').value,
           businessInfo: document.getElementById('cfg-business-info').value.trim(),
         }),

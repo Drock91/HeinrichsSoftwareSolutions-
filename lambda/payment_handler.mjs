@@ -480,7 +480,7 @@ async function handleCheckoutComplete(session) {
         Subject: { Data: `Welcome to ${planName}! Your AI Chatbot is Fully Active` },
         Body: {
           Text: {
-            Data: `Hi!\n\nThank you for upgrading to the ${planName} plan! Your AI chatbot for ${client.businessName} is now fully active with unlimited conversations.\n\nPlan Details:\n• Plan: ${planName}\n• Monthly billing: ${monthly}/month\n• Conversations: Unlimited\n• Support: ${plan === "pro" ? "Priority" : "Email"}\n\nManage your subscription anytime from your dashboard:\n${SITE_URL}/dashboard.html\n\nNeed help? Reply to this email or call (619) 770-7306.\n\nDaniel Heinrich\nHeinrichs Software Solutions LLC`,
+            Data: `Hi!\n\nThank you for upgrading to the ${planName} plan! Your AI chatbot for ${client.businessName} is now fully active with unlimited conversations.\n\nPlan Details:\n• Plan: ${planName}\n• Monthly billing: ${monthly}/month\n• Conversations: Unlimited\n• Support: ${plan === "pro" ? "Priority" : "Email"}\n\nManage your subscription anytime from your dashboard:\n${SITE_URL}/dashboard.html\n\nNeed help? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions LLC`,
           },
         },
       },
@@ -574,7 +574,7 @@ async function handlePaymentFailed(invoice) {
         Subject: { Data: "Action Needed: Payment Failed for Your AI Chatbot" },
         Body: {
           Text: {
-            Data: `Hi,\n\nWe were unable to process your monthly payment for ${client.businessName}'s AI chatbot.\n\nPlease update your payment method to keep your chatbot running:\n${SITE_URL}/dashboard.html\n\nIf there's an issue, please reach out — we're happy to help.\n\nDaniel Heinrich\n(619) 770-7306`,
+            Data: `Hi,\n\nWe were unable to process your monthly payment for ${client.businessName}'s AI chatbot.\n\nPlease update your payment method to keep your chatbot running:\n${SITE_URL}/dashboard.html\n\nIf there's an issue, please reach out — we're happy to help.\n\nHSS Team\n(619) 770-7306`,
           },
         },
       },

@@ -14,3 +14,4 @@ bucket-policy.json
 
 # Misc
 *.log
+*.zip

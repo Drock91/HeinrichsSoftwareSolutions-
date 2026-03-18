@@ -110,6 +110,7 @@ export const handler = async (event) => {
     }
     if (path.endsWith("/client/chatbot-config")) {
       if (method === "GET") return await getChatbotConfig(userId || body.userId);
+      if (method === "PUT") return await updateChatbotConfig(userId || body.userId, body);
     }
 
     // ─── ADMIN ROUTES ───
@@ -282,7 +283,7 @@ The chatbot is already trained on your business type (${industry || "general"}).
 
 Questions? Reply to this email or call (619) 770-7306.
 
-Daniel Heinrich
+HSS Team
 Heinrichs Software Solutions LLC
 ${SITE_URL}`,
           },
@@ -401,6 +402,48 @@ async function getChatbotConfig(userId) {
 }
 
 // ───────────────────────────────────────
+// CLIENT: UPDATE CHATBOT CONFIG
+// ───────────────────────────────────────
+async function updateChatbotConfig(userId, data) {
+  if (!userId) return respond(400, { error: "userId required" });
+
+  const client = await getClientByIdOrEmail(userId);
+  if (!client || !client.configId) return respond(404, { error: "No chatbot config found" });
+
+  // Only allow the client to update their own config
+  const configId = client.configId;
+
+  const updates = [];
+  const names = {};
+  const values = {};
+
+  const allowed = ["welcomeMessage", "brandColor", "headerText", "businessInfo", "position"];
+  for (const key of allowed) {
+    if (data[key] !== undefined && data[key] !== null) {
+      const alias = `#${key.slice(0, 5)}`;
+      const valAlias = `:${key.slice(0, 5)}`;
+      // Map businessInfo → systemPrompt in DynamoDB
+      const dbKey = key === "businessInfo" ? "systemPrompt" : key;
+      updates.push(`${alias} = ${valAlias}`);
+      names[alias] = dbKey;
+      values[valAlias] = data[key];
+    }
+  }
+
+  if (updates.length === 0) return respond(400, { error: "Nothing to update" });
+
+  await ddb.send(new UpdateCommand({
+    TableName: CONFIGS_TABLE,
+    Key: { configId },
+    UpdateExpression: "SET " + updates.join(", "),
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+  }));
+
+  return respond(200, { message: "Config updated" });
+}
+
+// ───────────────────────────────────────
 // PUBLIC CHATBOT CONFIG (for embed script)
 // ───────────────────────────────────────
 async function getPublicChatbotConfig(configId) {
@@ -423,6 +466,7 @@ async function getPublicChatbotConfig(configId) {
     brandColor: config.brandColor,
     headerText: config.headerText,
     welcomeMessage: config.welcomeMessage,
+    position: config.position,
     plan: config.plan,
   });
 }
@@ -624,7 +668,7 @@ async function checkExpirations() {
             Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or call (619) 770-7306.\n\nDaniel Heinrich\nHeinrichs Software Solutions LLC`,
+                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions LLC`,
               },
             },
           },
@@ -643,7 +687,7 @@ async function checkExpirations() {
             Subject: { Data: `⏰ Your AI Chatbot Trial Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nDaniel Heinrich\n(619) 770-7306`,
+                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\n(619) 770-7306`,
               },
             },
           },
