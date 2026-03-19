@@ -1872,6 +1872,150 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   opacity: 0.9;
 }
 
+/* ── Product Cards (Overview) ── */
+.product-card {
+  background: linear-gradient(135deg, rgba(0,31,63,0.95) 0%, rgba(0,59,92,0.95) 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(212,175,55,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.product-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: rgba(0,0,0,0.15);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.product-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.product-card-info {
+  flex: 1;
+}
+
+.product-card-body {
+  padding: 16px 20px 20px;
+  color: #fff;
+}
+
+/* ── Services Grid (Overview) ── */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.service-card {
+  background: var(--white);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid #e8e8e8;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.service-card-icon {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-card-content {
+  padding: 0 20px 16px;
+  flex: 1;
+}
+
+.service-card-content h4 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--dark-navy);
+  margin: 0 0 8px;
+}
+
+.service-card-content p {
+  font-size: 0.88rem;
+  color: var(--mid-gray);
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.service-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.service-card-price .price {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--dark-navy);
+}
+
+.service-card-price .period {
+  font-size: 0.9rem;
+  color: var(--mid-gray);
+}
+
+.service-card-footer {
+  padding: 12px 20px 16px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.coming-soon-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
+.btn-outline-light {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+}
+
+.btn-outline-light:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.6);
+}
+
 /* ── Billing Pricing Cards ── */
 .pricing-cards-dash {
   display: grid;

@@ -59,8 +59,8 @@
       <!-- ─── OVERVIEW TAB ─── -->
       <div class="dash-panel active" id="tab-overview">
 
-        <!-- Status Cards Row -->
-        <div class="dash-cards">
+        <!-- Status Cards Row (compact) -->
+        <div class="dash-cards" style="margin-bottom:32px;">
           <div class="dash-stat-card">
             <div class="dash-stat-label">Plan</div>
             <div class="dash-stat-value" id="stat-plan">Loading...</div>
@@ -83,18 +83,99 @@
           </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- ─── MY PRODUCTS ─── -->
+        <div class="dash-section" style="margin-bottom:40px;">
+          <h3 style="color:#D4AF37;margin-bottom:20px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;">&#128230; My Products</h3>
+          
+          <!-- AI Chatbot Product Card -->
+          <div class="product-card" id="overview-chatbot" style="display:none;">
+            <div class="product-card-header">
+              <div class="product-card-icon" style="background:linear-gradient(135deg,#D4AF37,#B8960C);">
+                <span style="font-size:1.5rem;">&#128172;</span>
+              </div>
+              <div class="product-card-info">
+                <h4 style="margin:0;color:#fff;font-family:'Oswald',sans-serif;">AI Chatbot</h4>
+                <p style="margin:4px 0 0;font-size:0.85rem;opacity:0.7;" id="overview-chatbot-status">Active</p>
+              </div>
+              <span class="admin-badge" id="overview-chatbot-badge" style="background:#2ecc71;">Active</span>
+            </div>
+            <div class="product-card-body">
+              <p style="margin:0 0 12px;font-size:0.9rem;opacity:0.8;">24/7 AI assistant answering customer questions on your website.</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-gold btn-sm" onclick="switchTab('products')">Manage</button>
+                <button class="btn btn-outline-light btn-sm" onclick="switchTab('analytics')" id="overview-analytics-btn" style="display:none;">Analytics</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Products State -->
+          <div class="product-card" id="overview-no-products" style="text-align:center;padding:32px;">
+            <p style="margin:0 0 16px;opacity:0.7;">You don't have any active products yet.</p>
+            <a href="chatbot.html" class="btn btn-gold btn-animated">Start Free Trial</a>
+          </div>
+        </div>
+
+        <!-- ─── OTHER SERVICES ─── -->
         <div class="dash-section">
-          <h3>Quick Actions</h3>
-          <div class="dash-actions">
-            <button class="btn btn-gold btn-animated" id="action-upgrade" style="display:none;">Upgrade Plan</button>
-            <button class="btn btn-outline-dark btn-animated" onclick="switchTab('products')">Manage Products</button>
-            <button class="btn btn-outline-dark btn-animated" onclick="switchTab('billing')">Manage Billing</button>
+          <h3 style="color:#D4AF37;margin-bottom:8px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;">&#10024; Add More Services</h3>
+          <p style="color:rgba(255,255,255,0.6);margin-bottom:24px;font-size:0.9rem;">Expand your digital toolkit with these easy-to-deploy solutions.</p>
+          
+          <div class="services-grid">
+            <!-- Uptime Monitor -->
+            <div class="service-card">
+              <div class="service-card-icon" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);">
+                <span style="font-size:1.3rem;">&#128200;</span>
+              </div>
+              <div class="service-card-content">
+                <h4>Uptime Monitor</h4>
+                <p>Get instant alerts when your website goes down. Track uptime history and response times.</p>
+                <div class="service-card-price">
+                  <span class="price">$9</span><span class="period">/month</span>
+                </div>
+              </div>
+              <div class="service-card-footer">
+                <span class="coming-soon-badge">Coming Soon</span>
+              </div>
+            </div>
+
+            <!-- AI Review Widget -->
+            <div class="service-card">
+              <div class="service-card-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+                <span style="font-size:1.3rem;">&#11088;</span>
+              </div>
+              <div class="service-card-content">
+                <h4>AI Review Widget</h4>
+                <p>Display Google reviews on your site and collect new testimonials with a simple embed.</p>
+                <div class="service-card-price">
+                  <span class="price">$19</span><span class="period">/month</span>
+                </div>
+              </div>
+              <div class="service-card-footer">
+                <span class="coming-soon-badge">Coming Soon</span>
+              </div>
+            </div>
+
+            <!-- AI Contact Form -->
+            <div class="service-card">
+              <div class="service-card-icon" style="background:linear-gradient(135deg,#10B981,#059669);">
+                <span style="font-size:1.3rem;">&#128231;</span>
+              </div>
+              <div class="service-card-content">
+                <h4>Smart Contact Forms</h4>
+                <p>AI-powered forms that filter spam, auto-respond, and capture leads directly to your inbox.</p>
+                <div class="service-card-price">
+                  <span class="price">$14</span><span class="period">/month</span>
+                </div>
+              </div>
+              <div class="service-card-footer">
+                <span class="coming-soon-badge">Coming Soon</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Trial Banner -->
-        <div class="dash-banner" id="trial-banner" style="display:none;">
+        <div class="dash-banner" id="trial-banner" style="display:none;margin-top:32px;">
           <div class="dash-banner-icon">&#9200;</div>
           <div class="dash-banner-content">
             <h4>Your free trial is active!</h4>
@@ -104,7 +185,7 @@
         </div>
 
         <!-- Payment Success Banner -->
-        <div class="dash-banner dash-banner-success" id="payment-success" style="display:none;">
+        <div class="dash-banner dash-banner-success" id="payment-success" style="display:none;margin-top:32px;">
           <div class="dash-banner-icon">&#10003;</div>
           <div class="dash-banner-content">
             <h4>Payment successful!</h4>
@@ -655,6 +736,13 @@
       const embedCode = `<script src="https://heinrichstech.com/chatbot-embed.js" data-config="${clientData.configId}"><\/script>`;
       document.getElementById('embed-code-display').textContent = embedCode;
       document.getElementById('set-client-id').textContent = clientData.clientId;
+
+      // ── Overview Tab: Show chatbot product card ──
+      document.getElementById('overview-chatbot').style.display = 'block';
+      document.getElementById('overview-no-products').style.display = 'none';
+      document.getElementById('overview-chatbot-status').textContent = chatbotStatus;
+      document.getElementById('overview-chatbot-badge').textContent = chatbotStatus;
+      document.getElementById('overview-chatbot-badge').style.background = chatbotStatusColor;
     }
 
     if (configData) {
@@ -669,6 +757,7 @@
     if (isPro) {
       document.getElementById('analytics-tab').style.display = '';
       document.getElementById('leads-tab').style.display = '';
+      document.getElementById('overview-analytics-btn').style.display = '';
       loadAnalytics();
       loadLeads();
     }
