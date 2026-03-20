@@ -39,6 +39,7 @@ const TRIALS_TABLE = process.env.TRIALS_TABLE || "HSS-TRIALS";
 const CONFIGS_TABLE = process.env.CONFIGS_TABLE || "HSS-CHATBOT-CONFIGS";
 const ANALYTICS_TABLE = process.env.ANALYTICS_TABLE || "HSS-ANALYTICS";
 const LEADS_TABLE = process.env.LEADS_TABLE || "HSS-LEADS";
+const CONVOS_TABLE = process.env.CONVOS_TABLE || "HSS-CONVERSATIONS";
 const SITE_URL = "https://heinrichstech.com";
 const API_URL = process.env.API_URL || "https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod";
 
@@ -82,11 +83,27 @@ export const handler = async (event) => {
   // If no authorizer claims, parse JWT from Authorization header directly
   if (!claims.sub) {
     const authHeader = event.headers?.Authorization || event.headers?.authorization || "";
-    if (authHeader) {
+    console.log("Auth header received:", authHeader ? authHeader.substring(0, 100) : "EMPTY");
+    if (authHeader && authHeader.length > 10) {
       try {
-        const token = authHeader.replace("Bearer ", "");
-        const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
-        claims = payload;
+        const token = authHeader.replace("Bearer ", "").trim();
+        const parts = token.split(".");
+        if (parts.length >= 2 && parts[1]) {
+          // Try base64url first, then standard base64
+          let payloadStr;
+          try {
+            payloadStr = Buffer.from(parts[1], "base64url").toString("utf8");
+          } catch {
+            // Fallback: convert base64url chars to standard base64
+            const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+            payloadStr = Buffer.from(b64, "base64").toString("utf8");
+          }
+          const payload = JSON.parse(payloadStr);
+          claims = payload;
+          console.log("Parsed JWT claims:", { sub: claims.sub, email: claims.email });
+        } else {
+          console.warn("Invalid JWT structure, parts:", parts.length);
+        }
       } catch (e) {
         console.warn("Failed to parse JWT:", e.message);
       }
@@ -120,6 +137,36 @@ export const handler = async (event) => {
     if (path.endsWith("/client/leads")) {
       return await getClientLeads(userId || body.userId, body);
     }
+    if (path.endsWith("/client/import-url") && method === "POST") {
+      return await importUrlContent(body.url);
+    }
+    if (path.endsWith("/client/import-sitemap") && method === "POST") {
+      return await importSitemap(body.url);
+    }
+    
+    // ─── LIVE CHAT ROUTES ───
+    if (path.endsWith("/client/conversations")) {
+      return await getClientConversations(userId || body.userId);
+    }
+    if (path.includes("/client/conversation/") && method === "GET") {
+      const sessionId = path.split("/client/conversation/")[1];
+      return await getConversation(userId || body.userId, sessionId);
+    }
+    if (path.endsWith("/client/conversation/reply") && method === "POST") {
+      return await agentReply(userId || body.userId, body);
+    }
+    if (path.endsWith("/client/conversation/takeover") && method === "POST") {
+      return await agentTakeover(userId || body.userId, body);
+    }
+    if (path.endsWith("/client/conversation/release") && method === "POST") {
+      return await agentRelease(userId || body.userId, body);
+    }
+    if (path.endsWith("/client/conversation/typing") && method === "POST") {
+      return await agentTyping(userId || body.userId, body);
+    }
+    if (path.endsWith("/client/conversation/end") && method === "POST") {
+      return await agentEndConversation(userId || body.userId, body);
+    }
 
     // ─── ADMIN ROUTES ───
     if (path.endsWith("/admin/clients") && isAdmin) {
@@ -144,6 +191,19 @@ export const handler = async (event) => {
     // ─── CHATBOT EMBED ROUTE (public, no auth) ───
     if (path.endsWith("/chatbot/config")) {
       return await getPublicChatbotConfig(event.queryStringParameters?.configId);
+    }
+    
+    // ─── WIDGET AGENT POLL (public, no auth) ───
+    if (path.endsWith("/chatbot/agent-poll") && method === "POST") {
+      return await widgetAgentPoll(body.configId, body.sessionId);
+    }
+    
+    // ─── WIDGET CHAT CLOSE (public, no auth) ───
+    if (path.endsWith("/chatbot/close") && method === "POST") {
+      return await widgetChatClose(body.configId, body.sessionId);
+    }
+    if (path.endsWith("/chatbot/heartbeat") && method === "POST") {
+      return await widgetHeartbeat(body.configId, body.sessionId);
     }
 
     // ─── TRIAL EXPIRATION CHECK (scheduled) ───
@@ -394,6 +454,20 @@ async function updateClientProfile(userId, data) {
     ExpressionAttributeValues: values,
   }));
 
+  // Also update chatbot config headerText if businessName changed
+  if (data.businessName) {
+    const client = await getClientByIdOrEmail(userId);
+    if (client && client.configId) {
+      await ddb.send(new UpdateCommand({
+        TableName: CONFIGS_TABLE,
+        Key: { configId: client.configId },
+        UpdateExpression: "SET #ht = :ht, #bn = :bn",
+        ExpressionAttributeNames: { "#ht": "headerText", "#bn": "businessName" },
+        ExpressionAttributeValues: { ":ht": data.businessName, ":bn": data.businessName },
+      }));
+    }
+  }
+
   return respond(200, { message: "Profile updated" });
 }
 
@@ -426,12 +500,34 @@ async function updateChatbotConfig(userId, data) {
   const names = {};
   const values = {};
 
-  const allowed = ["welcomeMessage", "brandColor", "headerText", "businessInfo", "position"];
+  // ── Validate allowedDomains count against plan limits ──
+  if (data.allowedDomains !== undefined && data.allowedDomains !== null) {
+    const domainStr = data.allowedDomains.trim();
+    if (domainStr) {
+      // Count unique root domains (strip www. prefix for dedup)
+      const roots = new Set(
+        domainStr.split(',').map(d => d.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/:\d+$/, '').replace(/^www\./, '')).filter(Boolean)
+      );
+      // Determine plan limits: trial/standard = 1 root domain, pro = 3
+      const plan = client.plan || 'trial';
+      const isPaid = client.subscriptionStatus === 'active' || client.subscriptionStatus === 'canceling';
+      const isComped = client.compedPlan && client.compedUntil && new Date(client.compedUntil) > new Date();
+      const effectivePlan = isComped ? client.compedPlan : plan;
+      const maxDomains = (effectivePlan === 'pro' && (isPaid || isComped)) ? 3 : 1;
+      if (roots.size > maxDomains) {
+        return respond(400, { error: `Your ${effectivePlan === 'pro' ? 'Pro' : 'Standard/Trial'} plan allows ${maxDomains} domain${maxDomains > 1 ? 's' : ''}. You entered ${roots.size}. Upgrade to add more.` });
+      }
+    }
+  }
+
+  const allowed = ["welcomeMessage", "brandColor", "headerColor", "headerText", "personality", "businessInfo", "position", "discordWebhook", "allowedDomains"];
+  let idx = 0;
   for (const key of allowed) {
     if (data[key] !== undefined && data[key] !== null) {
-      const alias = `#${key.slice(0, 5)}`;
-      const valAlias = `:${key.slice(0, 5)}`;
-      // Map businessInfo → systemPrompt in DynamoDB
+      const alias = `#f${idx}`;
+      const valAlias = `:v${idx}`;
+      idx++;
+      // Map businessInfo → systemPrompt in DynamoDB, personality stays as-is
       const dbKey = key === "businessInfo" ? "systemPrompt" : key;
       updates.push(`${alias} = ${valAlias}`);
       names[alias] = dbKey;
@@ -608,6 +704,446 @@ async function getClientLeads(userId, params = {}) {
 }
 
 // ───────────────────────────────────────
+// LIVE CHAT: GET ALL CONVERSATIONS
+// ───────────────────────────────────────
+async function getClientConversations(userId) {
+  if (!userId) return respond(400, { error: "userId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  // Query all conversations for this client
+  const result = await ddb.send(new QueryCommand({
+    TableName: CONVOS_TABLE,
+    KeyConditionExpression: "clientId = :cid",
+    ExpressionAttributeValues: { ":cid": client.clientId },
+    ScanIndexForward: false, // newest first
+    Limit: 50,
+  }));
+  
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const twoMinsAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  
+  const conversations = (result.Items || []).map(c => {
+    // Auto-expire agent_active if no activity in 30 minutes
+    let status = c.status || 'active';
+    if (status === 'agent_active' && c.lastActivity && c.lastActivity < thirtyMinsAgo) {
+      status = 'active'; // Expired
+    }
+    
+    // Check if customer is still connected (heartbeat within last 2 mins)
+    const customerOnline = c.lastHeartbeat && c.lastHeartbeat > twoMinsAgo;
+    
+    // Get the latest USER message as preview (most recent, not first)
+    let preview = '';
+    if (c.messages) {
+      try {
+        const msgs = JSON.parse(c.messages);
+        // Find the last user message
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i].role === 'user') {
+            preview = msgs[i].content?.slice(0, 100) || '';
+            break;
+          }
+        }
+      } catch (e) {}
+    }
+    
+    return {
+      sessionId: c.sessionId,
+      status: status,
+      agentName: c.agentName || null,
+      lastActivity: c.lastActivity,
+      customerPreview: preview || c.customerPreview || '',
+      messageCount: c.messages ? JSON.parse(c.messages).length : 0,
+      customerOnline: customerOnline,
+    };
+  });
+  
+  // Filter to only show:
+  // 1. Customer is currently online (heartbeat within 2 mins), OR
+  // 2. Very recent conversation (within last 2 mins - gives time for first heartbeat)
+  // Exclude closed conversations
+  const twoMinsAgoCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const activeConvos = conversations.filter(c => 
+    c.status !== 'closed' && (c.customerOnline || c.lastActivity > twoMinsAgoCutoff)
+  );
+  
+  return respond(200, { conversations: activeConvos });
+}
+
+// ───────────────────────────────────────
+// LIVE CHAT: GET SINGLE CONVERSATION
+// ───────────────────────────────────────
+async function getConversation(userId, sessionId) {
+  if (!userId || !sessionId) return respond(400, { error: "userId and sessionId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  const result = await ddb.send(new GetCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId },
+  }));
+  
+  if (!result.Item) {
+    return respond(404, { error: "Conversation not found" });
+  }
+  
+  const convo = result.Item;
+  return respond(200, {
+    sessionId: convo.sessionId,
+    status: convo.status || 'active',
+    agentName: convo.agentName || null,
+    lastActivity: convo.lastActivity,
+    messages: convo.messages ? JSON.parse(convo.messages) : [],
+  });
+}
+
+// ───────────────────────────────────────
+// LIVE CHAT: AGENT TAKEOVER
+// ───────────────────────────────────────
+async function agentTakeover(userId, body) {
+  if (!userId || !body.sessionId) return respond(400, { error: "userId and sessionId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  const agentName = body.agentName || client.businessName || 'Support Agent';
+  
+  // Update conversation status
+  await ddb.send(new UpdateCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId: body.sessionId },
+    UpdateExpression: "SET #status = :status, agentName = :agent, lastActivity = :ts",
+    ExpressionAttributeNames: { "#status": "status" },
+    ExpressionAttributeValues: {
+      ":status": "agent_active",
+      ":agent": agentName,
+      ":ts": new Date().toISOString(),
+    },
+  }));
+  
+  return respond(200, { success: true, agentName });
+}
+
+// ───────────────────────────────────────
+// LIVE CHAT: AGENT REPLY
+// ───────────────────────────────────────
+async function agentReply(userId, body) {
+  if (!userId || !body.sessionId || !body.message) {
+    return respond(400, { error: "userId, sessionId, and message required" });
+  }
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  const agentName = body.agentName || client.businessName || 'Support Agent';
+  
+  // Get current conversation
+  const result = await ddb.send(new GetCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId: body.sessionId },
+  }));
+  
+  if (!result.Item) {
+    return respond(404, { error: "Conversation not found" });
+  }
+  
+  const messages = result.Item.messages ? JSON.parse(result.Item.messages) : [];
+  messages.push({
+    role: 'agent',
+    name: agentName,
+    content: body.message,
+    timestamp: new Date().toISOString(),
+    delivered: false,  // Mark as not delivered to widget yet
+  });
+  
+  // Update conversation - also clear typing indicator
+  await ddb.send(new UpdateCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId: body.sessionId },
+    UpdateExpression: "SET messages = :msgs, #status = :status, agentName = :agent, lastActivity = :ts REMOVE agentTyping, agentTypingName",
+    ExpressionAttributeNames: { "#status": "status" },
+    ExpressionAttributeValues: {
+      ":msgs": JSON.stringify(messages),
+      ":status": "agent_active",
+      ":agent": agentName,
+      ":ts": new Date().toISOString(),
+    },
+  }));
+  
+  return respond(200, { success: true, messageCount: messages.length });
+}
+
+// ───────────────────────────────────────
+// LIVE CHAT: RELEASE BACK TO AI
+// ───────────────────────────────────────
+async function agentRelease(userId, body) {
+  if (!userId || !body.sessionId) return respond(400, { error: "userId and sessionId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  // Update conversation status back to active (AI mode), clear agent flags
+  await ddb.send(new UpdateCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId: body.sessionId },
+    UpdateExpression: "SET #status = :status, lastActivity = :ts REMOVE agentName, agentJoinedNotified",
+    ExpressionAttributeNames: { "#status": "status" },
+    ExpressionAttributeValues: {
+      ":status": "active",
+      ":ts": new Date().toISOString(),
+    },
+  }));
+  
+  return respond(200, { success: true });
+}
+
+// ───────────────────────────────────────
+// LIVE CHAT: AGENT END CONVERSATION
+// ───────────────────────────────────────
+async function agentEndConversation(userId, body) {
+  if (!userId || !body.sessionId) return respond(400, { error: "userId and sessionId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  // Mark conversation as closed
+  await ddb.send(new UpdateCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId: body.sessionId },
+    UpdateExpression: "SET #status = :status, closedAt = :ts REMOVE agentName, agentTyping, agentTypingName, agentJoinedNotified",
+    ExpressionAttributeNames: { "#status": "status" },
+    ExpressionAttributeValues: {
+      ":status": "closed",
+      ":ts": new Date().toISOString(),
+    },
+  }));
+  
+  return respond(200, { success: true });
+}
+
+// ───────────────────────────────────────
+// LIVE CHAT: AGENT TYPING INDICATOR
+// ───────────────────────────────────────
+async function agentTyping(userId, body) {
+  if (!userId || !body.sessionId) return respond(400, { error: "userId and sessionId required" });
+  
+  const client = await getClientByIdOrEmail(userId);
+  if (!client) return respond(404, { error: "Client not found" });
+  
+  // Set typing indicator with expiration (5 seconds from now)
+  const typingExpires = Date.now() + 5000;
+  
+  await ddb.send(new UpdateCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId: client.clientId, sessionId: body.sessionId },
+    UpdateExpression: "SET agentTyping = :typing, agentTypingName = :name",
+    ExpressionAttributeValues: {
+      ":typing": typingExpires,
+      ":name": body.agentName || "Support",
+    },
+  }));
+  
+  return respond(200, { success: true });
+}
+
+// ───────────────────────────────────────
+// CLIENT: IMPORT URL CONTENT
+// ───────────────────────────────────────
+async function importUrlContent(url) {
+  if (!url) return respond(400, { error: "URL required" });
+  
+  // Validate URL
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+  } catch {
+    return respond(400, { error: "Invalid URL" });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    const resp = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'HSS-Chatbot-Trainer/1.0',
+        'Accept': 'text/html,text/plain,*/*',
+      },
+    });
+    clearTimeout(timeout);
+
+    if (!resp.ok) {
+      return respond(400, { error: `Failed to fetch: HTTP ${resp.status}` });
+    }
+
+    const html = await resp.text();
+    
+    // Extract text content from HTML
+    let content = html
+      // Remove script and style blocks
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      // Remove HTML comments
+      .replace(/<!--[\s\S]*?-->/g, '')
+      // Remove common non-content elements
+      .replace(/<(nav|header|footer|aside|noscript)[^>]*>[\s\S]*?<\/\1>/gi, '')
+      // Convert block elements to newlines
+      .replace(/<\/(p|div|h[1-6]|li|tr|br|hr)[^>]*>/gi, '\n')
+      .replace(/<(br|hr)[^>]*\/?>/gi, '\n')
+      // Remove remaining HTML tags
+      .replace(/<[^>]+>/g, ' ')
+      // Decode HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&[a-z]+;/gi, '')
+      // Clean up whitespace
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n\s*\n/g, '\n\n')
+      .trim();
+
+    // Limit content length (prevent massive pages)
+    if (content.length > 50000) {
+      content = content.substring(0, 50000) + '\n\n[Content truncated - page too large]';
+    }
+
+    if (!content || content.length < 50) {
+      return respond(400, { error: "No usable content found on page" });
+    }
+
+    return respond(200, { 
+      content,
+      url: parsedUrl.href,
+      length: content.length,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return respond(400, { error: "Request timed out" });
+    }
+    console.error('Import URL error:', err);
+    return respond(500, { error: "Failed to fetch page: " + err.message });
+  }
+}
+
+// ───────────────────────────────────────
+// CLIENT: IMPORT SITEMAP
+// ───────────────────────────────────────
+async function importSitemap(url) {
+  if (!url) return respond(400, { error: "Sitemap URL required" });
+  
+  // Validate URL
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+  } catch {
+    return respond(400, { error: "Invalid URL" });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    
+    const resp = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'HSS-Chatbot-Trainer/1.0',
+        'Accept': 'application/xml,text/xml,*/*',
+      },
+    });
+    clearTimeout(timeout);
+
+    if (!resp.ok) {
+      return respond(400, { error: `Failed to fetch sitemap: HTTP ${resp.status}` });
+    }
+
+    const xml = await resp.text();
+    
+    // Check if this is a sitemap index (contains other sitemaps)
+    const sitemapIndexMatches = xml.match(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/gi);
+    
+    let urls = [];
+    
+    if (sitemapIndexMatches && sitemapIndexMatches.length > 0) {
+      // This is a sitemap index - extract child sitemap URLs and fetch them
+      for (const match of sitemapIndexMatches.slice(0, 5)) { // Limit to 5 child sitemaps
+        const locMatch = match.match(/<loc>([^<]+)<\/loc>/i);
+        if (locMatch) {
+          try {
+            const childResp = await fetch(locMatch[1], {
+              headers: { 'User-Agent': 'HSS-Chatbot-Trainer/1.0' },
+            });
+            if (childResp.ok) {
+              const childXml = await childResp.text();
+              const childUrls = extractUrlsFromSitemap(childXml);
+              urls.push(...childUrls);
+            }
+          } catch {
+            // Skip failed child sitemaps
+          }
+        }
+      }
+    } else {
+      // Regular sitemap - extract URLs directly
+      urls = extractUrlsFromSitemap(xml);
+    }
+
+    // Filter out non-page URLs (images, videos, etc.)
+    urls = urls.filter(u => {
+      const lower = u.toLowerCase();
+      return !lower.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|pdf|mp4|mp3|zip|css|js)$/);
+    });
+
+    // Limit to 50 pages max
+    if (urls.length > 50) {
+      urls = urls.slice(0, 50);
+    }
+
+    if (urls.length === 0) {
+      return respond(400, { error: "No page URLs found in sitemap" });
+    }
+
+    return respond(200, { 
+      urls,
+      count: urls.length,
+      source: parsedUrl.href,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return respond(400, { error: "Request timed out" });
+    }
+    console.error('Import sitemap error:', err);
+    return respond(500, { error: "Failed to fetch sitemap: " + err.message });
+  }
+}
+
+function extractUrlsFromSitemap(xml) {
+  const urls = [];
+  const locMatches = xml.match(/<url>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/url>/gi) || [];
+  
+  for (const match of locMatches) {
+    const locMatch = match.match(/<loc>([^<]+)<\/loc>/i);
+    if (locMatch && locMatch[1]) {
+      urls.push(locMatch[1].trim());
+    }
+  }
+  
+  return urls;
+}
+
+// ───────────────────────────────────────
 // PUBLIC CHATBOT CONFIG (for embed script)
 // ───────────────────────────────────────
 async function getPublicChatbotConfig(configId) {
@@ -628,11 +1164,161 @@ async function getPublicChatbotConfig(configId) {
     configId: config.configId,
     businessName: config.businessName,
     brandColor: config.brandColor,
+    headerColor: config.headerColor,
     headerText: config.headerText,
     welcomeMessage: config.welcomeMessage,
     position: config.position,
     plan: config.plan,
   });
+}
+
+// ───────────────────────────────────────
+// WIDGET: POLL FOR AGENT MESSAGES
+// ───────────────────────────────────────
+async function widgetAgentPoll(configId, sessionId) {
+  if (!configId || !sessionId) {
+    return respond(400, { error: "configId and sessionId required" });
+  }
+  
+  // Get clientId from config
+  const configResult = await ddb.send(new GetCommand({
+    TableName: CONFIGS_TABLE,
+    Key: { configId },
+  }));
+  
+  if (!configResult.Item?.clientId) {
+    return respond(404, { error: "Config not found" });
+  }
+  
+  const clientId = configResult.Item.clientId;
+  
+  // Get conversation
+  const convoResult = await ddb.send(new GetCommand({
+    TableName: CONVOS_TABLE,
+    Key: { clientId, sessionId },
+  }));
+  
+  if (!convoResult.Item) {
+    return respond(200, { agentActive: false, messages: [] });
+  }
+  
+  const convo = convoResult.Item;
+  const messages = convo.messages ? JSON.parse(convo.messages) : [];
+  
+  // Check if agent is currently typing (typing expires after 5 seconds)
+  const isTyping = convo.agentTyping && convo.agentTyping > Date.now();
+  const typingName = isTyping ? (convo.agentTypingName || convo.agentName || 'Support') : null;
+  
+  // Filter to only agent messages not yet delivered
+  const agentMessages = messages
+    .filter(m => m.role === 'agent' && !m.delivered)
+    .map(m => ({ 
+      role: 'agent',
+      name: m.name || convo.agentName || 'Support',
+      content: m.content,
+      timestamp: m.timestamp 
+    }));
+  
+  // Mark messages as delivered
+  if (agentMessages.length > 0) {
+    const updatedMessages = messages.map(m => {
+      if (m.role === 'agent' && !m.delivered) {
+        return { ...m, delivered: true };
+      }
+      return m;
+    });
+    
+    await ddb.send(new UpdateCommand({
+      TableName: CONVOS_TABLE,
+      Key: { clientId, sessionId },
+      UpdateExpression: "SET messages = :msgs",
+      ExpressionAttributeValues: { ":msgs": JSON.stringify(updatedMessages) },
+    }));
+  }
+  
+  return respond(200, {
+    agentActive: convo.status === 'agent_active',
+    agentName: convo.agentName || null,
+    agentTyping: isTyping,
+    agentTypingName: typingName,
+    messages: agentMessages,
+  });
+}
+
+// ───────────────────────────────────────
+// WIDGET: CLOSE CHAT SESSION
+// ───────────────────────────────────────
+async function widgetChatClose(configId, sessionId) {
+  if (!configId || !sessionId) {
+    return respond(400, { error: "configId and sessionId required" });
+  }
+  
+  // Get clientId from config
+  const configResult = await ddb.send(new GetCommand({
+    TableName: CONFIGS_TABLE,
+    Key: { configId },
+  }));
+  
+  if (!configResult.Item?.clientId) {
+    return respond(404, { error: "Config not found" });
+  }
+  
+  const clientId = configResult.Item.clientId;
+  
+  // Update conversation status to closed
+  try {
+    await ddb.send(new UpdateCommand({
+      TableName: CONVOS_TABLE,
+      Key: { clientId, sessionId },
+      UpdateExpression: "SET #status = :status, closedAt = :ts REMOVE agentName, agentTyping, agentTypingName, agentJoinedNotified",
+      ExpressionAttributeNames: { "#status": "status" },
+      ExpressionAttributeValues: {
+        ":status": "closed",
+        ":ts": new Date().toISOString(),
+      },
+    }));
+  } catch (err) {
+    console.warn('Close conversation error:', err.message);
+  }
+  
+  return respond(200, { success: true });
+}
+
+// ───────────────────────────────────────
+// WIDGET: HEARTBEAT (customer still connected)
+// ───────────────────────────────────────
+async function widgetHeartbeat(configId, sessionId) {
+  if (!configId || !sessionId) {
+    return respond(400, { error: "configId and sessionId required" });
+  }
+  
+  // Get clientId from config
+  const configResult = await ddb.send(new GetCommand({
+    TableName: CONFIGS_TABLE,
+    Key: { configId },
+  }));
+  
+  if (!configResult.Item?.clientId) {
+    return respond(404, { error: "Config not found" });
+  }
+  
+  const clientId = configResult.Item.clientId;
+  
+  // Update last heartbeat timestamp
+  try {
+    await ddb.send(new UpdateCommand({
+      TableName: CONVOS_TABLE,
+      Key: { clientId, sessionId },
+      UpdateExpression: "SET lastHeartbeat = :ts",
+      ExpressionAttributeValues: {
+        ":ts": new Date().toISOString(),
+      },
+    }));
+  } catch (err) {
+    console.warn('Heartbeat update error:', err.message);
+  }
+  
+  return respond(200, { success: true });
 }
 
 // ───────────────────────────────────────
@@ -666,26 +1352,40 @@ async function adminUpdateClient(data) {
   const updates = [];
   const names = {};
   const values = {};
+  const removes = [];
 
-  const allowed = ["plan", "status", "businessName", "website", "industry", "phone"];
+  const allowed = ["plan", "status", "businessName", "website", "industry", "phone", "subscriptionStatus", "compedPlan", "compedUntil"];
+  let idx = 0;
   for (const key of allowed) {
     if (data[key] !== undefined) {
-      const alias = `#${key.slice(0, 3)}`;
-      const valAlias = `:${key.slice(0, 3)}`;
-      updates.push(`${alias} = ${valAlias}`);
-      names[alias] = key;
-      values[valAlias] = data[key];
+      if (data[key] === null || data[key] === '') {
+        // Remove empty/null fields
+        const rAlias = `#r${idx}`;
+        removes.push(rAlias);
+        names[rAlias] = key;
+      } else {
+        const alias = `#a${idx}`;
+        const valAlias = `:v${idx}`;
+        updates.push(`${alias} = ${valAlias}`);
+        names[alias] = key;
+        values[valAlias] = data[key];
+      }
+      idx++;
     }
   }
 
-  if (updates.length === 0) return respond(400, { error: "Nothing to update" });
+  let updateExpr = '';
+  if (updates.length > 0) updateExpr += 'SET ' + updates.join(', ');
+  if (removes.length > 0) updateExpr += ' REMOVE ' + removes.join(', ');
+
+  if (!updateExpr) return respond(400, { error: "Nothing to update" });
 
   await ddb.send(new UpdateCommand({
     TableName: CLIENTS_TABLE,
     Key: { clientId: data.clientId },
-    UpdateExpression: "SET " + updates.join(", "),
+    UpdateExpression: updateExpr,
     ExpressionAttributeNames: names,
-    ExpressionAttributeValues: values,
+    ...(Object.keys(values).length > 0 ? { ExpressionAttributeValues: values } : {}),
   }));
 
   return respond(200, { message: "Client updated" });

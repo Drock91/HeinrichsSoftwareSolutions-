@@ -17,6 +17,7 @@ const TABLE_CLIENTS   = process.env.TABLE_CLIENTS   || "HSS-CLIENTS";
 const TABLE_TRIALS    = process.env.TABLE_TRIALS    || "HSS-TRIALS";
 const TABLE_ANALYTICS = process.env.TABLE_ANALYTICS || "HSS-ANALYTICS";
 const TABLE_LEADS     = process.env.TABLE_LEADS     || "HSS-LEADS";
+const TABLE_CONVOS    = process.env.TABLE_CONVOS    || "HSS-CONVERSATIONS";
 
 // ── API Keys (from Lambda env vars) ──
 const GOOGLE_API_KEY    = process.env.GOOGLE_API_KEY || "";
@@ -165,6 +166,86 @@ function getKey(envName) {
 }
 
 // ══════════════════════════════════════════════════════
+//  CONVERSATION STORAGE + AGENT TAKEOVER
+// ══════════════════════════════════════════════════════
+
+// Get or create conversation record
+async function getConversation(clientId, sessionId) {
+  if (!clientId || !sessionId) return null;
+  
+  try {
+    const res = await ddb.send(new GetItemCommand({
+      TableName: TABLE_CONVOS,
+      Key: { clientId: { S: clientId }, sessionId: { S: sessionId } },
+    }));
+    
+    if (res.Item) {
+      return {
+        clientId: res.Item.clientId?.S,
+        sessionId: res.Item.sessionId?.S,
+        messages: res.Item.messages?.S ? JSON.parse(res.Item.messages.S) : [],
+        status: res.Item.status?.S || 'active',
+        agentName: res.Item.agentName?.S || null,
+        lastActivity: res.Item.lastActivity?.S,
+        customerPreview: res.Item.customerPreview?.S || '',
+        agentJoinedNotified: res.Item.agentJoinedNotified?.BOOL || false,
+      };
+    }
+  } catch (err) {
+    console.warn('Get conversation error:', err.message);
+  }
+  return null;
+}
+
+// Save/update conversation
+async function saveConversation(clientId, sessionId, messages, status = 'active', agentName = null, customerPreview = '') {
+  return saveConversationWithNotify(clientId, sessionId, messages, status, agentName, customerPreview, false);
+}
+
+// Save conversation with optional agentJoinedNotified flag
+async function saveConversationWithNotify(clientId, sessionId, messages, status = 'active', agentName = null, customerPreview = '', agentJoinedNotified = false) {
+  if (!clientId || !sessionId) return;
+  
+  try {
+    await ddb.send(new PutItemCommand({
+      TableName: TABLE_CONVOS,
+      Item: {
+        clientId: { S: clientId },
+        sessionId: { S: sessionId },
+        messages: { S: JSON.stringify(messages) },
+        status: { S: status },
+        lastActivity: { S: new Date().toISOString() },
+        ...(agentName && { agentName: { S: agentName } }),
+        ...(customerPreview && { customerPreview: { S: customerPreview } }),
+        ...(agentJoinedNotified && { agentJoinedNotified: { BOOL: true } }),
+      },
+    }));
+  } catch (err) {
+    console.warn('Save conversation error:', err.message);
+  }
+}
+
+// Check if agent has pending messages for this session
+async function checkAgentMessages(clientId, sessionId) {
+  const convo = await getConversation(clientId, sessionId);
+  if (!convo) return { agentTakeover: false, pendingMessages: [], alreadyNotified: false };
+  
+  // If agent is active, return their pending messages
+  if (convo.status === 'agent_active' && convo.agentName) {
+    // Find messages from agent that might be waiting
+    const agentMsgs = convo.messages.filter(m => m.role === 'agent' && !m.delivered);
+    return { 
+      agentTakeover: true, 
+      agentName: convo.agentName,
+      pendingMessages: agentMsgs,
+      alreadyNotified: convo.agentJoinedNotified || false
+    };
+  }
+  
+  return { agentTakeover: false, pendingMessages: [], alreadyNotified: false };
+}
+
+// ══════════════════════════════════════════════════════
 //  CLIENT CONFIG + TRIAL ENFORCEMENT
 // ══════════════════════════════════════════════════════
 
@@ -187,21 +268,60 @@ async function resolveClientConfig(configId, sessionId) {
     };
   }
 
-  const systemPrompt = config.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+  // Build system prompt: personality (behavior instructions) + knowledge base (site content)
+  let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+  const personality = config.personality || '';
+  const knowledgeBase = config.systemPrompt || '';
+
+  if (personality && knowledgeBase) {
+    systemPrompt = personality + '\n\n--- KNOWLEDGE BASE ---\n' + knowledgeBase;
+  } else if (personality) {
+    systemPrompt = personality;
+  } else if (knowledgeBase) {
+    systemPrompt = knowledgeBase;
+  }
+
+  const discordWebhook = config.discordWebhook || null;
+  const businessName = config.businessName || config.headerText || 'Customer';
+
+  // Track if this is a new session (for Discord notifications)
+  let isNewConversation = false;
+  if (sessionId && discordWebhook) {
+    try {
+      // Try to add session to config's counted sessions
+      await ddb.send(new UpdateItemCommand({
+        TableName: TABLE_CONFIGS,
+        Key: { configId: { S: configId } },
+        UpdateExpression: "ADD notifiedSessions :sessSet",
+        ConditionExpression: "attribute_not_exists(notifiedSessions) OR NOT contains(notifiedSessions, :sid)",
+        ExpressionAttributeValues: {
+          ":sessSet": { SS: [sessionId] },
+          ":sid": { S: sessionId },
+        },
+      }));
+      isNewConversation = true;
+      console.log(`New conversation for Discord notification: session=${sessionId} config=${configId}`);
+    } catch (err) {
+      if (err.name !== "ConditionalCheckFailedException") {
+        console.warn("Session notification tracking error:", err.message);
+      }
+      // Session already notified - that's fine
+    }
+  }
 
   // 2. Fetch client record
-  if (!config.clientId) return { systemPrompt };
+  if (!config.clientId) return { systemPrompt, discordWebhook, businessName, isNewConversation };
 
   const clientRes = await ddb.send(new GetItemCommand({
     TableName: TABLE_CLIENTS,
     Key: { clientId: { S: config.clientId } },
   }));
 
-  if (!clientRes.Item) return { systemPrompt };
+  if (!clientRes.Item) return { systemPrompt, discordWebhook, businessName, isNewConversation };
   const client = unmarshal(clientRes.Item);
 
   // 3. Paid plans — no limits, just use their prompt
-  if (client.plan !== "trial") return { systemPrompt };
+  if (client.plan !== "trial") return { systemPrompt, discordWebhook, businessName, isNewConversation };
 
   // 3.5. Comped/Free plans — check if still valid
   if (client.compedPlan && client.compedUntil) {
@@ -209,21 +329,21 @@ async function resolveClientConfig(configId, sessionId) {
     if (new Date() < compedExpires) {
       // Still within free period, treat as paid
       console.log(`Comped ${client.compedPlan} plan active until ${client.compedUntil} for client ${client.clientId}`);
-      return { systemPrompt };
+      return { systemPrompt, discordWebhook, businessName, isNewConversation };
     } else {
       console.log(`Comped plan expired for client ${client.clientId}`);
     }
   }
 
   // 4. Trial plan — enforce limits
-  if (!client.trialId) return { systemPrompt };
+  if (!client.trialId) return { systemPrompt, discordWebhook, businessName, isNewConversation };
 
   const trialRes = await ddb.send(new GetItemCommand({
     TableName: TABLE_TRIALS,
     Key: { trialId: { S: client.trialId } },
   }));
 
-  if (!trialRes.Item) return { systemPrompt };
+  if (!trialRes.Item) return { systemPrompt, discordWebhook, businessName, isNewConversation };
   const trial = unmarshal(trialRes.Item);
 
   // Check expiration
@@ -243,7 +363,7 @@ async function resolveClientConfig(configId, sessionId) {
     };
   }
 
-  // 5. Track unique session as one conversation
+  // 5. Track unique session as one conversation (for trial limits)
   if (sessionId) {
     try {
       await ddb.send(new UpdateItemCommand({
@@ -271,7 +391,7 @@ async function resolveClientConfig(configId, sessionId) {
     }
   }
 
-  return { systemPrompt };
+  return { systemPrompt, discordWebhook, businessName, isNewConversation };
 }
 
 // ══════════════════════════════════════════════════════
@@ -331,11 +451,50 @@ export const handler = async (event) => {
     return respond(400, { error: "No valid messages" });
   }
 
+  // Get user's LATEST message (last user message in the array)
+  const userMessages = cleanMessages.filter(m => m.role === 'user');
+  const userMessage = userMessages.length > 0 ? userMessages[userMessages.length - 1].content : '';
+
   // ── Resolve system prompt + enforce trial limits ──
   let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+  let discordWebhook = null;
+  let businessName = 'Customer';
+  let isNewConversation = false;
+  let clientId = null;
 
   if (configId) {
     try {
+      // Get clientId from config
+      const cfgRes = await ddb.send(new GetItemCommand({
+        TableName: TABLE_CONFIGS,
+        Key: { configId: { S: configId } },
+      }));
+      if (cfgRes.Item?.clientId?.S) {
+        clientId = cfgRes.Item.clientId.S;
+      }
+
+      // ── Domain restriction: only allow chatbot on authorized websites ──
+      if (cfgRes.Item?.allowedDomains?.S) {
+        const rawOrigin = (event.headers?.origin || event.headers?.Origin || event.headers?.referer || event.headers?.Referer || '').toLowerCase();
+        const allowedList = cfgRes.Item.allowedDomains.S.split(',').map(d => d.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/:\d+$/, '')).filter(Boolean);
+        if (allowedList.length > 0) {
+          const originHost = rawOrigin.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/:\d+$/, '');
+          const domainOk = allowedList.some(d => originHost === d || originHost.endsWith('.' + d));
+          if (!domainOk) {
+            console.warn(`Domain rejected: origin="${originHost}" allowed=[${allowedList}] configId=${configId}`);
+            return respond(403, { error: "This chatbot is not authorized for this domain." });
+          }
+        }
+      } else {
+        // No allowedDomains configured — block in production (except HSS website itself)
+        const rawOrigin = (event.headers?.origin || event.headers?.Origin || event.headers?.referer || event.headers?.Referer || '').toLowerCase();
+        const originHost = rawOrigin.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/:\d+$/, '');
+        if (originHost && !originHost.includes('heinrichstech.com') && !originHost.includes('localhost')) {
+          console.warn(`No allowedDomains configured, blocking external origin="${originHost}" configId=${configId}`);
+          return respond(403, { error: "This chatbot has no authorized domains configured. Please set up allowed domains in your dashboard." });
+        }
+      }
+
       const resolved = await resolveClientConfig(configId, sessionId);
 
       // If the resolver returned a canned reply (inactive/expired/over-limit),
@@ -347,6 +506,43 @@ export const handler = async (event) => {
       if (resolved.systemPrompt) {
         systemPrompt = resolved.systemPrompt;
       }
+      if (resolved.discordWebhook) {
+        discordWebhook = resolved.discordWebhook;
+      }
+      if (resolved.businessName) {
+        businessName = resolved.businessName;
+      }
+      isNewConversation = resolved.isNewConversation || false;
+      
+      // ── Check for agent takeover ──
+      if (clientId && sessionId) {
+        const agentCheck = await checkAgentMessages(clientId, sessionId);
+        if (agentCheck.agentTakeover) {
+          // Agent has taken over - save user message
+          const convo = await getConversation(clientId, sessionId);
+          const msgs = convo?.messages || [];
+          msgs.push({ role: 'user', content: userMessage, timestamp: new Date().toISOString() });
+          
+          // Update customerPreview to latest user message
+          const latestUserMsg = userMessage.slice(0, 100);
+          
+          // Only show "joined" notification if this is the first message after takeover
+          if (!agentCheck.alreadyNotified) {
+            await saveConversationWithNotify(clientId, sessionId, msgs, 'agent_active', agentCheck.agentName, latestUserMsg, true);
+          } else {
+            // Already notified - just save message
+            await saveConversationWithNotify(clientId, sessionId, msgs, 'agent_active', agentCheck.agentName, latestUserMsg, true);
+          }
+          
+          // Return empty response - widget shows agent banner and will poll for replies
+          return respond(200, { 
+            reply: '',
+            agentActive: true,
+            agentName: agentCheck.agentName,
+            waitingForAgent: true
+          });
+        }
+      }
     } catch (err) {
       console.error("Config/trial lookup failed:", err.message);
       // Don't block the chat — fall back to default prompt
@@ -355,7 +551,6 @@ export const handler = async (event) => {
 
   // ── Try each provider in priority order (failover chain) ──
   const errors = [];
-  const userMessage = cleanMessages.find(m => m.role === 'user')?.content || '';
 
   for (const provider of PROVIDERS) {
     const apiKey = getKey(provider.keyEnv);
@@ -372,6 +567,22 @@ export const handler = async (event) => {
         // Check for lead capture (fire and forget)
         const conversationContext = cleanMessages.map(m => `${m.role}: ${m.content}`).join('\n');
         checkAndSaveLead(configId, cleanMessages, conversationContext).catch(e => console.warn('Lead capture failed:', e.message));
+        
+        // Send Discord notification for new conversations (fire and forget)
+        if (isNewConversation && discordWebhook) {
+          sendDiscordNotification(discordWebhook, businessName, userMessage).catch(e => console.warn('Discord notification failed:', e.message));
+        }
+        
+        // Save conversation for live chat (fire and forget)
+        if (clientId && sessionId) {
+          const convo = await getConversation(clientId, sessionId);
+          const msgs = convo?.messages || [];
+          msgs.push({ role: 'user', content: userMessage, timestamp: new Date().toISOString() });
+          msgs.push({ role: 'assistant', content: reply, timestamp: new Date().toISOString() });
+          // Use the latest user message for preview (not the first)
+          saveConversation(clientId, sessionId, msgs, 'active', null, userMessage.slice(0, 100))
+            .catch(e => console.warn('Save conversation failed:', e.message));
+        }
       }
       
       return respond(200, { reply });
@@ -576,6 +787,49 @@ async function logAnalyticsEvent(configId, userMessage, aiReply, provider) {
   }));
   
   console.log(`Analytics logged for client ${clientId}`);
+}
+
+// ══════════════════════════════════════════════════════
+//  DISCORD WEBHOOK NOTIFICATIONS
+// ══════════════════════════════════════════════════════
+async function sendDiscordNotification(webhookUrl, businessName, userMessage) {
+  if (!webhookUrl || !webhookUrl.startsWith('https://discord.com/api/webhooks/')) {
+    console.log('Discord webhook skipped - invalid URL:', webhookUrl?.slice(0, 50));
+    return;
+  }
+  
+  const msgPreview = userMessage?.slice(0, 500) || '(empty message)';
+  const ts = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+  
+  const payload = {
+    username: 'HSS Chatbot',
+    embeds: [{
+      title: "💬 New Chat Started",
+      description: "Someone started a conversation with your chatbot!",
+      color: 0xF1C40F,
+      fields: [{ name: "First Message", value: msgPreview, inline: false }],
+      footer: { text: `${businessName} • ${ts}` },
+      timestamp: new Date().toISOString()
+    }]
+  };
+  
+  try {
+    console.log('Sending Discord notification to:', webhookUrl.slice(0, 60) + '...');
+    const resp = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.warn(`Discord webhook failed (${resp.status}):`, errText);
+    } else {
+      console.log('Discord notification sent successfully');
+    }
+  } catch (err) {
+    console.warn('Discord webhook error:', err.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════

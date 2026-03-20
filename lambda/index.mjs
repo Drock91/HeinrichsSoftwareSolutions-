@@ -390,6 +390,20 @@ async function updateClientProfile(userId, data) {
     ExpressionAttributeValues: values,
   }));
 
+  // Also update chatbot config headerText if businessName changed
+  if (data.businessName) {
+    const client = await getClientByIdOrEmail(userId);
+    if (client && client.configId) {
+      await ddb.send(new UpdateCommand({
+        TableName: CONFIGS_TABLE,
+        Key: { configId: client.configId },
+        UpdateExpression: "SET #ht = :ht, #bn = :bn",
+        ExpressionAttributeNames: { "#ht": "headerText", "#bn": "businessName" },
+        ExpressionAttributeValues: { ":ht": data.businessName, ":bn": data.businessName },
+      }));
+    }
+  }
+
   return respond(200, { message: "Profile updated" });
 }
 
@@ -422,11 +436,13 @@ async function updateChatbotConfig(userId, data) {
   const names = {};
   const values = {};
 
-  const allowed = ["welcomeMessage", "brandColor", "headerText", "businessInfo", "position"];
+  const allowed = ["welcomeMessage", "brandColor", "headerColor", "headerText", "businessInfo", "position"];
+  let idx = 0;
   for (const key of allowed) {
     if (data[key] !== undefined && data[key] !== null) {
-      const alias = `#${key.slice(0, 5)}`;
-      const valAlias = `:${key.slice(0, 5)}`;
+      const alias = `#f${idx}`;
+      const valAlias = `:v${idx}`;
+      idx++;
       // Map businessInfo → systemPrompt in DynamoDB
       const dbKey = key === "businessInfo" ? "systemPrompt" : key;
       updates.push(`${alias} = ${valAlias}`);
@@ -564,6 +580,7 @@ async function getPublicChatbotConfig(configId) {
     configId: config.configId,
     businessName: config.businessName,
     brandColor: config.brandColor,
+    headerColor: config.headerColor,
     headerText: config.headerText,
     welcomeMessage: config.welcomeMessage,
     position: config.position,

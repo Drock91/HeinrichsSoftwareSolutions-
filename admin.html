@@ -102,8 +102,8 @@
       <!-- ─── CLIENTS TAB ─── -->
       <div class="dash-panel" id="tab-clients">
         <div class="dash-section">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-            <h3>All Clients</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+            <h3 style="margin:0;">Clients</h3>
             <div class="admin-filters">
               <select id="filter-plan" class="admin-select">
                 <option value="">All Plans</option>
@@ -115,24 +115,8 @@
               <input type="text" id="filter-search" placeholder="Search by name or email..." class="admin-search">
             </div>
           </div>
-
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Business</th>
-                  <th>Email</th>
-                  <th>Plan</th>
-                  <th>Status</th>
-                  <th>Industry</th>
-                  <th>Joined</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="clients-tbody">
-                <tr><td colspan="7" class="text-muted">Loading clients...</td></tr>
-              </tbody>
-            </table>
+          <div id="clients-list" style="display:flex;flex-direction:column;gap:16px;">
+            <p class="text-muted">Loading clients...</p>
           </div>
         </div>
       </div>
@@ -227,6 +211,10 @@
           <label for="edit-businessName">Business Name</label>
           <input type="text" id="edit-businessName">
         </div>
+        <div class="form-group">
+          <label for="edit-email">Email</label>
+          <input type="email" id="edit-email" readonly style="opacity:0.6;">
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label for="edit-plan">Plan</label>
@@ -262,8 +250,24 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="edit-email">Email</label>
-            <input type="email" id="edit-email" readonly style="opacity:0.6;">
+            <label for="edit-phone">Phone</label>
+            <input type="tel" id="edit-phone" placeholder="(555) 123-4567">
+          </div>
+        </div>
+        <hr style="border:none;border-top:1px solid #e0e0e0;margin:16px 0;">
+        <p style="font-size:0.85rem;font-weight:600;color:var(--dark-navy);margin-bottom:8px;">Comp / Override</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-compedPlan">Comped Plan</label>
+            <select id="edit-compedPlan">
+              <option value="">None</option>
+              <option value="standard">Standard</option>
+              <option value="pro">Pro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-compedUntil">Comped Until</label>
+            <input type="date" id="edit-compedUntil">
           </div>
         </div>
         <div id="edit-error" class="form-error" style="display:none;"></div>
@@ -292,17 +296,19 @@
   <script>
   // ──── CONFIG ────
   const API_BASE = 'https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod';
+
+  // ──── AUTH CHECK ────
   if (!window.hssAuth || !window.hssAuth.isTokenValid()) {
-    if (window.hssAuth) window.hssAuth.clearSession();
     window.location.replace('login.html');
     throw new Error('redirect');
   }
+  
   const idToken = localStorage.getItem('hss_id_token');
-
-  // Verify this user is actually an admin
   const _adminPayload = window.hssAuth.getPayload() || {};
   const _adminGroups = _adminPayload['cognito:groups'] || [];
   const _isAdmin = Array.isArray(_adminGroups) ? _adminGroups.includes('admin') : String(_adminGroups).includes('admin');
+
+  // Redirect non-admins
   if (!_isAdmin) {
     window.location.replace('dashboard.html');
     throw new Error('redirect');
@@ -312,8 +318,15 @@
   let allClients = [];
   let allTrials = [];
 
-  // ──── INIT ────
+  // ──── DOM READY ────
   document.addEventListener('DOMContentLoaded', async () => {
+    // Set up logout
+    document.getElementById('logout-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.hssAuth.clearSession();
+      window.location.replace('login.html');
+    });
+
     await loadAdminData();
   });
 
@@ -370,7 +383,7 @@
   }
 
   function renderClients(filter = '', search = '') {
-    const tbody = document.getElementById('clients-tbody');
+    const listEl = document.getElementById('clients-list');
     let filtered = allClients;
 
     if (filter) filtered = filtered.filter(c => c.plan === filter);
@@ -383,24 +396,87 @@
     }
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-muted">No clients found</td></tr>';
+      listEl.innerHTML = '<p class="text-muted">No clients found</p>';
       return;
     }
 
-    tbody.innerHTML = filtered.map(c => {
+    listEl.innerHTML = filtered.map(c => {
       const planBadge = getPlanBadge(c.plan || 'trial');
-      const statusBadge = getStatusBadge(c.subscriptionStatus || 'none');
       const joined = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—';
+      const trial = allTrials.find(t => t.clientId === c.clientId);
+      const isComped = c.compedPlan && c.compedUntil && new Date(c.compedUntil) > new Date();
 
-      return `<tr>
-        <td><strong>${esc(c.businessName || '—')}</strong></td>
-        <td>${esc(c.email || '—')}</td>
-        <td>${planBadge}</td>
-        <td>${statusBadge}</td>
-        <td>${esc(c.industry || '—')}</td>
-        <td>${joined}</td>
-        <td><button class="admin-btn" onclick="editClient('${c.clientId}')">Edit</button></td>
-      </tr>`;
+      // Build products list
+      let products = '';
+
+      // AI Chatbot product
+      if (c.configId) {
+        const chatbotPlan = c.plan || 'trial';
+        let chatbotStatus = '';
+        if (c.plan === 'trial' && trial) {
+          const daysLeft = Math.max(0, Math.ceil((new Date(trial.expiresDate) - new Date()) / 86400000));
+          const convos = trial.conversationCount || 0;
+          const maxConvos = trial.maxConversations || 50;
+          chatbotStatus = `<span style="font-size:0.8rem;color:var(--mid-gray);">${daysLeft} days left &bull; ${convos}/${maxConvos} convos</span>`;
+        } else if (c.plan === 'standard' || c.plan === 'pro') {
+          chatbotStatus = `<span style="font-size:0.8rem;color:#2ecc71;">Active subscription</span>`;
+        } else if (c.plan === 'expired') {
+          chatbotStatus = `<span style="font-size:0.8rem;color:#e74c3c;">Expired</span>`;
+        }
+        if (isComped) {
+          chatbotStatus += ` <span style="font-size:0.7rem;background:#9b59b6;color:#fff;padding:2px 6px;border-radius:4px;margin-left:4px;">COMPED ${c.compedPlan.toUpperCase()} until ${new Date(c.compedUntil).toLocaleDateString()}</span>`;
+        }
+
+        products += `
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8f9fa;border-radius:8px;border:1px solid #eee;">
+            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#D4AF37,#B8960C);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:1.1rem;">&#128172;</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <strong style="font-size:0.9rem;color:var(--dark-navy);">AI Chatbot</strong>
+                ${getPlanBadge(chatbotPlan)}
+              </div>
+              <div style="margin-top:2px;">${chatbotStatus}</div>
+            </div>
+            <code style="font-size:0.7rem;color:var(--mid-gray);background:#eee;padding:2px 6px;border-radius:4px;">${c.configId}</code>
+          </div>`;
+      }
+
+      // Future products placeholder (extensible)
+      // if (c.uptimeMonitorId) { products += `...uptime monitor card...`; }
+
+      if (!products) {
+        products = `<div style="padding:12px 16px;background:#f8f9fa;border-radius:8px;border:1px dashed #ddd;color:var(--mid-gray);font-size:0.85rem;text-align:center;">No products yet</div>`;
+      }
+
+      return `
+        <div style="background:var(--white);border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;transition:box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseleave="this.style.boxShadow='none'">
+          <!-- Client Header -->
+          <div style="padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid #f0f0f0;">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--dark-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;font-family:'Oswald',sans-serif;flex-shrink:0;">
+              ${esc((c.businessName || '?')[0].toUpperCase())}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <strong style="font-size:1.05rem;color:var(--dark-navy);">${esc(c.businessName || '—')}</strong>
+                ${planBadge}
+              </div>
+              <div style="font-size:0.85rem;color:var(--mid-gray);margin-top:2px;">
+                ${esc(c.email || '—')} &bull; Joined ${joined}
+                ${c.phone ? ' &bull; ' + esc(c.phone) : ''}
+              </div>
+            </div>
+            <button class="admin-btn" onclick="editClient('${c.clientId}')">Edit</button>
+          </div>
+          <!-- Products -->
+          <div style="padding:12px 20px 16px;">
+            <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--mid-gray);font-weight:600;margin-bottom:8px;">Products</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              ${products}
+            </div>
+          </div>
+        </div>`;
     }).join('');
   }
 
@@ -509,10 +585,13 @@
 
     document.getElementById('edit-clientId').value = client.clientId;
     document.getElementById('edit-businessName').value = client.businessName || '';
+    document.getElementById('edit-email').value = client.email || '';
     document.getElementById('edit-plan').value = client.plan || 'trial';
     document.getElementById('edit-subscriptionStatus').value = client.subscriptionStatus || 'none';
     document.getElementById('edit-industry').value = client.industry || 'general';
-    document.getElementById('edit-email').value = client.email || '';
+    document.getElementById('edit-phone').value = client.phone || '';
+    document.getElementById('edit-compedPlan').value = client.compedPlan || '';
+    document.getElementById('edit-compedUntil').value = client.compedUntil ? client.compedUntil.slice(0, 10) : '';
     document.getElementById('edit-error').style.display = 'none';
     document.getElementById('edit-modal').style.display = 'flex';
   }
@@ -536,6 +615,9 @@
           plan: document.getElementById('edit-plan').value,
           subscriptionStatus: document.getElementById('edit-subscriptionStatus').value,
           industry: document.getElementById('edit-industry').value,
+          phone: document.getElementById('edit-phone').value,
+          compedPlan: document.getElementById('edit-compedPlan').value || null,
+          compedUntil: document.getElementById('edit-compedUntil').value ? new Date(document.getElementById('edit-compedUntil').value).toISOString() : null,
         }),
       });
 
@@ -625,13 +707,6 @@
     div.textContent = str;
     return div.innerHTML;
   }
-
-  // ──── LOGOUT ────
-  document.getElementById('logout-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.hssAuth.clearSession();
-    window.location.replace('login.html');
-  });
   </script>
 </body>
 </html>

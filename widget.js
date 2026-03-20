@@ -33,6 +33,9 @@
   let chatConfig = null;
   let messages = [];
   let sessionId = `hss_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  let agentActive = false;
+  let agentName = null;
+  let agentPollInterval = null;
 
   // Create styles
   const styles = document.createElement('style');
@@ -73,9 +76,15 @@
     #hss-chat-toggle svg {
       width: 28px;
       height: 28px;
-      stroke: ${options.headerColor};
-      fill: none;
-      stroke-width: 2;
+      stroke: #001F3F !important;
+      stroke-width: 2px !important;
+      fill: none !important;
+      display: block;
+    }
+    #hss-chat-toggle svg path,
+    #hss-chat-toggle svg line {
+      stroke: inherit !important;
+      stroke-width: inherit !important;
     }
     
     @keyframes hss-pulse {
@@ -271,6 +280,34 @@
       padding: 0 4px;
     }
     
+    /* Agent Messages */
+    .hss-msg-agent {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+    .hss-msg-agent .hss-bubble {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: #fff;
+      border-radius: 16px 16px 16px 4px;
+      border: none;
+    }
+    .hss-agent-label {
+      font-size: 0.7rem;
+      color: #27ae60;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    
+    /* Agent Banner */
+    #hss-agent-banner {
+      display: none;
+      background: linear-gradient(90deg, #2ecc71, #27ae60);
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    
     /* Typing Indicator */
     #hss-typing {
       padding: 8px 16px;
@@ -286,15 +323,21 @@
       padding: 10px 16px;
       border: 1px solid #E5E7EB;
     }
-    .hss-typing-indicator span {
+    .hss-typing-indicator span:not(.hss-typing-label) {
       width: 7px;
       height: 7px;
       background: ${options.headerColor};
       border-radius: 50%;
       animation: hss-typing-bounce 1.4s ease-in-out infinite;
     }
-    .hss-typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-    .hss-typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    .hss-typing-indicator span:nth-child(3) { animation-delay: 0.2s; }
+    .hss-typing-indicator span:nth-child(4) { animation-delay: 0.4s; }
+    .hss-typing-label {
+      animation: none !important;
+      width: auto !important;
+      height: auto !important;
+      background: none !important;
+    }
     @keyframes hss-typing-bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
       30% { transform: translateY(-6px); opacity: 1; }
@@ -350,8 +393,15 @@
     #hss-chat-send svg {
       width: 20px;
       height: 20px;
-      stroke: ${options.headerColor};
-      fill: none;
+      stroke: #001F3F !important;
+      stroke-width: 2px !important;
+      fill: none !important;
+      display: block;
+    }
+    #hss-chat-send svg line,
+    #hss-chat-send svg polygon {
+      stroke: inherit !important;
+      stroke-width: inherit !important;
     }
     
     /* Powered By */
@@ -380,12 +430,12 @@
   widget.innerHTML = `
     <!-- Toggle Button -->
     <button id="hss-chat-toggle" aria-label="Open chat assistant" title="Chat with our AI Assistant">
-      <svg id="hss-icon-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <svg id="hss-icon-open" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" style="width:28px !important;height:28px !important;min-width:28px !important;min-height:28px !important;display:block !important;visibility:visible !important;opacity:1 !important;position:relative;z-index:10;">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="#001F3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#001F3F !important;"/>
       </svg>
-      <svg id="hss-icon-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
+      <svg id="hss-icon-close" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" style="width:28px !important;height:28px !important;min-width:28px !important;min-height:28px !important;display:none;visibility:visible !important;opacity:1 !important;position:relative;z-index:10;">
+        <line x1="18" y1="6" x2="6" y2="18" fill="none" stroke="#001F3F" stroke-width="2" style="stroke:#001F3F !important;"/>
+        <line x1="6" y1="6" x2="18" y2="18" fill="none" stroke="#001F3F" stroke-width="2" style="stroke:#001F3F !important;"/>
       </svg>
     </button>
 
@@ -414,10 +464,15 @@
         </button>
       </div>
 
+      <div id="hss-agent-banner">
+        <span id="hss-agent-banner-text">Live agent joined</span>
+      </div>
+
       <div id="hss-chat-messages"></div>
 
       <div id="hss-typing">
         <div class="hss-typing-indicator">
+          <span class="hss-typing-label" style="font-size:0.75rem;color:#6B7280;margin-right:8px;"></span>
           <span></span><span></span><span></span>
         </div>
       </div>
@@ -425,9 +480,9 @@
       <form id="hss-chat-form">
         <input type="text" id="hss-chat-input" placeholder="Type your message..." autocomplete="off" maxlength="1000" />
         <button type="submit" id="hss-chat-send" aria-label="Send message">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2" fill="${options.headerColor}"/>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" style="width:20px !important;height:20px !important;min-width:20px !important;min-height:20px !important;display:block !important;visibility:visible !important;opacity:1 !important;position:relative;z-index:10;">
+            <line x1="22" y1="2" x2="11" y2="13" fill="none" stroke="#001F3F" stroke-width="2" style="stroke:#001F3F !important;"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2" fill="none" stroke="#001F3F" stroke-width="2" style="stroke:#001F3F !important;"/>
           </svg>
         </button>
       </form>
@@ -458,9 +513,53 @@
       const data = await resp.json();
       chatConfig = data;
       headerTitle.textContent = chatConfig.headerText || chatConfig.businessName || 'AI Assistant';
+      
+      // Apply dynamic colors from dashboard config (brandColor or primaryColor)
+      const primaryClr = chatConfig.brandColor || chatConfig.primaryColor;
+      if (primaryClr) {
+        const pc = primaryClr;
+        // Update toggle button
+        const toggle = document.getElementById('hss-chat-toggle');
+        if (toggle) toggle.style.background = `linear-gradient(135deg, ${pc} 0%, ${darkenColor(pc, 20)} 100%)`;
+        // Update send button
+        const sendBtn = document.getElementById('hss-chat-send');
+        if (sendBtn) sendBtn.style.background = `linear-gradient(135deg, ${pc}, ${darkenColor(pc, 20)})`;
+        // Update avatar
+        const avatar = document.querySelector('.hss-avatar');
+        if (avatar) avatar.style.background = pc;
+        // Update typing dots
+        const dots = document.querySelectorAll('.hss-typing-indicator span');
+        dots.forEach(dot => dot.style.background = chatConfig.headerColor || '#001F3F');
+      }
+      if (chatConfig.headerColor) {
+        const hc = chatConfig.headerColor;
+        // Update header
+        const header = document.getElementById('hss-chat-header');
+        if (header) header.style.background = `linear-gradient(135deg, ${hc} 0%, ${lightenColor(hc, 20)} 100%)`;
+      }
     } catch (err) {
       console.error('HSS Chatbot: Failed to load config', err);
     }
+  }
+  
+  // Helper to darken a hex color
+  function darkenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max((num >> 16) - amt, 0);
+    const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
+    const B = Math.max((num & 0x0000FF) - amt, 0);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+  }
+  
+  // Helper to lighten a hex color
+  function lightenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min((num >> 16) + amt, 255);
+    const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
+    const B = Math.min((num & 0x0000FF) + amt, 255);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
   }
 
   // Toggle chat window
@@ -477,19 +576,33 @@
       if (messages.length === 0 && chatConfig?.welcomeMessage) {
         addMessage('bot', chatConfig.welcomeMessage);
       }
+      
+      // Start polling for agent messages
+      startAgentPolling();
     } else {
       chatWindow.classList.remove('hss-open');
       iconOpen.style.display = 'block';
       iconClose.style.display = 'none';
+      
+      // Stop polling when closed
+      stopAgentPolling();
     }
   }
 
   // Add message to chat
-  function addMessage(role, text) {
+  function addMessage(role, text, agentNameLabel) {
     messages.push({ role, content: text });
     
     const msgDiv = document.createElement('div');
     msgDiv.className = `hss-msg hss-msg-${role}`;
+    
+    // Add agent label if it's an agent message
+    if (role === 'agent' && agentNameLabel) {
+      const label = document.createElement('div');
+      label.className = 'hss-agent-label';
+      label.textContent = `👨‍💼 ${agentNameLabel}`;
+      msgDiv.appendChild(label);
+    }
     
     const bubble = document.createElement('div');
     bubble.className = 'hss-bubble';
@@ -511,6 +624,10 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
+      // Markdown links [text](url)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#f1c40f;text-decoration:underline;">$1</a>')
+      // Plain URLs
+      .replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?"'\])])/g, '<a href="$1" target="_blank" rel="noopener" style="color:#f1c40f;text-decoration:underline;">$1</a>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/`(.*?)`/g, '<code>$1</code>')
@@ -527,6 +644,7 @@
   // Send message to API
   async function sendMessage(userText) {
     addMessage('user', userText);
+    startHeartbeat(); // Start heartbeat when customer sends first message
     setTyping(true);
 
     // Build message history for context (last 20)
@@ -553,13 +671,160 @@
 
       const data = await res.json();
       setTyping(false);
-      addMessage('bot', data.reply || "Sorry, I couldn't generate a response. Please try again.");
+      
+      // Handle agent takeover responses
+      if (data.agentActive) {
+        agentActive = true;
+        agentName = data.agentName;
+        
+        // Show agent banner
+        const banner = document.getElementById('hss-agent-banner');
+        const bannerText = document.getElementById('hss-agent-banner-text');
+        if (banner && bannerText) {
+          bannerText.textContent = `${agentName || 'Support agent'} is responding`;
+          banner.style.display = 'block';
+        }
+        
+        // Only show reply if there's actual content (not empty waiting response)
+        if (data.reply && data.reply.trim()) {
+          addMessage('bot', data.reply);
+        }
+        // If waitingForAgent, don't show anything - agent will send message via poll
+      } else {
+        addMessage('bot', data.reply || "Sorry, I couldn't generate a response. Please try again.");
+      }
 
     } catch (err) {
       console.error('HSS Chatbot error:', err);
       setTyping(false);
       addMessage('bot', "I'm having trouble connecting right now. Please try again in a moment.");
     }
+  }
+
+  // Poll for agent messages
+  async function pollAgentMessages() {
+    if (!isOpen || messages.length === 0) return;
+    
+    try {
+      const res = await fetch(`${API_BASE}/chatbot/agent-poll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          configId: options.configId,
+          sessionId: sessionId
+        })
+      });
+      
+      if (!res.ok) return;
+      
+      const data = await res.json();
+      
+      // Update agent status
+      const wasAgentActive = agentActive;
+      agentActive = data.agentActive;
+      agentName = data.agentName;
+      
+      // Show/hide agent banner
+      const banner = document.getElementById('hss-agent-banner');
+      const bannerText = document.getElementById('hss-agent-banner-text');
+      if (agentActive && !wasAgentActive) {
+        bannerText.textContent = `${agentName || 'Support agent'} joined the chat`;
+        banner.style.display = 'block';
+      } else if (!agentActive && wasAgentActive) {
+        banner.style.display = 'none';
+      }
+      
+      // Show/hide agent typing indicator
+      const typingEl = document.getElementById('hss-typing');
+      if (data.agentTyping && agentActive) {
+        // Show typing indicator with agent name
+        typingEl.style.display = 'block';
+        const typingLabel = typingEl.querySelector('.hss-typing-label');
+        if (typingLabel) {
+          typingLabel.textContent = `${data.agentTypingName || agentName || 'Agent'} is typing`;
+        }
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } else if (agentActive) {
+        // Agent active but not typing - hide indicator
+        typingEl.style.display = 'none';
+      }
+      
+      // Add new agent messages
+      if (data.messages && data.messages.length > 0) {
+        // Hide typing indicator when message arrives
+        typingEl.style.display = 'none';
+        for (const msg of data.messages) {
+          addMessage('agent', msg.content, msg.name || agentName);
+        }
+      }
+    } catch (err) {
+      // Silently fail - polling errors shouldn't disrupt the user
+      console.warn('Agent poll error:', err);
+    }
+  }
+  
+  // Start agent polling
+  function startAgentPolling() {
+    if (agentPollInterval) return;
+    agentPollInterval = setInterval(pollAgentMessages, 2500);
+  }
+  
+  // Stop agent polling
+  function stopAgentPolling() {
+    if (agentPollInterval) {
+      clearInterval(agentPollInterval);
+      agentPollInterval = null;
+    }
+  }
+  
+  // Notify server that chat was closed
+  function notifyChatClosed() {
+    if (messages.length === 0) return; // No conversation to close
+    
+    // Use sendBeacon for reliability on page unload
+    const data = JSON.stringify({
+      configId: options.configId,
+      sessionId: sessionId
+    });
+    
+    // sendBeacon needs a Blob to set Content-Type properly
+    const blob = new Blob([data], { type: 'application/json' });
+    
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(`${API_BASE}/chatbot/close`, blob);
+    } else {
+      // Fallback for older browsers
+      fetch(`${API_BASE}/chatbot/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: data,
+        keepalive: true
+      }).catch(() => {});
+    }
+  }
+  
+  // Notify server when page is closed/navigated away
+  window.addEventListener('beforeunload', notifyChatClosed);
+  window.addEventListener('pagehide', notifyChatClosed);
+  window.addEventListener('unload', notifyChatClosed);
+  
+  // Send heartbeat to show customer is online
+  function sendHeartbeat() {
+    if (messages.length === 0) return;
+    fetch(`${API_BASE}/chatbot/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ configId: options.configId, sessionId: sessionId }),
+      keepalive: true
+    }).catch(() => {});
+  }
+  
+  // Send periodic heartbeat so server knows we're still here
+  let heartbeatInterval = null;
+  function startHeartbeat() {
+    if (heartbeatInterval) return;
+    sendHeartbeat(); // Send immediately
+    heartbeatInterval = setInterval(sendHeartbeat, 30000); // Then every 30 seconds
   }
 
   // Event listeners

@@ -235,6 +235,21 @@ img { max-width: 100%; height: auto; }
 .service-card h3 { font-size: 1.1rem; color: var(--gold); margin-bottom: 12px; }
 .service-card p { color: var(--mid-gray); font-size: 0.95rem; line-height: 1.6; }
 
+/* Dark section service cards (homepage "What We Do") */
+.section-dark .service-card {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,215,0,0.12) !important;
+  border-left: 4px solid var(--gold) !important;
+  border-radius: 8px !important;
+}
+.section-dark .service-card:hover {
+  border-color: var(--gold) !important;
+  border-left: 4px solid var(--gold) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+}
+.section-dark .service-card h3 { color: var(--gold); }
+.section-dark .service-card p { color: var(--mid-gray); }
+
 /* ── GOV CONTRACTING ── */
 .contracting-badge-row { display: flex; gap: 24px; justify-content: center; margin-bottom: 48px; flex-wrap: wrap; }
 .contract-badge {
@@ -544,6 +559,21 @@ img { max-width: 100%; height: auto; }
   padding: 5px 0 5px 20px; position: relative; color: #555; font-size: 0.92rem;
 }
 .sd-features li::before { content: '▸'; position: absolute; left: 0; color: var(--gold); font-weight: bold; }
+
+/* Dark section service detail cards */
+.section-dark .service-detail-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-left: 4px solid var(--gold);
+}
+.section-dark .service-detail-card:hover {
+  border-color: var(--gold);
+  border-left: 4px solid var(--gold);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+}
+.section-dark .sd-content h3 { color: var(--gold); }
+.section-dark .sd-content > p { color: var(--mid-gray); }
+.section-dark .sd-features li { color: var(--mid-gray); }
 
 /* ── LINK SERVICE CARDS ── */
 a.service-card { display: flex; flex-direction: column; text-decoration: none; cursor: pointer; }
@@ -1896,13 +1926,15 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
 }
 
 .product-card-icon {
-  width: 48px;
-  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .product-card-info {
@@ -1912,6 +1944,51 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
 .product-card-body {
   padding: 16px 20px 20px;
   color: #fff;
+}
+
+/* ── Product Stats Row (inside card) ── */
+.product-stats-row {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.1);
+}
+
+.product-stat {
+  flex: 1;
+  padding: 14px 16px;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.product-stat:last-child {
+  border-right: none;
+}
+
+.product-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+}
+
+.product-stat-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #D4AF37;
+}
+
+@media (max-width: 600px) {
+  .product-stats-row {
+    flex-wrap: wrap;
+  }
+  .product-stat {
+    flex: 1 1 45%;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
 }
 
 /* ── Services Grid (Overview) ── */
@@ -1941,8 +2018,10 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   width: 100%;
   padding: 24px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .service-card-content {
@@ -1987,6 +2066,38 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   border-top: 1px solid #f0f0f0;
   text-align: center;
 }
+
+/* Dark section service cards - Override for homepage "What We Do" */
+.section-dark .services-grid .service-card {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,215,0,0.12) !important;
+  border-left: 4px solid var(--gold) !important;
+  border-radius: 8px !important;
+}
+.section-dark .services-grid .service-card:hover {
+  border-color: var(--gold) !important;
+  border-left: 4px solid var(--gold) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2) !important;
+}
+.section-dark .services-grid .service-card h3,
+.section-dark .services-grid .service-card-content h4 { color: var(--gold) !important; }
+.section-dark .services-grid .service-card p,
+.section-dark .services-grid .service-card-content p { color: var(--mid-gray) !important; }
+
+/* Dark section service detail cards - Override for services page */
+.section-dark .services-detail-grid .service-detail-card {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,215,0,0.12) !important;
+  border-left: 4px solid var(--gold) !important;
+}
+.section-dark .services-detail-grid .service-detail-card:hover {
+  border-color: var(--gold) !important;
+  border-left: 4px solid var(--gold) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2) !important;
+}
+.section-dark .sd-content h3 { color: var(--gold) !important; }
+.section-dark .sd-content > p { color: var(--mid-gray) !important; }
+.section-dark .sd-features li { color: var(--mid-gray) !important; }
 
 .coming-soon-badge {
   display: inline-block;
