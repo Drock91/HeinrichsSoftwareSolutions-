@@ -24,6 +24,14 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Heinrichs Software Solutions Company">
   <meta property="og:image" content="https://heinrichstech.com/og-image.png">
+  <style>
+    /* Dark theme overrides for Blog page */
+    .section-dark .blog-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.15); box-shadow: none; }
+    .section-dark .blog-card:hover { background: rgba(255,255,255,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .section-dark .blog-card h3 { color: var(--gold); }
+    .section-dark .blog-card p { color: var(--mid-gray); }
+    .section-dark .blog-card-date { color: var(--mid-gray); }
+  </style>
 </head>
 <body>
 
@@ -44,6 +52,8 @@
           <div class="nav-dropdown-menu">
             <a href="about.html">About Us</a>
             <a href="blog.html">Blog</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
           </div>
         </div>
         <a href="services.html" class="nav-link">Services</a>
@@ -65,7 +75,7 @@
   </section>
 
   <!-- ========== BLOG GRID ========== -->
-  <section class="section">
+  <section class="section section-dark">
     <div class="container">
       <div class="blog-grid">
 
@@ -156,10 +166,15 @@
         <a href="careers.html">Careers</a>
         <a href="contact.html">Contact</a>
       </div>
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="cookies.html">Cookie Policy</a>
+      </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Heinrichs Software Solutions Company. All rights reserved.</p>
         <p>Veteran-Owned &bull; AI Solutions &bull; Florida, USA</p>
-        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+        <p><a href="mailto:contact@heinrichstech.com" style="color:var(--mid-gray);text-decoration:none;">contact@heinrichstech.com</a></p>
       </div>
     </div>
   </footer>

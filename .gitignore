@@ -15,3 +15,10 @@ bucket-policy.json
 # Misc
 *.log
 *.zip
+nul
+NUL
+logs.json
+output.json
+output2.json
+test-payload.json
+test-payload2.json

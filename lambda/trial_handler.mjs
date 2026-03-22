@@ -33,7 +33,7 @@ import { randomUUID } from "crypto";
 // ─── CONFIG ───
 const REGION = process.env.REGION || "us-east-2";
 const FROM_EMAIL = process.env.FROM_EMAIL || "contact@heinrichstech.com";
-const NOTIFY_EMAIL = "heinrichssoftwaresolutions@gmail.com";
+const NOTIFY_EMAIL = "contact@heinrichstech.com";
 const CLIENTS_TABLE = process.env.CLIENTS_TABLE || "HSS-CLIENTS";
 const TRIALS_TABLE = process.env.TRIALS_TABLE || "HSS-TRIALS";
 const CONFIGS_TABLE = process.env.CONFIGS_TABLE || "HSS-CHATBOT-CONFIGS";
@@ -46,11 +46,39 @@ const API_URL = process.env.API_URL || "https://pd30lkyyof.execute-api.us-east-2
 const ses = new SESClient({ region: REGION });
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
+const ALLOWED_ORIGINS = [
+  "https://heinrichstech.com",
+  "https://www.heinrichstech.com",
+];
+
+function getCorsHeaders(origin) {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+// ─── SSRF PROTECTION ───
+function isPrivateIp(hostname) {
+  // Block private/internal IPs to prevent SSRF attacks
+  const parts = hostname.split('.');
+  if (parts.length === 4 && parts.every(p => /^\d+$/.test(p))) {
+    const [a, b] = parts.map(Number);
+    if (a === 10) return true;                    // 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true;       // 192.168.0.0/16
+    if (a === 127) return true;                    // 127.0.0.0/8
+    if (a === 169 && b === 254) return true;       // 169.254.0.0/16 (metadata)
+    if (a === 0) return true;                      // 0.0.0.0/8
+  }
+  if (hostname === 'localhost' || hostname.endsWith('.local') || hostname.endsWith('.internal')) return true;
+  return false;
+}
+
+// Module-level variable removed — pass origin per-request to avoid race conditions
 
 // ─── INDUSTRY PROMPT TEMPLATES ───
 const INDUSTRY_PROMPTS = {
@@ -65,8 +93,12 @@ const INDUSTRY_PROMPTS = {
 
 // ─── MAIN HANDLER ───
 export const handler = async (event) => {
+  // Determine origin per-request (no module-level variable)
+  const origin = event.headers?.origin || event.headers?.Origin || "";
+  const requestOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
   if (event.httpMethod === "OPTIONS") {
-    return respond(200, {});
+    return respond(200, {}, requestOrigin);
   }
 
   // Parse route
@@ -211,6 +243,16 @@ export const handler = async (event) => {
       return await checkExpirations();
     }
 
+    // ─── COMP EXPIRATION CHECK (scheduled) ───
+    if (body.action === "check-comp-expirations" || path.endsWith("/trial/check-comp-expirations")) {
+      return await checkCompExpirations();
+    }
+
+    // ─── UNSUBSCRIBE FROM EMAILS (public, no auth) ───
+    if (path.endsWith("/unsubscribe") && method === "POST") {
+      return await unsubscribeFromEmails(body.clientId);
+    }
+
     // Direct invocation support
     if (body.action) {
       switch (body.action) {
@@ -225,14 +267,16 @@ export const handler = async (event) => {
         case "admin-update-config": return await adminUpdateConfig(body);
         case "admin-stats": return await getAdminStats();
         case "check-expirations": return await checkExpirations();
+        case "check-comp-expirations": return await checkCompExpirations();
+        case "unsubscribe": return await unsubscribeFromEmails(body.clientId);
         default: return respond(400, { error: `Unknown action: ${body.action}` });
       }
     }
 
-    return respond(404, { error: "Route not found" });
+    return respond(404, { error: "Route not found" }, requestOrigin);
   } catch (err) {
     console.error("Handler error:", err);
-    return respond(500, { error: err.message });
+    return respond(500, { error: "Internal server error" }, requestOrigin);
   }
 };
 
@@ -245,6 +289,16 @@ async function signupTrial(data) {
   if (!email || !businessName) {
     return respond(400, { error: "email and businessName are required" });
   }
+
+  // Input validation
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return respond(400, { error: "Invalid email format" });
+  }
+  if (email.length > 320) return respond(400, { error: "Email too long" });
+  if (businessName.length > 200) return respond(400, { error: "Business name too long (max 200)" });
+  if (website && website.length > 500) return respond(400, { error: "Website URL too long" });
+  if (phone && phone.length > 30) return respond(400, { error: "Phone too long" });
+  if (businessInfo && businessInfo.length > 50000) return respond(400, { error: "Business info too long (max 50,000 chars)" });
 
   const clientId = userId || randomUUID();
   const configId = `config-${randomUUID().slice(0, 8)}`;
@@ -349,7 +403,7 @@ Dashboard: ${SITE_URL}/dashboard.html
 
 The chatbot is already trained on your business type (${industry || "general"}). Want us to customize it further with your specific services, pricing, and FAQs? Just reply to this email with your business details and we'll update it within 24 hours.
 
-Questions? Reply to this email or call (619) 770-7306.
+Questions? Reply to this email.
 
 HSS Team
 Heinrichs Software Solutions Company
@@ -443,6 +497,7 @@ async function updateClientProfile(userId, data) {
   if (data.phone) { expr.push("#ph = :ph"); names["#ph"] = "phone"; values[":ph"] = data.phone; }
   if (data.industry) { expr.push("#ind = :ind"); names["#ind"] = "industry"; values[":ind"] = data.industry; }
   if (data.businessInfo) { expr.push("#bi = :bi"); names["#bi"] = "businessInfo"; values[":bi"] = data.businessInfo; }
+  if (data.emailNotifications !== undefined) { expr.push("#en = :en"); names["#en"] = "emailNotifications"; values[":en"] = data.emailNotifications; }
 
   if (expr.length === 0) return respond(400, { error: "Nothing to update" });
 
@@ -469,6 +524,27 @@ async function updateClientProfile(userId, data) {
   }
 
   return respond(200, { message: "Profile updated" });
+}
+
+// ───────────────────────────────────────
+// PUBLIC: UNSUBSCRIBE FROM EMAILS
+// ───────────────────────────────────────
+async function unsubscribeFromEmails(clientId) {
+  if (!clientId) return respond(400, { error: "clientId required" });
+
+  try {
+    await ddb.send(new UpdateCommand({
+      TableName: CLIENTS_TABLE,
+      Key: { clientId: clientId },
+      UpdateExpression: "SET emailNotifications = :false",
+      ExpressionAttributeValues: { ":false": false },
+    }));
+
+    return respond(200, { message: "Successfully unsubscribed from email notifications" });
+  } catch (err) {
+    console.error("Unsubscribe error:", err);
+    return respond(500, { error: "Failed to unsubscribe" });
+  }
 }
 
 async function getChatbotConfig(userId) {
@@ -962,6 +1038,10 @@ async function importUrlContent(url) {
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       throw new Error('Invalid protocol');
     }
+    // SSRF protection: block private/internal IPs
+    if (isPrivateIp(parsedUrl.hostname)) {
+      return respond(400, { error: "Cannot fetch internal/private URLs" });
+    }
   } catch {
     return respond(400, { error: "Invalid URL" });
   }
@@ -976,6 +1056,7 @@ async function importUrlContent(url) {
         'User-Agent': 'HSS-Chatbot-Trainer/1.0',
         'Accept': 'text/html,text/plain,*/*',
       },
+      redirect: 'manual', // Don't follow redirects to internal IPs
     });
     clearTimeout(timeout);
 
@@ -1047,6 +1128,10 @@ async function importSitemap(url) {
     parsedUrl = new URL(url);
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       throw new Error('Invalid protocol');
+    }
+    // SSRF protection
+    if (isPrivateIp(parsedUrl.hostname)) {
+      return respond(400, { error: "Cannot fetch internal/private URLs" });
     }
   } catch {
     return respond(400, { error: "Invalid URL" });
@@ -1349,6 +1434,11 @@ async function listTrials() {
 async function adminUpdateClient(data) {
   if (!data.clientId) return respond(400, { error: "clientId required" });
 
+  // Get current client data before update (for email notification checks)
+  const currentClient = await getClientByIdOrEmail(data.clientId);
+  const isNewComp = data.compedPlan && data.compedUntil && 
+    (!currentClient?.compedPlan || currentClient.compedUntil !== data.compedUntil);
+
   const updates = [];
   const names = {};
   const values = {};
@@ -1388,6 +1478,27 @@ async function adminUpdateClient(data) {
     ...(Object.keys(values).length > 0 ? { ExpressionAttributeValues: values } : {}),
   }));
 
+  // Send email notification for new comp (if user has notifications enabled)
+  if (isNewComp && currentClient?.email && currentClient.emailNotifications !== false) {
+    try {
+      const compEndDate = new Date(data.compedUntil).toLocaleDateString('en-US', { 
+        year: 'numeric', month: 'long', day: 'numeric' 
+      });
+      await ses.send(new SendEmailCommand({
+        Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+        Destination: { ToAddresses: [currentClient.email] },
+        Message: {
+          Subject: { Data: `🎉 You've Been Granted Complimentary ${data.compedPlan.toUpperCase()} Access!` },
+          Body: {
+            Text: {
+              Data: `Hi${currentClient.businessName ? ` ${currentClient.businessName}` : ''},\n\nGreat news! You've been granted complimentary ${data.compedPlan.toUpperCase()} plan access until ${compEndDate}.\n\nThis includes all the features of our ${data.compedPlan} plan at no cost. Your chatbot is fully active and ready to use.\n\nManage your chatbot: ${SITE_URL}/dashboard.html\n\nQuestions? Just reply to this email.\n\nHSS Team\nHeinrichs Software Solutions Company\n\n---\nDon't want these emails? Unsubscribe: ${SITE_URL}/unsubscribe.html?id=${data.clientId}`,
+            },
+          },
+        },
+      }));
+    } catch (emailErr) { console.warn("Comp notification email failed:", emailErr.message); }
+  }
+
   return respond(200, { message: "Client updated" });
 }
 
@@ -1396,6 +1507,14 @@ async function adminUpdateClient(data) {
 // ───────────────────────────────────────
 async function adminUpdateTrial(data) {
   if (!data.trialId) return respond(400, { error: "trialId required" });
+
+  // Get current trial data to check for extension
+  const currentTrialRes = await ddb.send(new GetCommand({
+    TableName: TRIALS_TABLE,
+    Key: { trialId: data.trialId },
+  }));
+  const currentTrial = currentTrialRes.Item;
+  const isExtension = data.expiresDate && currentTrial?.expiresDate !== data.expiresDate;
 
   const updates = [];
   const names = {};
@@ -1414,6 +1533,38 @@ async function adminUpdateTrial(data) {
     ExpressionAttributeNames: names,
     ExpressionAttributeValues: values,
   }));
+
+  // Send email notification for trial extension (if user has notifications enabled)
+  if (isExtension && currentTrial?.email) {
+    // Get client to check emailNotifications preference
+    const clientRes = await ddb.send(new ScanCommand({
+      TableName: CLIENTS_TABLE,
+      FilterExpression: "trialId = :tid",
+      ExpressionAttributeValues: { ":tid": data.trialId },
+    }));
+    const client = clientRes.Items?.[0];
+    
+    if (client?.emailNotifications !== false) {
+      try {
+        const newEndDate = new Date(data.expiresDate).toLocaleDateString('en-US', { 
+          year: 'numeric', month: 'long', day: 'numeric' 
+        });
+        const daysLeft = Math.ceil((new Date(data.expiresDate) - new Date()) / (1000 * 60 * 60 * 24));
+        await ses.send(new SendEmailCommand({
+          Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+          Destination: { ToAddresses: [currentTrial.email] },
+          Message: {
+            Subject: { Data: `🎉 Your Trial Has Been Extended!` },
+            Body: {
+              Text: {
+                Data: `Hi${currentTrial.businessName ? ` ${currentTrial.businessName}` : ''},\n\nGood news! Your AI chatbot trial has been extended.\n\nNew expiration date: ${newEndDate} (${daysLeft} days remaining)\n\nYour chatbot is active and ready to use. Keep testing it out!\n\nManage your chatbot: ${SITE_URL}/dashboard.html\n\nQuestions? Just reply to this email.\n\nHSS Team\nHeinrichs Software Solutions Company\n\n---\nDon't want these emails? Unsubscribe: ${SITE_URL}/unsubscribe.html?id=${client?.clientId || ''}`,
+              },
+            },
+          },
+        }));
+      } catch (emailErr) { console.warn("Extension notification email failed:", emailErr.message); }
+    }
+  }
 
   return respond(200, { message: "Trial updated" });
 }
@@ -1508,36 +1659,40 @@ async function checkExpirations() {
         ExpressionAttributeValues: { ":expired": "expired" },
       }));
 
-      // Deactivate chatbot config
+      // Check if client has active comp - comp supersedes trial
       const client = await ddb.send(new ScanCommand({
         TableName: CLIENTS_TABLE,
         FilterExpression: "trialId = :tid",
         ExpressionAttributeValues: { ":tid": trial.trialId },
       }));
-      if (client.Items?.[0]?.configId) {
+      const clientData = client.Items?.[0];
+      const hasActiveComp = clientData?.compedPlan && clientData?.compedUntil && new Date(clientData.compedUntil) > now;
+
+      // Only deactivate chatbot if they DON'T have an active comp
+      if (clientData?.configId && !hasActiveComp) {
         await ddb.send(new UpdateCommand({
           TableName: CONFIGS_TABLE,
-          Key: { configId: client.Items[0].configId },
+          Key: { configId: clientData.configId },
           UpdateExpression: "SET active = :false",
           ExpressionAttributeValues: { ":false": false },
         }));
-      }
 
-      // Email customer
-      try {
-        await ses.send(new SendEmailCommand({
-          Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-          Destination: { ToAddresses: [trial.email] },
-          Message: {
-            Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
-            Body: {
-              Text: {
-                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+        // Email customer (only if no active comp)
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [trial.email] },
+            Message: {
+              Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                },
               },
             },
-          },
-        }));
-      } catch (emailErr) { console.warn("Expiry email failed:", emailErr.message); }
+          }));
+        } catch (emailErr) { console.warn("Expiry email failed:", emailErr.message); }
+      }
 
       expired++;
     }
@@ -1551,7 +1706,7 @@ async function checkExpirations() {
             Subject: { Data: `⏰ Your AI Chatbot Trial Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\n(619) 770-7306`,
+                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team`,
               },
             },
           },
@@ -1581,6 +1736,120 @@ async function checkExpirations() {
 }
 
 // ───────────────────────────────────────
+// COMP EXPIRATION CHECKER (scheduled)
+// ───────────────────────────────────────
+async function checkCompExpirations() {
+  const now = new Date();
+  
+  // Scan for clients with compedPlan and compedUntil set
+  const result = await ddb.send(new ScanCommand({
+    TableName: CLIENTS_TABLE,
+    FilterExpression: "attribute_exists(compedPlan) AND attribute_exists(compedUntil)",
+  }));
+
+  let expired = 0;
+  let expiringSoon = 0;
+
+  for (const client of result.Items || []) {
+    if (!client.compedUntil || !client.compedPlan) continue;
+    
+    const expiresDate = new Date(client.compedUntil);
+    const daysLeft = Math.ceil((expiresDate - now) / (1000 * 60 * 60 * 24));
+
+    // Expired — deactivate config and clear comp
+    if (daysLeft <= 0) {
+      // Deactivate chatbot config if they don't have a paid subscription
+      if (client.plan === 'trial' || client.plan === 'expired') {
+        if (client.configId) {
+          await ddb.send(new UpdateCommand({
+            TableName: CONFIGS_TABLE,
+            Key: { configId: client.configId },
+            UpdateExpression: "SET active = :false",
+            ExpressionAttributeValues: { ":false": false },
+          }));
+        }
+
+        // Update client plan to expired
+        await ddb.send(new UpdateCommand({
+          TableName: CLIENTS_TABLE,
+          Key: { clientId: client.clientId },
+          UpdateExpression: "SET plan = :expired, compedPlan = :null, compedUntil = :null",
+          ExpressionAttributeValues: { 
+            ":expired": "expired",
+            ":null": null
+          },
+        }));
+      } else {
+        // Paid customer — just clear the comp fields
+        await ddb.send(new UpdateCommand({
+          TableName: CLIENTS_TABLE,
+          Key: { clientId: client.clientId },
+          UpdateExpression: "REMOVE compedPlan, compedUntil",
+        }));
+      }
+
+      // Email customer
+      if (client.email) {
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [client.email] },
+            Message: {
+              Subject: { Data: `Your Complimentary AI Chatbot Period Has Ended — ${client.businessName || 'Your Business'}` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nYour complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} has ended.\n\nWant to keep your AI chatbot running? Subscribe to a paid plan:\n• Standard: $499 setup + $49/month (2,500 conversations)\n• Pro: $999 setup + $99/month (10,000 conversations)\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Subscribing reactivates it instantly.\n\nQuestions? Reply to this email.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                },
+              },
+            },
+          }));
+        } catch (emailErr) { console.warn("Comp expiry email failed:", emailErr.message); }
+      }
+
+      expired++;
+    }
+    // Expiring in 3 days — send warning
+    else if (daysLeft <= 3 && daysLeft > 0) {
+      if (client.email) {
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [client.email] },
+            Message: {
+              Subject: { Data: `⏰ Your Complimentary Chatbot Access Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nJust a heads-up: your complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Subscribe to keep it running:\n${SITE_URL}/dashboard.html\n\nYour chatbot data and training will be saved either way.\n\nHSS Team`,
+                },
+              },
+            },
+          }));
+        } catch (emailErr) { console.warn("Comp warning email failed:", emailErr.message); }
+      }
+      expiringSoon++;
+    }
+  }
+
+  // Notify admin
+  if (expired > 0 || expiringSoon > 0) {
+    try {
+      await ses.send(new SendEmailCommand({
+        Source: `HSS Comp System <${FROM_EMAIL}>`,
+        Destination: { ToAddresses: [NOTIFY_EMAIL] },
+        Message: {
+          Subject: { Data: `Comp Check: ${expired} expired, ${expiringSoon} expiring soon` },
+          Body: {
+            Text: { Data: `Comp expiration check complete.\n\nExpired (deactivated): ${expired}\nExpiring in 3 days (warning sent): ${expiringSoon}\n\nDashboard: ${SITE_URL}/admin.html` },
+          },
+        },
+      }));
+    } catch (emailErr) { console.warn("Admin notification failed:", emailErr.message); }
+  }
+
+  return respond(200, { expired, expiringSoon, type: "comp" });
+}
+
+// ───────────────────────────────────────
 // HELPERS
 // ───────────────────────────────────────
 async function getClientByIdOrEmail(idOrEmail) {
@@ -1600,10 +1869,10 @@ async function getClientByIdOrEmail(idOrEmail) {
   return byEmail.Items?.[0] || null;
 }
 
-function respond(statusCode, body) {
+function respond(statusCode, body, origin) {
   return {
     statusCode,
-    headers: CORS_HEADERS,
+    headers: getCorsHeaders(origin || ALLOWED_ORIGINS[0]),
     body: JSON.stringify(body),
   };
 }

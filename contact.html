@@ -18,6 +18,30 @@
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#001F3F">
   <link rel="canonical" href="https://heinrichstech.com/contact.html">
+  <style>
+    .section-dark{background:var(--dark-navy) !important}
+    .section-dark p,.section-dark li{color:#fff !important}
+    .section-dark h4{color:var(--gold) !important}
+    .contact-info a{color:var(--gold) !important}
+    .contact-item .ci-icon{color:var(--gold) !important}
+    .cert-badge{background:rgba(255,215,0,0.15) !important;color:var(--gold) !important;border:1px solid var(--gold) !important}
+    .contact-form{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .contact-form label{color:#fff !important}
+    .contact-form input,.contact-form select,.contact-form textarea{background:#0a2a4a !important;border:1px solid rgba(255,215,0,0.3) !important;color:#fff !important}
+    a.btn-gold{color:#001F3F !important;background:var(--gold) !important}
+    /* Career file upload styling */
+    .career-fields{display:none;animation:fadeIn 0.3s ease}
+    .career-fields.show{display:block}
+    .file-upload-group{margin-bottom:16px}
+    .file-upload-group label{display:block;margin-bottom:8px}
+    .file-input-wrapper{position:relative;display:flex;align-items:center;gap:12px}
+    .file-input-wrapper input[type="file"]{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer}
+    .file-btn{background:rgba(255,215,0,0.15);border:1px dashed var(--gold);color:var(--gold);padding:12px 20px;border-radius:6px;cursor:pointer;transition:all 0.2s}
+    .file-btn:hover{background:rgba(255,215,0,0.25)}
+    .file-name{color:#aaa;font-size:14px}
+    .file-name.selected{color:var(--gold)}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+  </style>
   <meta property="og:title" content="Contact Us — Heinrichs Software Solutions Company">
   <meta property="og:description" content="Contact Heinrichs Software Solutions Company for custom software, AI chatbots, cloud solutions, government contracting, and partnership opportunities.">
   <meta property="og:url" content="https://heinrichstech.com/contact.html">
@@ -50,6 +74,8 @@
           <div class="nav-dropdown-menu">
             <a href="about.html">About Us</a>
             <a href="blog.html">Blog</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
           </div>
         </div>
         <a href="services.html" class="nav-link">Services</a>
@@ -71,7 +97,7 @@
   </section>
 
   <!-- ========== CONTACT ========== -->
-  <section class="section">
+  <section class="section section-dark">
     <div class="container">
       <div class="contact-grid">
         <div class="contact-info reveal reveal-left">
@@ -79,14 +105,7 @@
             <div class="ci-icon">&#128231;</div>
             <div>
               <h4>Email</h4>
-              <a href="mailto:heinrichssoftwaresolutions@gmail.com">heinrichssoftwaresolutions@gmail.com</a>
-            </div>
-          </div>
-          <div class="contact-item">
-            <div class="ci-icon">&#128222;</div>
-            <div>
-              <h4>Phone</h4>
-              <a href="tel:+16197707306">(619) 770-7306</a>
+              <a href="mailto:contact@heinrichstech.com">contact@heinrichstech.com</a>
             </div>
           </div>
           <div class="contact-item">
@@ -143,8 +162,27 @@
               <option value="general">General Question</option>
             </select>
           </div>
+          <!-- Career file uploads (shown when Career Inquiry selected) -->
+          <div id="career-fields" class="career-fields">
+            <div class="file-upload-group">
+              <label>Resume (PDF, DOC, DOCX) *</label>
+              <div class="file-input-wrapper">
+                <span class="file-btn">Choose File</span>
+                <span class="file-name" id="resume-name">No file selected</span>
+                <input type="file" id="c-resume" name="resume" accept=".pdf,.doc,.docx">
+              </div>
+            </div>
+            <div class="file-upload-group">
+              <label>Cover Letter (PDF, DOC, DOCX) — Optional</label>
+              <div class="file-input-wrapper">
+                <span class="file-btn">Choose File</span>
+                <span class="file-name" id="cover-name">No file selected</span>
+                <input type="file" id="c-cover" name="cover" accept=".pdf,.doc,.docx">
+              </div>
+            </div>
+          </div>
           <div class="form-group">
-            <label for="c-message">Message *</label>
+            <label for="c-message" id="message-label">Message *</label>
             <textarea id="c-message" name="message" rows="5" required placeholder="Tell us about your project or requirements..."></textarea>
           </div>
           <button type="submit" class="btn btn-gold btn-animated">Send Message</button>
@@ -171,10 +209,15 @@
         <a href="careers.html">Careers</a>
         <a href="contact.html">Contact</a>
       </div>
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="cookies.html">Cookie Policy</a>
+      </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Heinrichs Software Solutions Company. All rights reserved.</p>
         <p>Veteran-Owned &bull; AI Solutions &bull; Florida, USA</p>
-        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+        <p><a href="mailto:contact@heinrichstech.com" style="color:var(--mid-gray);text-decoration:none;">contact@heinrichstech.com</a></p>
       </div>
     </div>
   </footer>
@@ -191,9 +234,46 @@
           for (const opt of sel.options) {
             if (opt.value === subject) { sel.value = subject; break; }
           }
+          // Trigger change event to show career fields if needed
+          sel.dispatchEvent(new Event('change'));
         }
       }
     })();
+
+    // Show/hide career file uploads based on subject selection
+    const subjectSelect = document.getElementById('c-subject');
+    const careerFields = document.getElementById('career-fields');
+    const resumeInput = document.getElementById('c-resume');
+    const coverInput = document.getElementById('c-cover');
+    const messageLabel = document.getElementById('message-label');
+    const messageField = document.getElementById('c-message');
+
+    subjectSelect?.addEventListener('change', () => {
+      const isCareers = subjectSelect.value === 'careers';
+      careerFields.classList.toggle('show', isCareers);
+      resumeInput.required = isCareers;
+      if (isCareers) {
+        messageLabel.textContent = 'Cover Letter / Additional Info';
+        messageField.placeholder = 'Tell us why you\'re interested in joining HSS and what makes you a great fit...';
+        messageField.required = false;
+      } else {
+        messageLabel.textContent = 'Message *';
+        messageField.placeholder = 'Tell us about your project or requirements...';
+        messageField.required = true;
+      }
+    });
+
+    // File input display names
+    resumeInput?.addEventListener('change', () => {
+      const name = resumeInput.files[0]?.name || 'No file selected';
+      document.getElementById('resume-name').textContent = name;
+      document.getElementById('resume-name').classList.toggle('selected', !!resumeInput.files[0]);
+    });
+    coverInput?.addEventListener('change', () => {
+      const name = coverInput.files[0]?.name || 'No file selected';
+      document.getElementById('cover-name').textContent = name;
+      document.getElementById('cover-name').classList.toggle('selected', !!coverInput.files[0]);
+    });
   </script>
   <script src="chatbot.js"></script>
 </body>

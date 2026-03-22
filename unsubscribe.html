@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsubscribe — Heinrichs Software Solutions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <style>
+    :root {
+      --dark-navy: #001F3F;
+      --gold: #FFD700;
+      --mid-gray: #D1D5DB;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--dark-navy);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container {
+      max-width: 480px;
+      text-align: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      background: var(--gold);
+      color: var(--dark-navy);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+    .logo-text {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      color: #fff;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 12px;
+      padding: 40px 32px;
+    }
+    h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem;
+      margin-bottom: 16px;
+      color: var(--gold);
+    }
+    p {
+      color: var(--mid-gray);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--dark-navy);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,215,0,0.3);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--gold);
+      color: var(--gold);
+      margin-left: 12px;
+    }
+    .success {
+      color: #22c55e;
+    }
+    .error {
+      color: #ef4444;
+    }
+    .hidden { display: none; }
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">HSS</div>
+      <div class="logo-text">Heinrichs Software Solutions</div>
+    </div>
+
+    <div class="card" id="confirm-card">
+      <h1>Unsubscribe from Emails</h1>
+      <p>You're about to unsubscribe from email notifications including trial updates, plan changes, and promotional messages.</p>
+      <p>You'll still receive critical account emails like password resets.</p>
+      <div class="actions">
+        <button class="btn" id="unsubscribe-btn">Unsubscribe</button>
+        <a href="dashboard.html" class="btn btn-outline">Cancel</a>
+      </div>
+    </div>
+
+    <div class="card hidden" id="success-card">
+      <h1 class="success">✓ Unsubscribed</h1>
+      <p>You've been unsubscribed from email notifications.</p>
+      <p>Changed your mind? You can re-enable notifications anytime in your <a href="dashboard.html" style="color:var(--gold);">dashboard settings</a>.</p>
+    </div>
+
+    <div class="card hidden" id="error-card">
+      <h1 class="error">Something went wrong</h1>
+      <p id="error-message">Unable to process your request. Please try again or manage your preferences in the dashboard.</p>
+      <a href="dashboard.html" class="btn">Go to Dashboard</a>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://9qtb4my1q3.execute-api.us-east-2.amazonaws.com/prod';
+    
+    // Get client ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get('id');
+
+    if (!clientId) {
+      document.getElementById('confirm-card').classList.add('hidden');
+      document.getElementById('error-card').classList.remove('hidden');
+      document.getElementById('error-message').textContent = 'Invalid unsubscribe link. Please use the link from your email.';
+    }
+
+    document.getElementById('unsubscribe-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('unsubscribe-btn');
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch(`${API_BASE}/unsubscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId: clientId }),
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Failed to unsubscribe');
+
+        document.getElementById('confirm-card').classList.add('hidden');
+        document.getElementById('success-card').classList.remove('hidden');
+      } catch (err) {
+        document.getElementById('confirm-card').classList.add('hidden');
+        document.getElementById('error-card').classList.remove('hidden');
+        document.getElementById('error-message').textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -32,6 +32,19 @@
   <meta name="twitter:title" content="Heinrichs Software Solutions Company — AI Chatbots & Managed AI Solutions">
   <meta name="twitter:description" content="Veteran-owned company specializing in AI chatbots, custom AI integrations, and managed AI solutions for businesses.">
   <meta name="twitter:image" content="https://heinrichstech.com/og-image.png">
+  <style>
+    /* Dark theme overrides for Home page */
+    .section-dark .about-teaser-text h3 { color: var(--gold); }
+    .section-dark .about-teaser-text p { color: var(--mid-gray); }
+    .section-dark .highlight-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.15); }
+    .section-dark .highlight-card h4 { color: var(--gold); }
+    .section-dark .highlight-card p { color: var(--mid-gray); }
+    .section-dark.cta-section { background: var(--dark-navy); }
+    .section-dark .cta-banner { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.2); border-top: 4px solid var(--gold); box-shadow: none; }
+    .section-dark .cta-banner h2 { color: var(--gold); }
+    .section-dark .cta-banner p { color: var(--mid-gray); }
+    .section-dark .cta-badge-item { color: var(--light-gray); }
+  </style>
   <!-- JSON-LD -->
   <script type="application/ld+json">
   {
@@ -50,8 +63,7 @@
       "addressRegion": "FL",
       "addressCountry": "US"
     },
-    "telephone": "+1-619-770-7306",
-    "email": "heinrichssoftwaresolutions@gmail.com",
+    "email": "contact@heinrichstech.com",
     "sameAs": [
       "https://github.com/Drock91",
       "https://www.linkedin.com/in/derek-heinrichs-0a090429a"
@@ -78,6 +90,8 @@
           <div class="nav-dropdown-menu">
             <a href="about.html">About Us</a>
             <a href="blog.html">Blog</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
           </div>
         </div>
         <a href="services.html" class="nav-link">Services</a>
@@ -115,27 +129,27 @@
   </section>
 
   <!-- ========== AI CHATBOT CTA ========== -->
-  <section class="section" style="padding:64px 0;background:linear-gradient(135deg,#fff 0%,#f4f6f9 100%);">
+  <section class="section section-dark" style="padding:64px 0;">
     <div class="container">
       <div class="reveal reveal-up" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;">
 
         <!-- Left: Copy -->
         <div>
           <div style="display:inline-block;background:var(--gold);color:var(--dark-navy);padding:4px 14px;border-radius:20px;font-family:'Oswald',sans-serif;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">&#128172; Our Flagship Product</div>
-          <h2 style="font-family:'Oswald',sans-serif;font-size:2.2rem;font-weight:700;color:var(--dark-navy);line-height:1.2;margin:0 0 16px;">An AI Chatbot That Actually Knows Your Business</h2>
-          <p style="font-size:1.05rem;color:#444;line-height:1.7;margin:0 0 20px;">Not a generic FAQ widget. We train a real AI assistant on <strong>your</strong> products, services, pricing, FAQs andthen deploy it on your website in days. It answers customer questions 24/7, captures leads, and never calls in sick.</p>
+          <h2 style="font-family:'Oswald',sans-serif;font-size:2.2rem;font-weight:700;color:var(--gold);line-height:1.2;margin:0 0 16px;">An AI Chatbot That Actually Knows Your Business</h2>
+          <p style="font-size:1.05rem;color:var(--mid-gray);line-height:1.7;margin:0 0 20px;">Not a generic FAQ widget. We train a real AI assistant on <strong style="color:var(--white);">your</strong> products, services, pricing, FAQs andthen deploy it on your website in days. It answers customer questions 24/7, captures leads, and never calls in sick.</p>
           <ul style="list-style:none;padding:0;margin:0 0 28px;display:grid;gap:10px;">
-            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:#333;"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Trained on YOUR business, not generic templates</li>
-            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:#333;"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> 5 AI providers with automatic failover and 99.9% uptime</li>
-            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:#333;"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Handles unlimited conversations simultaneously</li>
-            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:#333;"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Lead capture, analytics &amp; live chat handoff (Pro)</li>
-            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:#333;"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Matches your brand, your colors, your voice</li>
+            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:var(--light-gray);"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Trained on YOUR business, not generic templates</li>
+            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:var(--light-gray);"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> 5 AI providers with automatic failover and 99.9% uptime</li>
+            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:var(--light-gray);"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Handles multiple conversations simultaneously</li>
+            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:var(--light-gray);"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Lead capture, analytics &amp; live chat handoff (Pro)</li>
+            <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.95rem;color:var(--light-gray);"><span style="color:var(--gold);font-weight:700;font-size:1.1rem;">&#10003;</span> Matches your brand, your colors, your voice</li>
           </ul>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
             <a href="signup.html" class="btn btn-gold btn-animated">Start Free Trial $0 for 14 Days</a>
-            <a href="chatbot.html" class="btn btn-outline-dark btn-animated">See Pricing &amp; Demo</a>
+            <a href="chatbot.html" class="btn btn-outline btn-animated">See Pricing &amp; Demo</a>
           </div>
-          <p style="font-size:0.82rem;color:#888;margin-top:10px;">No credit card required. Setup takes minutes. Cancel anytime.</p>
+          <p style="font-size:0.82rem;color:var(--mid-gray);margin-top:10px;">No credit card required. Setup takes minutes. Cancel anytime.</p>
         </div>
 
         <!-- Right: Visual card -->
@@ -184,9 +198,9 @@
   </section>
 
   <!-- ========== ABOUT TEASER ========== -->
-  <section class="section">
+  <section class="section section-dark">
     <div class="container">
-      <h2 class="section-title reveal reveal-up">About Us</h2>
+      <h2 class="section-title light reveal reveal-up">About Us</h2>
       <div class="about-teaser">
         <div class="about-teaser-text reveal reveal-left">
           <h3>Veteran-Founded. Mission-Driven.</h3>
@@ -247,7 +261,7 @@
   </section>
 
   <!-- ========== AI CHATBOT PRODUCT ========== -->
-  <section class="section cta-section">
+  <section class="section section-dark cta-section">
     <div class="container">
       <div class="cta-banner reveal reveal-scale">
         <div class="cta-content">
@@ -255,7 +269,7 @@
           <p>See the chat widget in the corner? We built that and we can build one for you. A custom AI assistant trained on your company, deployed on your site in days. Multi-provider AI with automatic failover means 99.9% uptime.</p>
           <div class="cta-actions">
             <a href="services.html#ai-chatbot" class="btn btn-gold btn-animated">Learn More</a>
-            <a href="contact.html" class="btn btn-outline-dark btn-animated">Get a Quote</a>
+            <a href="contact.html" class="btn btn-outline btn-animated">Get a Quote</a>
           </div>
         </div>
         <div class="cta-badges">
@@ -296,10 +310,15 @@
         <a href="careers.html">Careers</a>
         <a href="contact.html">Contact</a>
       </div>
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="cookies.html">Cookie Policy</a>
+      </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Heinrichs Software Solutions Company. All rights reserved.</p>
         <p>Veteran-Owned &bull; AI Solutions &bull; Florida, USA</p>
-        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+        <p><a href="mailto:contact@heinrichstech.com" style="color:var(--mid-gray);text-decoration:none;">contact@heinrichstech.com</a></p>
       </div>
     </div>
   </footer>

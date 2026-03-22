@@ -33,7 +33,7 @@ import { randomUUID } from "crypto";
 // ─── CONFIG ───
 const REGION = process.env.REGION || "us-east-2";
 const FROM_EMAIL = process.env.FROM_EMAIL || "contact@heinrichstech.com";
-const NOTIFY_EMAIL = "heinrichssoftwaresolutions@gmail.com";
+const NOTIFY_EMAIL = "contact@heinrichstech.com";
 const CLIENTS_TABLE = process.env.CLIENTS_TABLE || "HSS-CLIENTS";
 const TRIALS_TABLE = process.env.TRIALS_TABLE || "HSS-TRIALS";
 const CONFIGS_TABLE = process.env.CONFIGS_TABLE || "HSS-CHATBOT-CONFIGS";
@@ -147,6 +147,11 @@ export const handler = async (event) => {
       return await checkExpirations();
     }
 
+    // ─── COMP EXPIRATION CHECK (scheduled) ───
+    if (body.action === "check-comp-expirations" || path.endsWith("/trial/check-comp-expirations")) {
+      return await checkCompExpirations();
+    }
+
     // Direct invocation support
     if (body.action) {
       switch (body.action) {
@@ -161,6 +166,7 @@ export const handler = async (event) => {
         case "admin-update-config": return await adminUpdateConfig(body);
         case "admin-stats": return await getAdminStats();
         case "check-expirations": return await checkExpirations();
+        case "check-comp-expirations": return await checkCompExpirations();
         default: return respond(400, { error: `Unknown action: ${body.action}` });
       }
     }
@@ -168,7 +174,7 @@ export const handler = async (event) => {
     return respond(404, { error: "Route not found" });
   } catch (err) {
     console.error("Handler error:", err);
-    return respond(500, { error: err.message });
+    return respond(500, { error: "Internal server error" });
   }
 };
 
@@ -285,7 +291,7 @@ Dashboard: ${SITE_URL}/dashboard.html
 
 The chatbot is already trained on your business type (${industry || "general"}). Want us to customize it further with your specific services, pricing, and FAQs? Just reply to this email with your business details and we'll update it within 24 hours.
 
-Questions? Reply to this email or call (619) 770-7306.
+Questions? Reply to this email or reach out at contact@heinrichstech.com.
 
 HSS Team
 Heinrichs Software Solutions Company
@@ -785,7 +791,7 @@ async function checkExpirations() {
             Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
               },
             },
           },
@@ -804,7 +810,7 @@ async function checkExpirations() {
             Subject: { Data: `⏰ Your AI Chatbot Trial Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\n(619) 770-7306`,
+                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\ncontact@heinrichstech.com`,
               },
             },
           },
@@ -831,6 +837,120 @@ async function checkExpirations() {
   }
 
   return respond(200, { expired, expiringSoon });
+}
+
+// ───────────────────────────────────────
+// COMP EXPIRATION CHECKER (scheduled)
+// ───────────────────────────────────────
+async function checkCompExpirations() {
+  const now = new Date();
+  
+  // Scan for clients with compedPlan and compedUntil set
+  const result = await ddb.send(new ScanCommand({
+    TableName: CLIENTS_TABLE,
+    FilterExpression: "attribute_exists(compedPlan) AND attribute_exists(compedUntil)",
+  }));
+
+  let expired = 0;
+  let expiringSoon = 0;
+
+  for (const client of result.Items || []) {
+    if (!client.compedUntil || !client.compedPlan) continue;
+    
+    const expiresDate = new Date(client.compedUntil);
+    const daysLeft = Math.ceil((expiresDate - now) / (1000 * 60 * 60 * 24));
+
+    // Expired — deactivate config and clear comp
+    if (daysLeft <= 0) {
+      // Deactivate chatbot config if they don't have a paid subscription
+      if (client.plan === 'trial' || client.plan === 'expired') {
+        if (client.configId) {
+          await ddb.send(new UpdateCommand({
+            TableName: CONFIGS_TABLE,
+            Key: { configId: client.configId },
+            UpdateExpression: "SET active = :false",
+            ExpressionAttributeValues: { ":false": false },
+          }));
+        }
+
+        // Update client plan to expired
+        await ddb.send(new UpdateCommand({
+          TableName: CLIENTS_TABLE,
+          Key: { clientId: client.clientId },
+          UpdateExpression: "SET plan = :expired, compedPlan = :null, compedUntil = :null",
+          ExpressionAttributeValues: { 
+            ":expired": "expired",
+            ":null": null
+          },
+        }));
+      } else {
+        // Paid customer — just clear the comp fields
+        await ddb.send(new UpdateCommand({
+          TableName: CLIENTS_TABLE,
+          Key: { clientId: client.clientId },
+          UpdateExpression: "REMOVE compedPlan, compedUntil",
+        }));
+      }
+
+      // Email customer
+      if (client.email) {
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [client.email] },
+            Message: {
+              Subject: { Data: `Your Complimentary AI Chatbot Period Has Ended — ${client.businessName || 'Your Business'}` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nYour complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} has ended.\n\nWant to keep your AI chatbot running? Subscribe to a paid plan:\n• Standard: $499 setup + $49/month (2,500 conversations)\n• Pro: $999 setup + $99/month (10,000 conversations)\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Subscribing reactivates it instantly.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                },
+              },
+            },
+          }));
+        } catch (emailErr) { console.warn("Comp expiry email failed:", emailErr.message); }
+      }
+
+      expired++;
+    }
+    // Expiring in 3 days — send warning
+    else if (daysLeft <= 3 && daysLeft > 0) {
+      if (client.email) {
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [client.email] },
+            Message: {
+              Subject: { Data: `⏰ Your Complimentary Chatbot Access Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nJust a heads-up: your complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Subscribe to keep it running:\n${SITE_URL}/dashboard.html\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\ncontact@heinrichstech.com`,
+                },
+              },
+            },
+          }));
+        } catch (emailErr) { console.warn("Comp warning email failed:", emailErr.message); }
+      }
+      expiringSoon++;
+    }
+  }
+
+  // Notify admin
+  if (expired > 0 || expiringSoon > 0) {
+    try {
+      await ses.send(new SendEmailCommand({
+        Source: `HSS Comp System <${FROM_EMAIL}>`,
+        Destination: { ToAddresses: [NOTIFY_EMAIL] },
+        Message: {
+          Subject: { Data: `Comp Check: ${expired} expired, ${expiringSoon} expiring soon` },
+          Body: {
+            Text: { Data: `Comp expiration check complete.\n\nExpired (deactivated): ${expired}\nExpiring in 3 days (warning sent): ${expiringSoon}\n\nDashboard: ${SITE_URL}/admin.html` },
+          },
+        },
+      }));
+    } catch (emailErr) { console.warn("Admin notification failed:", emailErr.message); }
+  }
+
+  return respond(200, { expired, expiringSoon, type: "comp" });
 }
 
 // ───────────────────────────────────────

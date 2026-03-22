@@ -197,7 +197,7 @@
     } catch (err) {
       console.error('Chat error:', err);
       setTyping(false);
-      addMessage('assistant', 'I\'m having trouble connecting right now. Please try again in a moment, or reach out to us directly at **heinrichssoftwaresolutions@gmail.com**.');
+      addMessage('assistant', 'I\'m having trouble connecting right now. Please try again in a moment, or reach out to us directly at **contact@heinrichstech.com**.');
     }
   }
 

@@ -30,6 +30,16 @@
   <meta name="twitter:title" content="About Us — Heinrichs Software Solutions Company">
   <meta name="twitter:description" content="Veteran-founded software company specializing in custom development, AI solutions, and cloud architecture.">
   <meta name="twitter:image" content="https://heinrichstech.com/og-image.png">
+  <style>
+    /* Dark theme overrides for About page */
+    .section-dark .about-text h3,
+    .section-dark .about-capabilities h3 { color: var(--gold); }
+    .section-dark .about-text p { color: var(--mid-gray); }
+    .section-dark .cap-list li { color: var(--light-gray); }
+    .section-dark .page-cta { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.2); }
+    .section-dark .page-cta h2 { color: var(--gold); }
+    .section-dark .page-cta p { color: var(--mid-gray); }
+  </style>
 </head>
 <body>
 
@@ -50,6 +60,8 @@
           <div class="nav-dropdown-menu">
             <a href="about.html">About Us</a>
             <a href="blog.html">Blog</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
           </div>
         </div>
         <a href="services.html" class="nav-link">Services</a>
@@ -71,7 +83,7 @@
   </section>
 
   <!-- ========== ABOUT ========== -->
-  <section class="section">
+  <section class="section section-dark">
     <div class="container">
       <div class="about-grid">
         <div class="about-text reveal reveal-left">
@@ -134,14 +146,14 @@
   </section>
 
   <!-- ========== CTA ========== -->
-  <section class="section">
+  <section class="section section-dark">
     <div class="container">
       <div class="page-cta reveal reveal-scale">
         <h2>Ready to Work With Us?</h2>
         <p>Whether you need an AI chatbot for your website, a custom AI integration, or a managed AI solution — we're here to help.</p>
         <div class="cta-actions">
           <a href="services.html" class="btn btn-gold btn-animated">View Services</a>
-          <a href="contact.html" class="btn btn-outline-dark btn-animated">Contact Us</a>
+          <a href="contact.html" class="btn btn-outline btn-animated">Contact Us</a>
         </div>
       </div>
     </div>
@@ -165,10 +177,15 @@
         <a href="careers.html">Careers</a>
         <a href="contact.html">Contact</a>
       </div>
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="cookies.html">Cookie Policy</a>
+      </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Heinrichs Software Solutions Company. All rights reserved.</p>
         <p>Veteran-Owned &bull; AI Solutions &bull; Florida, USA</p>
-        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+        <p><a href="mailto:contact@heinrichstech.com" style="color:var(--mid-gray);text-decoration:none;">contact@heinrichstech.com</a></p>
       </div>
     </div>
   </footer>

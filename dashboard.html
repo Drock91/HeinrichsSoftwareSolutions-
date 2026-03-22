@@ -13,6 +13,51 @@
   <link rel="stylesheet" href="style.css?v=20260319d">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="canonical" href="https://heinrichstech.com/dashboard.html">
+  <style>
+    .section-dark{background:var(--dark-navy) !important}
+    .section-dark h3,.section-dark h4{color:var(--gold) !important}
+    .section-dark p,.section-dark span,.section-dark label{color:#fff !important}
+    .dash-tab{background:rgba(255,215,0,0.1) !important;color:#fff !important;border:1px solid rgba(255,215,0,0.3) !important}
+    .dash-tab.active{background:var(--gold) !important;color:var(--dark-navy) !important}
+    .dash-stat-card,.product-card,.product-stat{background:rgba(255,215,0,0.05) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .dash-stat-label,.product-stat-label{color:var(--mid-gray) !important}
+    .dash-stat-value,.product-stat-value{color:var(--gold) !important}
+    .service-card{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.15) !important}
+    .service-card-content p{color:var(--mid-gray) !important}
+    .service-card-price .price{color:var(--gold) !important}
+    .service-card-price .period{color:var(--mid-gray) !important}
+    .coming-soon-badge{background:rgba(255,215,0,0.15) !important;color:var(--gold) !important}
+    .dash-banner{background:rgba(255,215,0,0.1) !important;border:1px solid var(--gold) !important}
+    .dash-banner h4{color:var(--gold) !important}
+    .dash-banner p{color:#fff !important}
+    .embed-code-box{background:#0a2a4a !important;border:1px solid rgba(255,215,0,0.3) !important}
+    .embed-code-box pre,.embed-code-box code{color:var(--gold) !important}
+    .form-group input,.form-group select,.form-group textarea{background:#0a2a4a !important;border:1px solid rgba(255,215,0,0.3) !important;color:#fff !important}
+    .form-group input::placeholder,.form-group textarea::placeholder{color:var(--mid-gray) !important}
+    code{background:rgba(255,215,0,0.1) !important;color:var(--gold) !important}
+    a.btn-gold,button.btn-gold{color:#001F3F !important;background:var(--gold) !important}
+    .btn-outline-dark,.btn-outline-light{border-color:var(--gold) !important;color:var(--gold) !important}
+    .billing-card{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .billing-card h4{color:var(--gold) !important}
+    .billing-card p{color:#fff !important}
+    .pricing-card{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .pricing-card.featured{border:2px solid var(--gold) !important}
+    .pricing-plan{color:var(--gold) !important}
+    .pricing-features li{color:#fff !important}
+    .text-muted{color:var(--mid-gray) !important}
+    .billing-plan-card{background:rgba(255,215,0,0.05) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .billing-plan-name{color:var(--gold) !important}
+    .billing-plan-badge{background:rgba(46,204,113,0.2) !important;color:#2ecc71 !important}
+    .billing-plan-details p{color:#fff !important}
+    .pricing-card-dash{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .pricing-card-dash.featured{border:2px solid var(--gold) !important}
+    .pricing-card-dash h4{color:var(--gold) !important}
+    .pricing-card-dash-price{color:#fff !important}
+    .pricing-card-dash-price span{color:var(--mid-gray) !important}
+    .pricing-card-dash-setup{color:var(--mid-gray) !important}
+    .pricing-features-dash li{color:#fff !important}
+    .pricing-popular-tag{background:var(--gold) !important;color:var(--dark-navy) !important}
+  </style>
 </head>
 <body>
 
@@ -44,7 +89,7 @@
   </section>
 
   <!-- DASHBOARD TABS -->
-  <section class="section" style="padding-top:0;">
+  <section class="section section-dark" style="padding-top:0;">
     <div class="container">
 
       <div class="dash-tabs">
@@ -505,20 +550,21 @@ A: Yes, completely free to play!"></textarea>
           <div class="pricing-cards-dash">
 
             <div class="pricing-card-dash" id="plan-standard">
+              <div id="standard-promo-banner" style="display:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;padding:8px 12px;border-radius:8px 8px 0 0;text-align:center;font-size:0.85rem;font-weight:600;margin:-24px -24px 16px -24px;">&#127881; FREE FIRST MONTH — Upgrade within 7 days!</div>
               <div class="pricing-card-dash-header">
                 <h4>Standard</h4>
                 <div class="pricing-card-dash-price">$49<span>/month</span></div>
                 <div class="pricing-card-dash-setup">+ $499 one-time setup</div>
               </div>
               <ul class="pricing-features-dash">
-                <li>&#10003; AI chatbot with unlimited conversations</li>
+                <li>&#10003; AI chatbot with 2,500 conversations/month</li>
                 <li>&#10003; 1 website domain included</li>
                 <li>&#10003; Your branding &amp; colors</li>
                 <li>&#10003; Email support</li>
                 <li>&#10003; Monthly analytics report</li>
                 <li>&#10003; Basic AI automation</li>
               </ul>
-              <button class="btn btn-gold btn-animated btn-full" onclick="startCheckout('standard')">Get Standard</button>
+              <button class="btn btn-gold btn-animated btn-full" id="btn-standard">Get Standard</button>
             </div>
 
             <div class="pricing-card-dash featured" id="plan-pro">
@@ -530,6 +576,7 @@ A: Yes, completely free to play!"></textarea>
               </div>
               <ul class="pricing-features-dash">
                 <li>&#10003; Everything in Standard</li>
+                <li>&#10003; 10,000 conversations/month</li>
                 <li>&#10003; Up to 3 website domains</li>
                 <li>&#10003; Priority support</li>
                 <li>&#10003; Advanced analytics dashboard</li>
@@ -537,7 +584,7 @@ A: Yes, completely free to play!"></textarea>
                 <li>&#10003; Lead capture &amp; notifications</li>
                 <li>&#10003; Custom integrations &amp; AI workflows</li>
               </ul>
-              <button class="btn btn-gold btn-animated btn-full" onclick="startCheckout('pro')">Get Pro</button>
+              <button class="btn btn-gold btn-animated btn-full" id="btn-pro">Get Pro</button>
             </div>
 
           </div>
@@ -619,10 +666,46 @@ A: Yes, completely free to play!"></textarea>
             <a href="#" id="change-password-link" style="color:var(--gold);">Change Password</a>
           </p>
         </div>
+
+        <div class="dash-section">
+          <h3>Email Preferences</h3>
+          <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+            <input type="checkbox" id="set-email-notifications" checked style="width:20px;height:20px;accent-color:var(--gold);">
+            <span>Receive email updates (trial extensions, plan changes, important notices)</span>
+          </label>
+          <p style="margin-top:8px;font-size:0.85rem;color:var(--mid-gray);">We'll always send critical account emails like password resets.</p>
+        </div>
       </div>
 
     </div>
   </section>
+
+  <!-- Change Password Modal -->
+  <div id="change-password-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10000;justify-content:center;align-items:center;">
+    <div style="background:var(--dark-navy);border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:32px;max-width:400px;width:90%;">
+      <h3 style="color:var(--gold);margin-bottom:20px;">Change Password</h3>
+      <form id="change-password-form">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;color:#fff;">Current Password</label>
+          <input type="password" id="cp-current" required style="width:100%;padding:10px;background:#0a2a4a;border:1px solid rgba(255,215,0,0.3);border-radius:6px;color:#fff;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;color:#fff;">New Password</label>
+          <input type="password" id="cp-new" required style="width:100%;padding:10px;background:#0a2a4a;border:1px solid rgba(255,215,0,0.3);border-radius:6px;color:#fff;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;color:#fff;">Confirm New Password</label>
+          <input type="password" id="cp-confirm" required style="width:100%;padding:10px;background:#0a2a4a;border:1px solid rgba(255,215,0,0.3);border-radius:6px;color:#fff;">
+        </div>
+        <div id="cp-error" style="display:none;color:#ff6b6b;margin-bottom:12px;font-size:0.9rem;"></div>
+        <div id="cp-success" style="display:none;color:#4CAF50;margin-bottom:12px;font-size:0.9rem;"></div>
+        <div style="display:flex;gap:12px;margin-top:20px;">
+          <button type="button" id="cp-cancel" style="flex:1;padding:12px;background:transparent;border:1px solid var(--mid-gray);border-radius:6px;color:#fff;cursor:pointer;">Cancel</button>
+          <button type="submit" id="cp-submit" style="flex:1;padding:12px;background:var(--gold);border:none;border-radius:6px;color:#001F3F;font-weight:600;cursor:pointer;">Change Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <footer class="footer">
     <div class="container footer-inner">
@@ -638,10 +721,15 @@ A: Yes, completely free to play!"></textarea>
         <a href="blog.html">Blog</a>
         <a href="contact.html">Contact</a>
       </div>
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="cookies.html">Cookie Policy</a>
+      </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Heinrichs Software Solutions Company. All rights reserved.</p>
         <p>Veteran-Owned &bull; AI Solutions &bull; Florida, USA</p>
-        <p><a href="tel:+16197707306" style="color:var(--mid-gray);text-decoration:none;">(619) 770-7306</a> &bull; <a href="mailto:heinrichssoftwaresolutions@gmail.com" style="color:var(--mid-gray);text-decoration:none;">heinrichssoftwaresolutions@gmail.com</a></p>
+        <p><a href="mailto:contact@heinrichstech.com" style="color:var(--mid-gray);text-decoration:none;">contact@heinrichstech.com</a></p>
       </div>
     </div>
   </footer>
@@ -792,17 +880,18 @@ A: Yes, completely free to play!"></textarea>
       document.getElementById('stat-trial-card').style.display = '';
       document.getElementById('stat-trial-days').textContent = trialData.daysLeft;
       document.getElementById('trial-banner').style.display = 'flex';
-      document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysLeft} days remaining. Upgrade to keep your products running with unlimited access.`;
+      document.getElementById('trial-banner-text').textContent = `You have ${trialData.daysLeft} days remaining. Upgrade to keep your products running with full access.`;
     } else {
       document.getElementById('stat-trial-days').textContent = '0';
     }
 
     // ── Conversations Remaining (trial users only) ──
     if (isPaid || isComped) {
-      // Paid/comped users have unlimited
+      // Paid/comped users have plan-based limits
+      const convLimit = (plan === 'pro' || compedPlan === 'pro') ? '10,000' : '2,500';
       document.getElementById('stat-conversations-card').style.display = '';
-      document.getElementById('stat-conversations-label').textContent = 'Conversations';
-      document.getElementById('stat-conversations').textContent = 'Unlimited';
+      document.getElementById('stat-conversations-label').textContent = 'Monthly Limit';
+      document.getElementById('stat-conversations').textContent = convLimit;
       document.getElementById('stat-conversations').style.color = '#2ecc71';
     } else if (isTrial && trialData.maxConversations) {
       const used = trialData.conversationCount || 0;
@@ -842,9 +931,10 @@ A: Yes, completely free to play!"></textarea>
     } else if (isPaid) {
       const planName = plan === 'pro' ? 'Pro' : 'Standard';
       const price = plan === 'pro' ? '$99/month' : '$49/month';
+      const convLimit = plan === 'pro' ? '10,000' : '2,500';
       document.getElementById('billing-plan-name').textContent = planName;
       document.getElementById('billing-plan-price').textContent = price;
-      document.getElementById('billing-plan-desc').textContent = 'Unlimited conversations, full access to all products';
+      document.getElementById('billing-plan-desc').textContent = `${convLimit} conversations/month, full access to all products`;
 
       if (subData?.cancelAtPeriodEnd) {
         document.getElementById('billing-plan-badge').textContent = 'Canceling';
@@ -942,7 +1032,11 @@ A: Yes, completely free to play!"></textarea>
       document.getElementById('set-website').value = clientData.website || '';
       document.getElementById('set-phone').value = clientData.phone || '';
       document.getElementById('set-industry').value = clientData.industry || 'general';
+      document.getElementById('set-email-notifications').checked = clientData.emailNotifications !== false; // default true
     }
+
+    // ── Update promo display for free month offer ──
+    updatePromoDisplay();
   }
 
   // ──── TAB SWITCHING ────
@@ -1454,14 +1548,37 @@ A: Yes, completely free to play!"></textarea>
     });
   });
 
+  // ──── CHECK IF ELIGIBLE FOR FREE MONTH ────
+  function isEligibleForFreeMonth() {
+    if (!trialData?.startDate) return false;
+    const trialStart = new Date(trialData.startDate);
+    const now = new Date();
+    const daysSinceStart = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
+    return daysSinceStart <= 7;
+  }
+
+  // Show free month promo if eligible
+  function updatePromoDisplay() {
+    const promoBanner = document.getElementById('standard-promo-banner');
+    const btnStandard = document.getElementById('btn-standard');
+    if (isEligibleForFreeMonth()) {
+      if (promoBanner) promoBanner.style.display = 'block';
+      if (btnStandard) btnStandard.textContent = 'Get Standard + Free Month';
+    }
+  }
+
+  // Setup checkout buttons
+  document.getElementById('btn-standard')?.addEventListener('click', () => startCheckout('standard', isEligibleForFreeMonth()));
+  document.getElementById('btn-pro')?.addEventListener('click', () => startCheckout('pro', false));
+
   // ──── STRIPE CHECKOUT ────
-  async function startCheckout(plan) {
+  async function startCheckout(plan, freeMonth = false) {
     if (!clientData?.clientId) {
       alert('Please complete your signup first.');
       return;
     }
 
-    const btn = document.querySelector(`#plan-${plan} button`);
+    const btn = document.getElementById(`btn-${plan}`);
     btn.textContent = 'Redirecting to checkout...';
     btn.disabled = true;
 
@@ -1473,6 +1590,7 @@ A: Yes, completely free to play!"></textarea>
           clientId: clientData.clientId,
           plan: plan,
           email: userEmail,
+          freeMonth: freeMonth,
         }),
       });
 
@@ -1798,6 +1916,7 @@ A: Yes, completely free to play!"></textarea>
           website: document.getElementById('set-website').value.trim(),
           phone: document.getElementById('set-phone').value.trim(),
           industry: document.getElementById('set-industry').value,
+          emailNotifications: document.getElementById('set-email-notifications').checked,
         }),
       });
 
@@ -1830,9 +1949,87 @@ A: Yes, completely free to play!"></textarea>
   document.getElementById('action-upgrade')?.addEventListener('click', () => switchTab('billing'));
 
   // ──── CHANGE PASSWORD ────
+  const COGNITO_REGION = 'us-east-2';
+  const cpModal = document.getElementById('change-password-modal');
+  const cpForm = document.getElementById('change-password-form');
+  const cpError = document.getElementById('cp-error');
+  const cpSuccess = document.getElementById('cp-success');
+
   document.getElementById('change-password-link')?.addEventListener('click', (e) => {
     e.preventDefault();
-    window.location.href = 'login.html?action=forgot';
+    cpModal.style.display = 'flex';
+    cpError.style.display = 'none';
+    cpSuccess.style.display = 'none';
+    cpForm.reset();
+  });
+
+  document.getElementById('cp-cancel')?.addEventListener('click', () => {
+    cpModal.style.display = 'none';
+  });
+
+  cpModal?.addEventListener('click', (e) => {
+    if (e.target === cpModal) cpModal.style.display = 'none';
+  });
+
+  cpForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const currentPw = document.getElementById('cp-current').value;
+    const newPw = document.getElementById('cp-new').value;
+    const confirmPw = document.getElementById('cp-confirm').value;
+
+    cpError.style.display = 'none';
+    cpSuccess.style.display = 'none';
+
+    if (newPw !== confirmPw) {
+      cpError.textContent = 'New passwords do not match.';
+      cpError.style.display = 'block';
+      return;
+    }
+
+    if (newPw.length < 8) {
+      cpError.textContent = 'Password must be at least 8 characters.';
+      cpError.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('cp-submit');
+    btn.textContent = 'Changing...';
+    btn.disabled = true;
+
+    try {
+      const accessToken = localStorage.getItem('hss_access_token');
+      if (!accessToken) throw new Error('Not authenticated. Please log in again.');
+
+      const resp = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ChangePassword',
+        },
+        body: JSON.stringify({
+          AccessToken: accessToken,
+          PreviousPassword: currentPw,
+          ProposedPassword: newPw,
+        }),
+      });
+
+      const data = await resp.json();
+      if (data.__type) {
+        const errMsg = data.message || 'Password change failed';
+        throw new Error(errMsg.includes('Incorrect') ? 'Current password is incorrect.' : errMsg);
+      }
+
+      cpSuccess.textContent = 'Password changed successfully!';
+      cpSuccess.style.display = 'block';
+      cpForm.reset();
+      setTimeout(() => { cpModal.style.display = 'none'; }, 2000);
+    } catch (err) {
+      cpError.textContent = err.message;
+      cpError.style.display = 'block';
+    } finally {
+      btn.textContent = 'Change Password';
+      btn.disabled = false;
+    }
   });
   </script>
 </body>

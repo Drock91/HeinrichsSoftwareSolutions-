@@ -31,7 +31,7 @@ import {
 // ─── CONFIG ───
 const REGION = process.env.REGION || "us-east-2";
 const FROM_EMAIL = process.env.FROM_EMAIL || "contact@heinrichstech.com";
-const NOTIFY_EMAIL = "heinrichssoftwaresolutions@gmail.com";
+const NOTIFY_EMAIL = "contact@heinrichstech.com";
 const CLIENTS_TABLE = process.env.CLIENTS_TABLE || "HSS-CLIENTS";
 const TRIALS_TABLE = process.env.TRIALS_TABLE || "HSS-TRIALS";
 const CONFIGS_TABLE = process.env.CONFIGS_TABLE || "HSS-CHATBOT-CONFIGS";
@@ -50,11 +50,30 @@ const PRO_MONTHLY_PRICE = process.env.PRO_MONTHLY_PRICE || "price_pro_monthly";
 const ses = new SESClient({ region: REGION });
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOWED_ORIGINS = [
+  "https://heinrichstech.com",
+  "https://www.heinrichstech.com",
+];
+
+function getCorsHeaders(origin) {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+// Validate required environment variables at cold start
+const REQUIRED_ENV_VARS = ["STRIPE_SECRET_KEY"];
+for (const envVar of REQUIRED_ENV_VARS) {
+  if (!process.env[envVar]) {
+    console.error(`FATAL: Missing required environment variable: ${envVar}`);
+  }
+}
+
+// Module-level race condition removed — origin passed per-request
 
 // ─── Stripe API helper (no SDK needed) ───
 async function stripeRequest(endpoint, params) {
@@ -112,8 +131,12 @@ function flattenParams(obj, params, prefix = "") {
 
 // ─── MAIN HANDLER ───
 export const handler = async (event) => {
+  // Determine origin per-request (no module-level variable)
+  const origin = event.headers?.origin || event.headers?.Origin || "";
+  const requestOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
   if (event.httpMethod === "OPTIONS") {
-    return respond(200, {});
+    return respond(200, {}, requestOrigin);
   }
 
   const path = event.path || event.rawPath || "";
@@ -157,10 +180,10 @@ export const handler = async (event) => {
       return await handleWebhook(rawBody, event.headers);
     }
 
-    return respond(404, { error: "Route not found" });
+    return respond(404, { error: "Route not found" }, requestOrigin);
   } catch (err) {
     console.error("Payment handler error:", err);
-    return respond(500, { error: err.message });
+    return respond(500, { error: "Internal server error" }, requestOrigin);
   }
 };
 
@@ -168,12 +191,27 @@ export const handler = async (event) => {
 // CREATE CHECKOUT SESSION
 // ───────────────────────────────────────
 async function createCheckout(data) {
-  const { clientId, plan, email } = data;
+  const { clientId, plan, email, freeMonth } = data;
   if (!clientId || !plan) return respond(400, { error: "clientId and plan required" });
 
   // Look up client
   const client = await getClient(clientId);
   if (!client) return respond(404, { error: "Client not found" });
+
+  // Verify free month eligibility (must be within 7 days of trial start)
+  let eligibleForFreeMonth = false;
+  if (freeMonth && plan === 'standard' && client.trialId) {
+    const trialResult = await ddb.send(new GetCommand({
+      TableName: TRIALS_TABLE,
+      Key: { trialId: client.trialId },
+    }));
+    if (trialResult.Item?.startDate) {
+      const trialStart = new Date(trialResult.Item.startDate);
+      const now = new Date();
+      const daysSinceStart = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
+      eligibleForFreeMonth = daysSinceStart <= 7;
+    }
+  }
 
   // Determine prices
   let lineItems;
@@ -211,7 +249,7 @@ async function createCheckout(data) {
   }
 
   // Create Checkout Session
-  const session = await stripeRequest("/checkout/sessions", {
+  const sessionParams = {
     customer: stripeCustomerId,
     mode: "subscription",
     "line_items[0][price]": lineItems[0].price,
@@ -224,7 +262,14 @@ async function createCheckout(data) {
     "subscription_data[metadata][plan]": plan,
     "metadata[clientId]": clientId,
     "metadata[plan]": plan,
-  });
+  };
+
+  // Add 30-day free trial if eligible
+  if (eligibleForFreeMonth) {
+    sessionParams["subscription_data[trial_period_days]"] = "30";
+  }
+
+  const session = await stripeRequest("/checkout/sessions", sessionParams);
 
   return respond(200, { checkoutUrl: session.url, sessionId: session.id });
 }
@@ -357,21 +402,63 @@ async function createPortalSession(clientId) {
 }
 
 // ───────────────────────────────────────
+// STRIPE WEBHOOK SIGNATURE VERIFICATION
+// ───────────────────────────────────────
+import { createHmac, timingSafeEqual } from "crypto";
+
+function verifyStripeSignature(payload, header, secret) {
+  if (!header || !secret) return false;
+  
+  // Parse signature header: t=timestamp,v1=signature
+  const elements = header.split(",");
+  const timestamp = elements.find(e => e.startsWith("t="))?.split("=")[1];
+  const signature = elements.find(e => e.startsWith("v1="))?.split("=")[1];
+  
+  if (!timestamp || !signature) return false;
+  
+  // Reject if timestamp is more than 5 minutes old (replay attack prevention)
+  const fiveMinutes = 5 * 60;
+  const currentTime = Math.floor(Date.now() / 1000);
+  if (currentTime - parseInt(timestamp) > fiveMinutes) {
+    console.warn("Webhook timestamp too old - possible replay attack");
+    return false;
+  }
+  
+  // Compute expected signature
+  const signedPayload = `${timestamp}.${payload}`;
+  const expectedSig = createHmac("sha256", secret)
+    .update(signedPayload, "utf8")
+    .digest("hex");
+  
+  // Constant-time comparison to prevent timing attacks
+  try {
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+  } catch {
+    return false;
+  }
+}
+
+// ───────────────────────────────────────
 // STRIPE WEBHOOK
 // ───────────────────────────────────────
 async function handleWebhook(rawBody, headers) {
-  // Verify webhook signature
   const sig = headers["stripe-signature"] || headers["Stripe-Signature"];
+  const payload = typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody);
 
-  if (STRIPE_WEBHOOK_SECRET && sig) {
-    // Simple signature verification (timestamp + payload)
-    // In production, use Stripe's official verification
-    // For now we process all webhook events
+  // Verify webhook signature (REQUIRED for production)
+  if (STRIPE_WEBHOOK_SECRET) {
+    if (!verifyStripeSignature(payload, sig, STRIPE_WEBHOOK_SECRET)) {
+      console.error("Webhook signature verification failed");
+      return respond(401, { error: "Invalid webhook signature" });
+    }
+    console.log("Webhook signature verified successfully");
+  } else {
+    console.warn("STRIPE_WEBHOOK_SECRET not set - webhook signature verification DISABLED");
   }
 
   let event;
   try {
-    event = typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody;
+    event = JSON.parse(payload);
   } catch (e) {
     return respond(400, { error: "Invalid webhook payload" });
   }
@@ -472,6 +559,7 @@ async function handleCheckoutComplete(session) {
   if (client?.email) {
     const planName = plan === "pro" ? "Pro" : "Standard";
     const monthly = plan === "pro" ? "$99" : "$49";
+    const convLimit = plan === "pro" ? "10,000" : "2,500";
 
     await ses.send(new SendEmailCommand({
       Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
@@ -480,7 +568,7 @@ async function handleCheckoutComplete(session) {
         Subject: { Data: `Welcome to ${planName}! Your AI Chatbot is Fully Active` },
         Body: {
           Text: {
-            Data: `Hi!\n\nThank you for upgrading to the ${planName} plan! Your AI chatbot for ${client.businessName} is now fully active with unlimited conversations.\n\nPlan Details:\n• Plan: ${planName}\n• Monthly billing: ${monthly}/month\n• Conversations: Unlimited\n• Support: ${plan === "pro" ? "Priority" : "Email"}\n\nManage your subscription anytime from your dashboard:\n${SITE_URL}/dashboard.html\n\nNeed help? Reply to this email or call (619) 770-7306.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+            Data: `Hi!\n\nThank you for upgrading to the ${planName} plan! Your AI chatbot for ${client.businessName} is now fully active.\n\nPlan Details:\n• Plan: ${planName}\n• Monthly billing: ${monthly}/month\n• Conversations: ${convLimit}/month\n• Support: ${plan === "pro" ? "Priority" : "Email"}\n\nManage your subscription anytime from your dashboard:\n${SITE_URL}/dashboard.html\n\nNeed help? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
           },
         },
       },
@@ -574,7 +662,7 @@ async function handlePaymentFailed(invoice) {
         Subject: { Data: "Action Needed: Payment Failed for Your AI Chatbot" },
         Body: {
           Text: {
-            Data: `Hi,\n\nWe were unable to process your monthly payment for ${client.businessName}'s AI chatbot.\n\nPlease update your payment method to keep your chatbot running:\n${SITE_URL}/dashboard.html\n\nIf there's an issue, please reach out — we're happy to help.\n\nHSS Team\n(619) 770-7306`,
+            Data: `Hi,\n\nWe were unable to process your monthly payment for ${client.businessName}'s AI chatbot.\n\nPlease update your payment method to keep your chatbot running:\n${SITE_URL}/dashboard.html\n\nIf there's an issue, please reach out — we're happy to help.\n\nHSS Team\ncontact@heinrichstech.com`,
           },
         },
       },
@@ -591,10 +679,10 @@ async function getClient(clientId) {
   return result.Item || null;
 }
 
-function respond(statusCode, body) {
+function respond(statusCode, body, origin) {
   return {
     statusCode,
-    headers: CORS_HEADERS,
+    headers: getCorsHeaders(origin || ALLOWED_ORIGINS[0]),
     body: JSON.stringify(body),
   };
 }

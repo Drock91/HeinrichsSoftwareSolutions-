@@ -12,6 +12,51 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <style>
+    .section-dark{background:var(--dark-navy) !important}
+    .section-dark h3{color:var(--gold) !important}
+    .section-dark p,.section-dark span,.section-dark td{color:#fff !important}
+    .dash-tab{background:rgba(255,215,0,0.1) !important;color:#fff !important;border:1px solid rgba(255,215,0,0.3) !important}
+    .dash-tab.active{background:var(--gold) !important;color:var(--dark-navy) !important}
+    .dash-stat-card{background:rgba(255,215,0,0.05) !important;border:1px solid rgba(255,215,0,0.2) !important}
+    .dash-stat-label{color:var(--mid-gray) !important}
+    .dash-stat-value{color:var(--gold) !important}
+    .admin-table{background:rgba(255,215,0,0.02) !important}
+    .admin-table th{background:rgba(255,215,0,0.1) !important;color:var(--gold) !important;border-bottom:2px solid var(--gold) !important}
+    .admin-table td{border-bottom:1px solid rgba(255,215,0,0.1) !important}
+    .admin-table tr:hover td{background:rgba(255,255,255,0.1) !important;color:#fff !important}
+    .admin-table tbody tr:hover{background:rgba(255,255,255,0.08) !important}
+    .admin-table tbody tr:hover td{background:inherit !important;color:#fff !important}
+    .admin-select,.admin-search{background:#0a2a4a !important;border:1px solid rgba(255,215,0,0.3) !important;color:#fff !important}
+    .modal-card{background:var(--dark-navy) !important;border:2px solid var(--gold) !important}
+    .modal-card h3{color:var(--gold) !important}
+    .modal-card label{color:#fff !important}
+    .modal-card input,.modal-card select{background:#0a2a4a !important;border:1px solid rgba(255,215,0,0.3) !important;color:#fff !important}
+    .modal-card hr{border-top:1px solid rgba(255,215,0,0.2) !important}
+    .modal-card p{color:var(--gold) !important}
+    a.btn-gold,button.btn-gold{color:#001F3F !important;background:var(--gold) !important}
+    .text-muted{color:var(--mid-gray) !important}
+    .admin-activity-list{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.2) !important;border-radius:8px;padding:16px}
+    .activity-item{color:#fff !important}
+    .activity-item span{color:#fff !important}
+    .activity-item strong{color:var(--gold) !important}
+    .activity-date{color:var(--mid-gray) !important}
+    .client-card{background:rgba(255,215,0,0.03) !important;border:1px solid rgba(255,215,0,0.2) !important;border-radius:12px;overflow:hidden}
+    .client-card:hover{box-shadow:0 4px 16px rgba(255,215,0,0.1) !important}
+    .client-header{padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid rgba(255,215,0,0.1);cursor:pointer}
+    .client-header:hover{background:rgba(255,215,0,0.05)}
+    .client-avatar{width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--dark-navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;font-family:'Oswald',sans-serif;flex-shrink:0}
+    .client-name{font-size:1.05rem;color:var(--gold) !important;font-weight:700}
+    .client-meta{font-size:0.85rem;color:var(--mid-gray) !important;margin-top:2px}
+    .client-products{padding:12px 20px 16px;display:none}
+    .client-products.open{display:block}
+    .client-products-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--mid-gray);font-weight:600;margin-bottom:8px}
+    .client-product-card{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,215,0,0.05);border-radius:8px;border:1px solid rgba(255,215,0,0.15)}
+    .client-product-card strong{color:var(--gold) !important}
+    .client-product-card code{font-size:0.7rem;color:var(--mid-gray);background:rgba(255,215,0,0.1);padding:2px 6px;border-radius:4px}
+    .collapse-icon{margin-left:auto;color:var(--gold);font-size:1.2rem;transition:transform 0.2s}
+    .collapse-icon.open{transform:rotate(180deg)}
+  </style>
 </head>
 <body>
 
@@ -41,13 +86,12 @@
     </div>
   </section>
 
-  <section class="section" style="padding-top:0;">
+  <section class="section section-dark" style="padding-top:0;">
     <div class="container">
 
       <div class="dash-tabs">
         <button class="dash-tab active" data-tab="stats">Stats</button>
         <button class="dash-tab" data-tab="clients">Clients</button>
-        <button class="dash-tab" data-tab="trials">Trials</button>
         <button class="dash-tab" data-tab="revenue">Revenue</button>
       </div>
 
@@ -108,6 +152,7 @@
               <select id="filter-plan" class="admin-select">
                 <option value="">All Plans</option>
                 <option value="trial">Trial</option>
+                <option value="comped">Comped</option>
                 <option value="standard">Standard</option>
                 <option value="pro">Pro</option>
                 <option value="expired">Expired</option>
@@ -117,40 +162,6 @@
           </div>
           <div id="clients-list" style="display:flex;flex-direction:column;gap:16px;">
             <p class="text-muted">Loading clients...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── TRIALS TAB ─── -->
-      <div class="dash-panel" id="tab-trials">
-        <div class="dash-section">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-            <h3>All Trials</h3>
-            <select id="filter-trial-status" class="admin-select">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="expired">Expired</option>
-              <option value="converted">Converted</option>
-            </select>
-          </div>
-
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Status</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Conversations</th>
-                  <th>Days Left</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="trials-tbody">
-                <tr><td colspan="7" class="text-muted">Loading trials...</td></tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -346,7 +357,6 @@
 
       renderStats(stats);
       renderClients();
-      renderTrials();
       renderRevenue();
       renderActivity();
     } catch (err) {
@@ -386,7 +396,11 @@
     const listEl = document.getElementById('clients-list');
     let filtered = allClients;
 
-    if (filter) filtered = filtered.filter(c => c.plan === filter);
+    if (filter === 'comped') {
+      filtered = filtered.filter(c => c.compedPlan && c.compedUntil && new Date(c.compedUntil) > new Date());
+    } else if (filter) {
+      filtered = filtered.filter(c => c.plan === filter);
+    }
     if (search) {
       const s = search.toLowerCase();
       filtered = filtered.filter(c =>
@@ -405,6 +419,21 @@
       const joined = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—';
       const trial = allTrials.find(t => t.clientId === c.clientId);
       const isComped = c.compedPlan && c.compedUntil && new Date(c.compedUntil) > new Date();
+
+      // Calculate days remaining for trial or comp
+      let daysInfo = '';
+      let showExtend = false;
+      let extendId = '';
+      
+      if (isComped) {
+        const compDaysLeft = Math.max(0, Math.ceil((new Date(c.compedUntil) - new Date()) / 86400000));
+        daysInfo = `<span style="font-size:0.75rem;background:#9b59b6;color:#fff;padding:3px 8px;border-radius:4px;margin-left:8px;">COMP: ${compDaysLeft}d left</span>`;
+      } else if (c.plan === 'trial' && trial) {
+        const trialDaysLeft = Math.max(0, Math.ceil((new Date(trial.expiresDate) - new Date()) / 86400000));
+        daysInfo = `<span style="font-size:0.75rem;background:#f39c12;color:#fff;padding:3px 8px;border-radius:4px;margin-left:8px;">TRIAL: ${trialDaysLeft}d left</span>`;
+        showExtend = trial.status === 'active';
+        extendId = trial.trialId;
+      }
 
       // Build products list
       let products = '';
@@ -428,18 +457,18 @@
         }
 
         products += `
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8f9fa;border-radius:8px;border:1px solid #eee;">
+          <div class="client-product-card">
             <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#D4AF37,#B8960C);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <span style="font-size:1.1rem;">&#128172;</span>
             </div>
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <strong style="font-size:0.9rem;color:var(--dark-navy);">AI Chatbot</strong>
+                <strong style="font-size:0.9rem;">AI Chatbot</strong>
                 ${getPlanBadge(chatbotPlan)}
               </div>
               <div style="margin-top:2px;">${chatbotStatus}</div>
             </div>
-            <code style="font-size:0.7rem;color:var(--mid-gray);background:#eee;padding:2px 6px;border-radius:4px;">${c.configId}</code>
+            <code>${c.configId}</code>
           </div>`;
       }
 
@@ -447,31 +476,35 @@
       // if (c.uptimeMonitorId) { products += `...uptime monitor card...`; }
 
       if (!products) {
-        products = `<div style="padding:12px 16px;background:#f8f9fa;border-radius:8px;border:1px dashed #ddd;color:var(--mid-gray);font-size:0.85rem;text-align:center;">No products yet</div>`;
+        products = `<div class="client-product-card" style="border-style:dashed;text-align:center;color:var(--mid-gray);font-size:0.85rem;">No products yet</div>`;
       }
 
+      const cardId = 'client-' + c.clientId;
       return `
-        <div style="background:var(--white);border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;transition:box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseleave="this.style.boxShadow='none'">
+        <div class="client-card">
           <!-- Client Header -->
-          <div style="padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid #f0f0f0;">
-            <div style="width:44px;height:44px;border-radius:50%;background:var(--dark-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;font-family:'Oswald',sans-serif;flex-shrink:0;">
+          <div class="client-header" onclick="toggleClient('${cardId}')">
+            <div class="client-avatar">
               ${esc((c.businessName || '?')[0].toUpperCase())}
             </div>
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <strong style="font-size:1.05rem;color:var(--dark-navy);">${esc(c.businessName || '—')}</strong>
+                <span class="client-name">${esc(c.businessName || '—')}</span>
                 ${planBadge}
+                ${daysInfo}
               </div>
-              <div style="font-size:0.85rem;color:var(--mid-gray);margin-top:2px;">
+              <div class="client-meta">
                 ${esc(c.email || '—')} &bull; Joined ${joined}
                 ${c.phone ? ' &bull; ' + esc(c.phone) : ''}
               </div>
             </div>
-            <button class="admin-btn" onclick="editClient('${c.clientId}')">Edit</button>
+            ${showExtend ? `<button class="admin-btn" onclick="event.stopPropagation();extendTrial('${extendId}')" style="background:#f39c12;margin-right:8px;">Extend</button>` : ''}
+            <span class="collapse-icon" id="icon-${cardId}">&#9660;</span>
+            <button class="admin-btn" onclick="event.stopPropagation();editClient('${c.clientId}')">Edit</button>
           </div>
           <!-- Products -->
-          <div style="padding:12px 20px 16px;">
-            <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--mid-gray);font-weight:600;margin-bottom:8px;">Products</div>
+          <div class="client-products" id="${cardId}">
+            <div class="client-products-label">Products</div>
             <div style="display:flex;flex-direction:column;gap:8px;">
               ${products}
             </div>
@@ -574,9 +607,15 @@
     renderClients(document.getElementById('filter-plan').value, e.target.value);
   });
 
-  document.getElementById('filter-trial-status')?.addEventListener('change', (e) => {
-    renderTrials(e.target.value);
-  });
+  // ── TOGGLE CLIENT CARD ──
+  function toggleClient(cardId) {
+    const products = document.getElementById(cardId);
+    const icon = document.getElementById('icon-' + cardId);
+    if (products && icon) {
+      products.classList.toggle('open');
+      icon.classList.toggle('open');
+    }
+  }
 
   // ──── EDIT CLIENT ────
   function editClient(clientId) {

@@ -29,7 +29,7 @@ import {
 // ─── CONFIG ───
 const REGION = process.env.REGION || "us-east-2";
 const FROM_EMAIL = process.env.FROM_EMAIL || "contact@heinrichstech.com";
-const NOTIFY_EMAIL = "heinrichssoftwaresolutions@gmail.com";
+const NOTIFY_EMAIL = "contact@heinrichstech.com";
 const PROSPECTS_TABLE = process.env.PROSPECTS_TABLE || "HSS-OUTREACH-PROSPECTS";
 const DAILY_LIMIT = parseInt(process.env.DAILY_LIMIT || "25", 10);
 const SITE_URL = "https://heinrichstech.com";
@@ -69,7 +69,6 @@ Try it free: ${SITE_URL}/signup.html
 Best,
 HSS Team
 Heinrichs Software Solutions Company
-(619) 770-7306
 ${SITE_URL}`,
   }),
 
@@ -108,7 +107,7 @@ ${SITE_URL}/signup.html
 Best,
 HSS Team
 Heinrichs Software Solutions Company
-(619) 770-7306`,
+contact@heinrichstech.com`,
     };
   },
 
@@ -127,7 +126,7 @@ ${SITE_URL}/blog.html
 Worth a shot?
 
 HSS Team
-(619) 770-7306`,
+contact@heinrichstech.com`,
   }),
 };
 
@@ -165,7 +164,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error("Outreach error:", err);
-    return respond(500, { error: err.message });
+    return respond(500, { error: "Internal server error" });
   }
 };
 

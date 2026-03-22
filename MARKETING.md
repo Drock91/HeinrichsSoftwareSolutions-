@@ -344,5 +344,5 @@ Nobody says no to free.
 | Your actual cost per client | ~$1-5/month |
 | Deployment time | 3-5 business days |
 | Demo URL | heinrichstech.com |
-| Contact email | heinrichssoftwaresolutions@gmail.com |
+| Contact email | contact@heinrichstech.com |
 | Phone | (619) 770-7306 |

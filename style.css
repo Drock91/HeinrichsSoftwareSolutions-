@@ -390,6 +390,9 @@ img { max-width: 100%; height: auto; }
 .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
 .footer-links a { color: var(--mid-gray); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s; }
 .footer-links a:hover { color: var(--gold); }
+.footer-legal { display: flex; gap: 24px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+.footer-legal a { color: var(--mid-gray); font-size: 12px; letter-spacing: 0.5px; transition: color 0.2s; }
+.footer-legal a:hover { color: var(--gold); }
 .footer-bottom p { color: #667; font-size: 0.85rem; }
 .footer-bottom p:last-child { font-size: 0.75rem; margin-top: 4px; color: #556; }
 
@@ -1492,6 +1495,23 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   color: var(--white);
 }
 
+/* Dark theme overrides for blog */
+.section-dark .blog-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.15); box-shadow: none; }
+.section-dark .blog-card:hover { background: rgba(255,255,255,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.section-dark .blog-card h3 { color: var(--gold); }
+.section-dark .blog-card p { color: #FFFFFF !important; }
+.section-dark .blog-card-date { color: #CCCCCC; }
+.section-dark .blog-article h2 { color: var(--gold) !important; }
+.section-dark .blog-article p { color: #FFFFFF !important; }
+.section-dark .blog-article ul,
+.section-dark .blog-article ol { color: #FFFFFF !important; }
+.section-dark .blog-article li { color: #FFFFFF !important; }
+.section-dark .blog-article strong { color: var(--gold) !important; }
+.section-dark .blog-article a { color: var(--gold) !important; }
+.section-dark .blog-lead { color: #FFFFFF !important; border-left-color: var(--gold); }
+.section-dark .blog-table tr:hover { background: rgba(255,255,255,0.05); }
+.section-dark .blog-table td { color: #FFFFFF !important; border-bottom-color: rgba(255,255,255,0.1); }
+
 /* Blog Table */
 .blog-table {
   width: 100%;
@@ -2300,7 +2320,7 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
 }
 
 .admin-table tbody tr:hover {
-  background: #f9f9f9;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .admin-table tbody tr:last-child td {
