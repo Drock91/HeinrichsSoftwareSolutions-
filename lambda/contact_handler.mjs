@@ -41,9 +41,14 @@ function escapeHtml(str) {
 // ─── INPUT VALIDATION ───
 function validateInput(body) {
   const errors = [];
+  // Required fields for contact form
+  const isJobApp = body.formType === 'career';
+  if (!body.name || !body.name.trim()) errors.push('Name is required');
+  if (!body.email || !body.email.trim()) errors.push('Email is required');
+  if (!isJobApp && (!body.message || !body.message.trim())) errors.push('Message is required');
   if (body.name && body.name.length > 200) errors.push('Name too long (max 200 chars)');
   if (body.email && body.email.length > 320) errors.push('Email too long');
-  if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) errors.push('Invalid email format');
+  if (body.email && body.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) errors.push('Invalid email format');
   if (body.message && body.message.length > 10000) errors.push('Message too long (max 10,000 chars)');
   if (body.coverLetter && body.coverLetter.length > 10000) errors.push('Cover letter too long');
   if (body.organization && body.organization.length > 200) errors.push('Organization name too long');
