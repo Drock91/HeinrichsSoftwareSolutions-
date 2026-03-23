@@ -440,7 +440,7 @@ img { max-width: 100%; height: auto; }
 .reveal.reveal-scale { transform: scale(0.92); }
 .reveal.visible {
   opacity: 1;
-  transform: translate(0, 0) scale(1);
+  transform: none;
 }
 
 /* ── BUTTON ANIMATIONS ── */
@@ -2539,6 +2539,7 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   margin: 48px auto 0;
   max-width: 900px;
   position: relative;
+  z-index: 10000;
 }
 .cost-col {
   flex: 1;
