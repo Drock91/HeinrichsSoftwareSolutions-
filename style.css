@@ -2642,7 +2642,7 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  z-index: 10000;
   box-shadow: 0 4px 20px rgba(255,215,0,0.3);
 }
 .cost-stats {
