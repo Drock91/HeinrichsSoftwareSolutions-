@@ -2627,10 +2627,6 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   text-align: center;
 }
 .cost-vs {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -2644,6 +2640,11 @@ a.service-card { display: flex; flex-direction: column; text-decoration: none; c
   justify-content: center;
   z-index: 10000;
   box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+  flex-shrink: 0;
+  margin-left: -28px;
+  margin-right: -28px;
+  align-self: center;
+  position: relative;
 }
 .cost-stats {
   display: grid;
