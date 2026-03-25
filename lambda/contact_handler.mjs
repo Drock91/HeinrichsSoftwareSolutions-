@@ -6,7 +6,7 @@
 import { SESClient, SendEmailCommand, SendRawEmailCommand } from "@aws-sdk/client-ses";
 
 // ─── CONFIG ───
-const TO_EMAIL = "heinrichssoftwaresolutions@gmail.com";
+const TO_EMAIL = "contact@heinrichstech.com";
 const FROM_EMAIL = "contact@heinrichstech.com"; // SES-verified domain
 const REGION = "us-east-2";
 
@@ -270,6 +270,32 @@ export const handler = async (event) => {
         },
       })
     );
+
+    // Send confirmation receipt to the person who submitted the form
+    const confirmationHtml = `
+      <p>Hi ${escapeHtml(name)},</p>
+      <p>Thanks for reaching out! We received your message and will get back to you within 24 hours.</p>
+      <p><strong>Your message:</strong></p>
+      <blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555;">${escapeHtml(message).replace(/\n/g, '<br>')}</blockquote>
+      <p>In the meantime, feel free to check out our <a href="https://heinrichstech.com/services.html">services page</a> or try our <a href="https://heinrichstech.com/signup.html">free 14-day AI chatbot trial</a>.</p>
+      <p>— HSS Team<br>Heinrichs Software Solutions Company<br>contact@heinrichstech.com</p>
+    `;
+    try {
+      await ses.send(
+        new SendEmailCommand({
+          Source: FROM_EMAIL,
+          Destination: { ToAddresses: [email] },
+          ReplyToAddresses: [TO_EMAIL],
+          Message: {
+            Subject: { Data: "We got your message — Heinrichs Software Solutions", Charset: "UTF-8" },
+            Body: { Html: { Data: confirmationHtml, Charset: "UTF-8" } },
+          },
+        })
+      );
+    } catch (confirmErr) {
+      console.warn("Confirmation email failed (non-fatal):", confirmErr.message);
+    }
+
     return {
       statusCode: 200,
       headers: getCorsHeaders(requestOrigin),

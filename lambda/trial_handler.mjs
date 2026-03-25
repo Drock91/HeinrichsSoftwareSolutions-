@@ -395,7 +395,7 @@ ${embedCode}
 
 TRIAL DETAILS:
 • Trial expires: ${expiresDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-• Conversations included: 100
+• Conversations included: 50
 • Your config ID: ${configId}
 
 MANAGE YOUR TRIAL:
@@ -1686,7 +1686,7 @@ async function checkExpirations() {
               Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
               Body: {
                 Text: {
-                  Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                  Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $79/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email.\n\nHSS Team\nHeinrichs Software Solutions Company`,
                 },
               },
             },
@@ -1695,9 +1695,60 @@ async function checkExpirations() {
       }
 
       expired++;
-    }
-    // Expiring in 3 days — send warning
-    else if (daysLeft <= 3 && daysLeft > 0) {
+    } else {
+      // Active trial — send onboarding sequence emails
+      const daysSinceStart = Math.floor((now - new Date(trial.startDate || trial.createdAt)) / (1000 * 60 * 60 * 24));
+
+      // Day 3 — tips email
+      if (daysSinceStart >= 3 && !trial.onboardingDay3Sent) {
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [trial.email] },
+            Message: {
+              Subject: { Data: `Day 3 Tip: Get More From Your AI Chatbot — ${trial.businessName}` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nYou're 3 days into your free chatbot trial for ${trial.businessName}. Here are a few tips:\n\n1. Update your business info — log in to your dashboard and refine your chatbot's training. The more detail you add, the better it answers.\n   ${SITE_URL}/dashboard.html\n\n2. Share it with a colleague — ask them to test it with real customer questions.\n\n3. Check your conversations — your dashboard shows everything your chatbot has said. Use it to spot gaps.\n\nYou have ${daysLeft} days left in your trial. Reply to this email with any questions.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                },
+              },
+            },
+          }));
+          await ddb.send(new UpdateCommand({
+            TableName: TRIALS_TABLE,
+            Key: { trialId: trial.trialId },
+            UpdateExpression: "SET onboardingDay3Sent = :true",
+            ExpressionAttributeValues: { ":true": true },
+          }));
+        } catch (emailErr) { console.warn("Day 3 email failed:", emailErr.message); }
+      }
+
+      // Day 5 — ROI nudge + upgrade CTA
+      if (daysSinceStart >= 5 && !trial.onboardingDay5Sent) {
+        try {
+          await ses.send(new SendEmailCommand({
+            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            Destination: { ToAddresses: [trial.email] },
+            Message: {
+              Subject: { Data: `How's the chatbot working for ${trial.businessName}?` },
+              Body: {
+                Text: {
+                  Data: `Hi,\n\nYou're 5 days into your free trial for ${trial.businessName}. We hope your chatbot has been saving you time answering customer questions.\n\nWant to keep it going? Upgrading takes less than 5 minutes:\n\n• Standard: $499 setup + $79/month — 2,500 conversations, 1 domain, email support\n• Pro: $999 setup + $99/month — 10,000 conversations, lead capture, analytics, priority support\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nOr reply to this email — we're happy to help find the right plan.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+                },
+              },
+            },
+          }));
+          await ddb.send(new UpdateCommand({
+            TableName: TRIALS_TABLE,
+            Key: { trialId: trial.trialId },
+            UpdateExpression: "SET onboardingDay5Sent = :true",
+            ExpressionAttributeValues: { ":true": true },
+          }));
+        } catch (emailErr) { console.warn("Day 5 email failed:", emailErr.message); }
+      }
+
+      // Expiring in 3 days — send warning
+      if (daysLeft <= 3 && daysLeft > 0) {
       try {
         await ses.send(new SendEmailCommand({
           Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
@@ -1706,13 +1757,14 @@ async function checkExpirations() {
             Subject: { Data: `⏰ Your AI Chatbot Trial Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
             Body: {
               Text: {
-                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team`,
+                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/dashboard.html\n\nUpgrade options:\n• Standard: $499 setup + $79/month\n• Pro: $999 setup + $99/month\n\nYour chatbot data and training will be saved either way.\n\nHSS Team`,
               },
             },
           },
         }));
       } catch (emailErr) { console.warn("Warning email failed:", emailErr.message); }
-      expiringSoon++;
+        expiringSoon++;
+      }
     }
   }
 

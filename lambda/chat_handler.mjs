@@ -424,8 +424,9 @@ export const handler = async (event) => {
   // ── Extract fields ──
   // chatbot.js sends: { messages: [{role,content}] }
   // chatbot-embed.js sends: { configId, sessionId, history: [{role,content}], message }
-  const configId  = body.configId  || null;
-  const sessionId = body.sessionId || null;
+  const configId    = body.configId    || null;
+  const sessionId   = body.sessionId   || null;
+  const leadConsent = body.leadConsent === true;
   const rawMessages = body.messages || body.history || [];
 
   if (!rawMessages.length) {
@@ -563,9 +564,11 @@ export const handler = async (event) => {
       if (configId) {
         logAnalyticsEvent(configId, userMessage, reply, provider.name).catch(e => console.warn('Analytics log failed:', e.message));
         
-        // Check for lead capture (fire and forget)
-        const conversationContext = cleanMessages.map(m => `${m.role}: ${m.content}`).join('\n');
-        checkAndSaveLead(configId, cleanMessages, conversationContext).catch(e => console.warn('Lead capture failed:', e.message));
+        // Check for lead capture — only if user explicitly opted in
+        if (leadConsent) {
+          const conversationContext = cleanMessages.map(m => `${m.role}: ${m.content}`).join('\n');
+          checkAndSaveLead(configId, cleanMessages, conversationContext).catch(e => console.warn('Lead capture failed:', e.message));
+        }
         
         // Send Discord notification for new conversations (fire and forget)
         if (isNewConversation && discordWebhook) {

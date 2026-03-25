@@ -36,6 +36,7 @@
   let agentActive = false;
   let agentName = null;
   let agentPollInterval = null;
+  let leadConsent = false;
 
   // Create styles
   const styles = document.createElement('style');
@@ -487,6 +488,11 @@
         </button>
       </form>
 
+      <div id="hss-lead-consent" style="padding:6px 12px;font-size:11px;color:#6B7280;background:#fff;border-top:1px solid #f3f4f6;display:flex;align-items:center;gap:6px;">
+        <input type="checkbox" id="hss-consent-checkbox" style="cursor:pointer;flex-shrink:0;">
+        <label for="hss-consent-checkbox" style="cursor:pointer;line-height:1.3;">I agree to be contacted about my inquiry</label>
+      </div>
+
       <div id="hss-powered-by">
         Powered by <a href="https://heinrichstech.com" target="_blank" rel="noopener">Heinrichs Software Solutions</a>
       </div>
@@ -501,6 +507,8 @@
   const messagesContainer = document.getElementById('hss-chat-messages');
   const input = document.getElementById('hss-chat-input');
   const form = document.getElementById('hss-chat-form');
+  const consentCheckbox = document.getElementById('hss-consent-checkbox');
+  consentCheckbox.addEventListener('change', () => { leadConsent = consentCheckbox.checked; });
   const headerTitle = document.getElementById('hss-header-title');
   const iconOpen = document.getElementById('hss-icon-open');
   const iconClose = document.getElementById('hss-icon-close');
@@ -660,7 +668,8 @@
         body: JSON.stringify({
           configId: options.configId,
           sessionId: sessionId,
-          messages: history
+          messages: history,
+          leadConsent: leadConsent
         })
       });
 
