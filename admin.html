@@ -373,7 +373,7 @@
     const expiredTrials = allTrials.filter(t => t.status === 'expired').length;
     const convertedTrials = allTrials.filter(t => t.status === 'converted').length;
 
-    const monthlyRevenue = (standardClients * 49) + (proClients * 99);
+    const monthlyRevenue = (standardClients * 79) + (proClients * 99);
     const conversionRate = allTrials.length > 0 ? ((convertedTrials / allTrials.length) * 100).toFixed(1) : '0';
 
     document.getElementById('stat-total-clients').textContent = totalClients;
@@ -555,7 +555,7 @@
     }
 
     tbody.innerHTML = paidClients.map(c => {
-      const monthly = c.plan === 'pro' ? '$99' : '$49';
+      const monthly = c.plan === 'pro' ? '$99' : '$79';
       const setup = c.plan === 'pro' ? '$999' : '$499';
       const since = c.paidAt ? new Date(c.paidAt).toLocaleDateString() : '—';
       const status = c.cancelAtPeriodEnd ? 'Canceling' : (c.subscriptionStatus || 'active');
