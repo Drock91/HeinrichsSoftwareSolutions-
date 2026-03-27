@@ -558,7 +558,7 @@ async function handleCheckoutComplete(session) {
   // Email customer confirmation
   if (client?.email) {
     const planName = plan === "pro" ? "Pro" : "Standard";
-    const monthly = plan === "pro" ? "$99" : "$49";
+    const monthly = plan === "pro" ? "$99" : "$79";
     const convLimit = plan === "pro" ? "10,000" : "2,500";
 
     await ses.send(new SendEmailCommand({
