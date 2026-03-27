@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SP20JF1RE"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2SP20JF1RE');</script>
+  <title>AI Chatbot for Your Business — Live in 3 Days | Heinrichs Software Solutions</title>
+  <meta name="description" content="Get a custom AI chatbot trained on your business and live on your website in days. 14-day free trial, no credit card required. 5-provider AI failover for 99.9% uptime.">
+  <meta name="robots" content="noindex"><!-- Keep ad landing pages out of organic index -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="theme-color" content="#001F3F">
+  <!--
+    UTM TRACKING — append these params to your ad destination URL:
+    Google Ads example:
+      https://heinrichstech.com/landing.html?utm_source=google&utm_medium=cpc&utm_campaign=ai-chatbot&utm_content=ad-variant-a
+    Meta Ads example:
+      https://heinrichstech.com/landing.html?utm_source=facebook&utm_medium=cpc&utm_campaign=ai-chatbot
+    GA4 will automatically capture these and show them under Acquisition > Traffic Acquisition.
+  -->
+  <style>
+    body { background: var(--dark-navy); }
+
+    /* Minimal landing header — logo only */
+    .landing-header {
+      background: var(--dark-navy);
+      border-bottom: 1px solid rgba(255,215,0,0.15);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .landing-header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .landing-header .cta-pill {
+      background: var(--gold);
+      color: var(--dark-navy);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 8px 20px;
+      border-radius: 30px;
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: opacity 0.2s;
+    }
+    .landing-header .cta-pill:hover { opacity: 0.85; }
+
+    /* Trust strip */
+    .trust-strip {
+      background: rgba(255,215,0,0.07);
+      border-bottom: 1px solid rgba(255,215,0,0.12);
+      padding: 10px 0;
+      text-align: center;
+    }
+    .trust-strip-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px 32px;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.82rem;
+      color: var(--light-gray);
+      font-family: 'Roboto', sans-serif;
+    }
+    .trust-item span:first-child { color: var(--gold); }
+
+    /* Landing hero */
+    .landing-hero {
+      padding: 80px 0 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .landing-hero::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(212,175,55,0.08), transparent 70%);
+      pointer-events: none;
+    }
+    .landing-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 30px;
+      padding: 6px 18px;
+      font-size: 0.82rem;
+      color: var(--gold);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+    .landing-hero h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      margin: 0 auto 20px;
+      max-width: 800px;
+    }
+    .landing-hero h1 span { color: var(--gold); }
+    .landing-hero p {
+      font-size: 1.05rem;
+      color: var(--mid-gray);
+      line-height: 1.75;
+      max-width: 620px;
+      margin: 0 auto 36px;
+    }
+    .landing-cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .landing-no-cc {
+      font-size: 0.82rem;
+      color: var(--mid-gray);
+    }
+
+    /* Stats row */
+    .landing-stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px 40px;
+      margin-top: 52px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,215,0,0.12);
+    }
+    .landing-stat { text-align: center; }
+    .landing-stat-num {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      display: block;
+    }
+    .landing-stat-label {
+      font-size: 0.8rem;
+      color: var(--mid-gray);
+    }
+
+    /* Section titles for landing */
+    .lsection { padding: 64px 0; }
+    .lsection-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      margin: 0 0 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lsection-sub {
+      text-align: center;
+      color: var(--mid-gray);
+      font-size: 1rem;
+      max-width: 580px;
+      margin: 0 auto 44px;
+      line-height: 1.7;
+    }
+    .lcontainer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* How it works */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 32px; }
+    .step { text-align: center; padding: 8px; }
+    .step-num {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--dark-navy);
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .step h3 {
+      font-family: 'Oswald', sans-serif;
+      color: #fff;
+      font-size: 1.05rem;
+      margin: 0 0 10px;
+    }
+    .step p { font-size: 0.9rem; color: var(--mid-gray); line-height: 1.7; margin: 0; }
+
+    /* Feature grid */
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 20px; }
+    .feat {
+      background: rgba(255,215,0,0.04);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 10px;
+      padding: 22px;
+    }
+    .feat-icon { font-size: 1.5rem; margin-bottom: 10px; }
+    .feat h4 { font-family: 'Oswald', sans-serif; color: var(--gold); font-size: 0.95rem; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .feat p { font-size: 0.87rem; color: var(--mid-gray); line-height: 1.65; margin: 0; }
+
+    /* Pricing */
+    .landing-pricing {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      gap: 24px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .lp-card {
+      background: rgba(255,215,0,0.04);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 14px;
+      padding: 32px 28px;
+      position: relative;
+    }
+    .lp-card.featured { border: 2px solid var(--gold); }
+    .lp-tag {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--dark-navy);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 16px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .lp-name { font-family: 'Oswald', sans-serif; color: var(--gold); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px; }
+    .lp-price { font-family: 'Oswald', sans-serif; color: #fff; font-size: 2.4rem; font-weight: 700; line-height: 1; margin: 0 0 4px; }
+    .lp-price-sub { font-size: 0.82rem; color: var(--mid-gray); margin: 0 0 20px; }
+    .lp-features { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 9px; }
+    .lp-features li { font-size: 0.88rem; color: var(--light-gray); display: flex; gap: 8px; align-items: flex-start; }
+    .lp-features li span:first-child { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+    /* Comparison callout */
+    .compare-callout {
+      background: rgba(255,215,0,0.06);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 12px;
+      padding: 24px 28px;
+      text-align: center;
+      max-width: 680px;
+      margin: 36px auto 0;
+    }
+    .compare-callout p { color: var(--light-gray); font-size: 0.95rem; line-height: 1.7; margin: 0; }
+    .compare-callout strong { color: var(--gold); }
+
+    /* FAQ */
+    .lfaq { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 18px; }
+    .lfaq-item {
+      background: rgba(255,215,0,0.04);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 10px;
+      padding: 22px;
+    }
+    .lfaq-item h4 { font-family: 'Oswald', sans-serif; color: var(--gold); font-size: 0.95rem; margin: 0 0 8px; }
+    .lfaq-item p { font-size: 0.87rem; color: var(--mid-gray); line-height: 1.65; margin: 0; }
+
+    /* Final CTA */
+    .landing-final-cta {
+      background: rgba(255,215,0,0.06);
+      border: 2px solid rgba(255,215,0,0.25);
+      border-radius: 16px;
+      padding: 56px 40px;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .landing-final-cta h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      color: var(--gold);
+      margin: 0 0 14px;
+    }
+    .landing-final-cta p { color: var(--mid-gray); font-size: 1rem; line-height: 1.7; margin: 0 0 28px; }
+
+    /* Minimal footer */
+    .landing-footer {
+      border-top: 1px solid rgba(255,215,0,0.1);
+      padding: 24px;
+      text-align: center;
+    }
+    .landing-footer p { font-size: 0.8rem; color: var(--mid-gray); margin: 0 0 8px; }
+    .landing-footer a { color: var(--mid-gray); text-decoration: none; margin: 0 10px; }
+    .landing-footer a:hover { color: var(--gold); }
+
+    /* Divider between sections */
+    .lsection + .lsection { border-top: 1px solid rgba(255,215,0,0.08); }
+
+    @media (max-width: 640px) {
+      .landing-hero { padding: 56px 0 48px; }
+      .landing-final-cta { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== MINIMAL HEADER ========== -->
+  <header class="landing-header">
+    <div class="landing-header-inner">
+      <a href="index.html" class="logo" style="text-decoration:none;">
+        <div class="logo-icon" style="font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold);font-size:1rem;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:6px 10px;">HSS</div>
+        <div class="logo-text" style="margin-left:10px;">
+          <span class="logo-name" style="font-family:'Oswald',sans-serif;font-size:1rem;font-weight:600;color:#fff;display:block;line-height:1.2;">Heinrichs Software Solutions</span>
+          <span style="font-size:0.72rem;color:var(--mid-gray);">Veteran-Owned &bull; AI Chatbots</span>
+        </div>
+      </a>
+      <a href="signup.html" class="cta-pill">Start Free Trial</a>
+    </div>
+  </header>
+
+  <!-- ========== TRUST STRIP ========== -->
+  <div class="trust-strip">
+    <div class="trust-strip-inner">
+      <div class="trust-item"><span>&#9733;</span><span>Veteran-Owned Business</span></div>
+      <div class="trust-item"><span>&#10003;</span><span>14-Day Free Trial</span></div>
+      <div class="trust-item"><span>&#10003;</span><span>No Credit Card Required</span></div>
+      <div class="trust-item"><span>&#10003;</span><span>Cancel Anytime</span></div>
+      <div class="trust-item"><span>&#9889;</span><span>5-Provider AI Failover</span></div>
+    </div>
+  </div>
+
+  <!-- ========== HERO ========== -->
+  <section class="landing-hero">
+    <div class="lcontainer">
+      <div class="landing-hero-badge">
+        <span>&#128172;</span> AI Chatbot for Your Business
+      </div>
+      <h1>Your Website. An AI That <span>Knows It All.</span><br>Live in 3 Days.</h1>
+      <p>We train a custom AI assistant on your business (your services, pricing, FAQs, and hours) then deploy it on your website to answer customer questions 24/7. No templates. No DIY. Just a working chatbot built for your business.</p>
+      <div class="landing-cta-group">
+        <a href="signup.html" class="btn btn-gold btn-animated" style="font-size:1.05rem;padding:14px 32px;">Start Free — 14 Days, $0</a>
+        <a href="chatbot.html" class="btn btn-outline btn-animated" style="font-size:1.05rem;padding:14px 32px;">See How It Works</a>
+      </div>
+      <p class="landing-no-cc">No credit card &bull; No contracts &bull; Cancel anytime</p>
+      <div class="landing-stats">
+        <div class="landing-stat">
+          <span class="landing-stat-num">24/7</span>
+          <span class="landing-stat-label">Always Online</span>
+        </div>
+        <div class="landing-stat">
+          <span class="landing-stat-num">3–5</span>
+          <span class="landing-stat-label">Days to Deploy</span>
+        </div>
+        <div class="landing-stat">
+          <span class="landing-stat-num">5</span>
+          <span class="landing-stat-label">AI Providers (Failover)</span>
+        </div>
+        <div class="landing-stat">
+          <span class="landing-stat-num">99.9%</span>
+          <span class="landing-stat-label">Uptime</span>
+        </div>
+        <div class="landing-stat">
+          <span class="landing-stat-num">$79</span>
+          <span class="landing-stat-label">/month after trial</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOW IT WORKS ========== -->
+  <section class="lsection" style="background:rgba(255,215,0,0.03);">
+    <div class="lcontainer">
+      <h2 class="lsection-title">How It Works</h2>
+      <p class="lsection-sub">Three steps from signup to a live AI assistant answering your customers' questions.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Sign Up &amp; Enter Your URL</h3>
+          <p>Create your account and enter your website address. We automatically scrape your services, pricing, hours, and FAQs to train your AI. No calls, no intake forms.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>We Build &amp; Train Your Bot</h3>
+          <p>We fine-tune the AI on your exact business, match it to your brand colors, and test it thoroughly before launch. You review and approve before anything goes live.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Paste One Line. Go Live.</h3>
+          <p>Add one script tag to your website (we can do it for you if needed) and your AI chatbot is live 24/7. We handle all hosting, monitoring, and monthly updates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== WHY IT'S DIFFERENT ========== -->
+  <section class="lsection">
+    <div class="lcontainer">
+      <h2 class="lsection-title">Not Your Average Chatbot Tool</h2>
+      <p class="lsection-sub">Every other option either runs on a single AI provider, makes you build it yourself, or hits you with surprise bills.</p>
+      <div class="features">
+        <div class="feat">
+          <div class="feat-icon">&#9889;</div>
+          <h4>Stays Online When ChatGPT Goes Down</h4>
+          <p>We route across 5 AI providers (Gemini, Groq, Mistral, OpenAI, and Anthropic) with automatic failover. One goes down, the next one takes over instantly. 99.9% uptime guaranteed.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#128736;</div>
+          <h4>We Handle Everything. No DIY Required.</h4>
+          <p>Chatbase and SiteGPT make you configure everything yourself. We handle training, design, deployment, and updates. You didn't build your own website from scratch. You shouldn't have to build your own chatbot either.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#128176;</div>
+          <h4>One Flat Rate. No Surprise Bills.</h4>
+          <p>Intercom charges per resolved conversation. Tidio charges per chat. We charge one flat monthly rate. $79/month, every month, no exceptions. You'll never open a billing email and get surprised.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#127891;</div>
+          <h4>Trained on YOUR Business</h4>
+          <p>Not a generic FAQ widget. Not a template. Your AI learns your specific services, pricing, policies, and how your customers talk. It answers like a knowledgeable employee, not a script.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#9733;</div>
+          <h4>Veteran-Owned &amp; Human-Backed</h4>
+          <p>Founded by a U.S. Navy veteran with 10,000+ hours of engineering experience. You get a real human behind your chatbot, not a faceless SaaS tool with a support ticket queue.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#128200;</div>
+          <h4>Lead Capture Built In</h4>
+          <p>When a visitor is ready to buy, your chatbot collects their name, email, and what they need, then sends it straight to your inbox. Never miss a hot lead because nobody was online to answer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PRICING ========== -->
+  <section class="lsection" style="background:rgba(255,215,0,0.03);">
+    <div class="lcontainer">
+      <h2 class="lsection-title">Simple, Transparent Pricing</h2>
+      <p class="lsection-sub">Start free. No credit card, no contracts, no lock-in. Cancel anytime.</p>
+      <div class="landing-pricing">
+
+        <div class="lp-card">
+          <p class="lp-name">Free Trial</p>
+          <p class="lp-price">$0</p>
+          <p class="lp-price-sub">for 14 days — no credit card required</p>
+          <ul class="lp-features">
+            <li><span>&#10003;</span><span>AI chatbot live on your website</span></li>
+            <li><span>&#10003;</span><span>Trained on your business info</span></li>
+            <li><span>&#10003;</span><span>Up to 50 real conversations</span></li>
+            <li><span>&#10003;</span><span>Standard chat widget design</span></li>
+            <li><span>&#10003;</span><span>See exactly how it works before paying</span></li>
+          </ul>
+          <a href="signup.html" class="btn btn-outline btn-animated" style="width:100%;text-align:center;display:block;">Start Free Trial</a>
+        </div>
+
+        <div class="lp-card featured">
+          <div class="lp-tag">Most Popular</div>
+          <p class="lp-name">Standard</p>
+          <p class="lp-price">$499 <span style="font-size:1rem;color:var(--mid-gray);font-weight:400;">setup</span></p>
+          <p class="lp-price-sub">+ $79/month — less than a single service call</p>
+          <ul class="lp-features">
+            <li><span>&#10003;</span><span>Everything in Free Trial</span></li>
+            <li><span>&#10003;</span><span><strong style="color:#fff;">2,500</strong> conversations/month</span></li>
+            <li><span>&#10003;</span><span>Custom brand colors &amp; styling</span></li>
+            <li><span>&#10003;</span><span>Full business training (services, pricing, FAQs)</span></li>
+            <li><span>&#10003;</span><span>5-provider AI failover (99.9% uptime)</span></li>
+            <li><span>&#10003;</span><span>Email support</span></li>
+          </ul>
+          <a href="contact.html?subject=chatbot-standard" class="btn btn-gold btn-animated" style="width:100%;text-align:center;display:block;">Get Started</a>
+        </div>
+
+      </div>
+      <div class="compare-callout">
+        <p>A full-time customer service rep costs <strong>$35,000+/year</strong>. Our AI chatbot handles 80% of the same questions for <strong>$588/year</strong>, and it works nights, weekends, and holidays without overtime.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== DEMO CALLOUT ========== -->
+  <section class="lsection">
+    <div class="lcontainer" style="text-align:center;">
+      <h2 class="lsection-title">See It Working Right Now</h2>
+      <p class="lsection-sub">The gold chat button in the bottom-right corner of this page is our AI chatbot running live. Ask it anything about our company. Your customers will get that same experience, trained on your business instead of ours.</p>
+      <a href="signup.html" class="btn btn-gold btn-animated" style="font-size:1.05rem;padding:14px 36px;">Try It Free for 14 Days</a>
+      <p style="margin-top:12px;font-size:0.82rem;color:var(--mid-gray);">No credit card &bull; Setup in minutes &bull; Cancel anytime</p>
+    </div>
+  </section>
+
+  <!-- ========== FAQ ========== -->
+  <section class="lsection" style="background:rgba(255,215,0,0.03);">
+    <div class="lcontainer">
+      <h2 class="lsection-title">Quick Answers</h2>
+      <div class="lfaq">
+        <div class="lfaq-item">
+          <h4>How fast can I get started?</h4>
+          <p>The free trial starts immediately after signup, no waiting. Paid plans go fully live within 3 to 5 business days once we've completed custom training and brand styling.</p>
+        </div>
+        <div class="lfaq-item">
+          <h4>Do I need any technical skills?</h4>
+          <p>None. You enter your website URL and we handle everything. You get one line of code to paste into your site, or we can add it for you at no extra charge.</p>
+        </div>
+        <div class="lfaq-item">
+          <h4>What if the AI gives a wrong answer?</h4>
+          <p>We carefully train and test every chatbot before launch. It's designed to say "I don't know, please contact us directly" rather than guess. Monthly updates keep it accurate as your business changes.</p>
+        </div>
+        <div class="lfaq-item">
+          <h4>What happens after the free trial?</h4>
+          <p>Nothing automatic. Your trial simply ends and the chatbot stops appearing on your site. If you want to keep it running, you choose a paid plan. No charges without your explicit sign-off.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FINAL CTA ========== -->
+  <section class="lsection">
+    <div class="lcontainer">
+      <div class="landing-final-cta">
+        <h2>Ready to Put AI to Work for Your Business?</h2>
+        <p>Start a free 14-day trial with no credit card and no commitment. See a custom AI chatbot working on your actual website before you pay a single dollar.</p>
+        <div class="landing-cta-group">
+          <a href="signup.html" class="btn btn-gold btn-animated" style="font-size:1.05rem;padding:14px 36px;">Start Free Trial Now</a>
+          <a href="contact.html" class="btn btn-outline btn-animated" style="font-size:1.05rem;padding:14px 36px;">Talk to Us First</a>
+        </div>
+        <p class="landing-no-cc" style="margin-top:14px;">No credit card &bull; No contracts &bull; Veteran-owned business</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== MINIMAL FOOTER ========== -->
+  <footer class="landing-footer">
+    <p>&copy; 2026 Heinrichs Software Solutions Company &bull; Veteran-Owned &bull; Florida, USA</p>
+    <p>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="index.html">Full Website</a>
+      <a href="mailto:contact@heinrichstech.com">contact@heinrichstech.com</a>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script src="chatbot.js"></script>
+</body>
+</html>
