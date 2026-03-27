@@ -133,6 +133,9 @@ export const handler = async (event) => {
     if (path.endsWith("/admin/update-config") && isAdmin) {
       return await adminUpdateConfig(body);
     }
+    if (path.endsWith("/admin/get-config") && isAdmin) {
+      return await adminGetConfig(body);
+    }
     if (path.endsWith("/admin/stats") && isAdmin) {
       return await getAdminStats();
     }
@@ -683,17 +686,22 @@ async function adminUpdateTrial(data) {
 async function adminUpdateConfig(data) {
   if (!data.configId) return respond(400, { error: "configId required" });
 
+  // businessInfo is the friendly name for systemPrompt
+  if (data.businessInfo !== undefined) data.systemPrompt = data.businessInfo;
+
   const updates = [];
   const names = {};
   const values = {};
 
-  const allowed = ["systemPrompt", "brandColor", "headerText", "welcomeMessage", "active", "plan"];
+  const allowed = ["systemPrompt", "brandColor", "headerColor", "headerText", "welcomeMessage", "active", "plan", "personality", "position", "discordWebhook", "allowedDomains"];
+  let idx = 0;
   for (const key of allowed) {
     if (data[key] !== undefined) {
-      const alias = `#${key.slice(0, 4)}`;
-      const valAlias = `:${key.slice(0, 4)}`;
-      updates.push(`${alias} = ${valAlias}`);
-      names[alias] = key;
+      const nameAlias = `#f${idx}`;
+      const valAlias = `:v${idx}`;
+      idx++;
+      updates.push(`${nameAlias} = ${valAlias}`);
+      names[nameAlias] = key;
       values[valAlias] = data[key];
     }
   }
@@ -709,6 +717,28 @@ async function adminUpdateConfig(data) {
   }));
 
   return respond(200, { message: "Config updated" });
+}
+
+// ───────────────────────────────────────
+// ADMIN: GET CHATBOT CONFIG FOR A CLIENT
+// ───────────────────────────────────────
+async function adminGetConfig(data) {
+  if (!data.clientId) return respond(400, { error: "clientId required" });
+
+  const clientResult = await ddb.send(new GetCommand({
+    TableName: CLIENTS_TABLE,
+    Key: { clientId: data.clientId },
+  }));
+
+  const client = clientResult.Item;
+  if (!client || !client.configId) return respond(404, { error: "No chatbot config found" });
+
+  const configResult = await ddb.send(new GetCommand({
+    TableName: CONFIGS_TABLE,
+    Key: { configId: client.configId },
+  }));
+
+  return respond(200, configResult.Item || {});
 }
 
 // ───────────────────────────────────────

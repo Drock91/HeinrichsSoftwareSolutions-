@@ -209,6 +209,94 @@
     </div>
   </section>
 
+  <!-- CHATBOT CONFIG MODAL -->
+  <div class="modal-overlay" id="chatbot-modal" style="display:none;">
+    <div class="modal-card" style="max-width:700px;width:95%;max-height:90vh;overflow-y:auto;">
+      <div class="modal-header">
+        <h3 id="chatbot-modal-title">Configure Chatbot</h3>
+        <button class="modal-close" id="chatbot-modal-close">&times;</button>
+      </div>
+      <form id="chatbot-config-form">
+        <input type="hidden" id="cfg-configId">
+        <input type="hidden" id="cfg-clientId">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label for="cfg-headerText">Header Text</label>
+            <input type="text" id="cfg-headerText" placeholder="My Business Name">
+          </div>
+          <div class="form-group">
+            <label for="cfg-position">Widget Position</label>
+            <select id="cfg-position" class="admin-select">
+              <option value="bottom-right">Bottom Right</option>
+              <option value="bottom-left">Bottom Left</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-welcomeMessage">Welcome Message</label>
+          <input type="text" id="cfg-welcomeMessage" placeholder="Hi! How can I help you today?">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label for="cfg-brandColor">Brand Color</label>
+            <input type="color" id="cfg-brandColor" value="#FFD700" style="width:100%;height:40px;padding:2px;cursor:pointer;">
+          </div>
+          <div class="form-group">
+            <label for="cfg-headerColor">Header Color</label>
+            <input type="color" id="cfg-headerColor" value="#001F3F" style="width:100%;height:40px;padding:2px;cursor:pointer;">
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;padding-bottom:2px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+              <input type="checkbox" id="cfg-active" style="width:18px;height:18px;accent-color:var(--gold);"> Chatbot Active
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-personality">Personality / Custom Instructions</label>
+          <textarea id="cfg-personality" rows="2" placeholder="Be concise and friendly. Always refer the customer to call for urgent matters." style="width:100%;background:#0a2a4a;border:1px solid rgba(255,215,0,0.3);color:#fff;border-radius:6px;padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-discordWebhook">Discord Webhook (optional)</label>
+          <input type="url" id="cfg-discordWebhook" placeholder="https://discord.com/api/webhooks/...">
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-allowedDomains">Allowed Domains (comma-separated)</label>
+          <input type="text" id="cfg-allowedDomains" placeholder="example.com, www.example.com">
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,215,0,0.2);margin:16px 0;">
+        <p style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">Knowledge Base</p>
+
+        <div class="form-group">
+          <label for="cfg-import-url">Import from URL</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="url" id="cfg-import-url" placeholder="https://client-site.com/sitemap.xml" style="flex:1;min-width:200px;background:#0a2a4a;border:1px solid rgba(255,215,0,0.3);color:#fff;border-radius:6px;padding:10px;">
+            <button type="button" id="cfg-btn-sitemap" class="btn btn-gold" style="white-space:nowrap;">Import Sitemap</button>
+            <button type="button" id="cfg-btn-page" class="btn" style="white-space:nowrap;background:#444;color:#fff;">Import Page</button>
+          </div>
+          <div id="cfg-import-status" style="font-size:0.8rem;margin-top:6px;display:none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-systemPrompt">System Prompt / Knowledge Base</label>
+          <textarea id="cfg-systemPrompt" rows="10" placeholder="Full system prompt or knowledge base content..." style="width:100%;background:#0a2a4a;border:1px solid rgba(255,215,0,0.3);color:#fff;border-radius:6px;padding:10px;font-size:0.85rem;font-family:monospace;resize:vertical;"></textarea>
+        </div>
+
+        <div id="chatbot-config-error" class="form-error" style="display:none;"></div>
+        <div style="display:flex;gap:12px;margin-top:16px;">
+          <button type="submit" class="btn btn-gold btn-animated">Save Changes</button>
+          <button type="button" class="btn btn-outline btn-animated" id="chatbot-modal-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- EDIT CLIENT MODAL -->
   <div class="modal-overlay" id="edit-modal" style="display:none;">
     <div class="modal-card">
@@ -469,6 +557,7 @@
               <div style="margin-top:2px;">${chatbotStatus}</div>
             </div>
             <code>${c.configId}</code>
+            <button class="admin-btn" onclick="event.stopPropagation();editChatbotConfig('${c.clientId}','${c.configId}')">Configure</button>
           </div>`;
       }
 
@@ -723,6 +812,181 @@
       tab.classList.add('active');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
     });
+  });
+
+  // ──── CHATBOT CONFIG MODAL ────
+  async function editChatbotConfig(clientId, configId) {
+    const client = allClients.find(c => c.clientId === clientId);
+    document.getElementById('chatbot-modal-title').textContent = `Configure Chatbot: ${client?.businessName || clientId}`;
+    document.getElementById('cfg-configId').value = configId;
+    document.getElementById('cfg-clientId').value = clientId;
+    document.getElementById('chatbot-config-error').style.display = 'none';
+    document.getElementById('cfg-import-status').style.display = 'none';
+
+    // Reset form while loading
+    document.getElementById('cfg-headerText').value = '';
+    document.getElementById('cfg-welcomeMessage').value = '';
+    document.getElementById('cfg-brandColor').value = '#FFD700';
+    document.getElementById('cfg-headerColor').value = '#001F3F';
+    document.getElementById('cfg-position').value = 'bottom-right';
+    document.getElementById('cfg-personality').value = '';
+    document.getElementById('cfg-systemPrompt').value = 'Loading...';
+    document.getElementById('cfg-discordWebhook').value = '';
+    document.getElementById('cfg-allowedDomains').value = '';
+    document.getElementById('cfg-active').checked = true;
+    document.getElementById('chatbot-modal').style.display = 'flex';
+
+    try {
+      const resp = await fetch(`${API_BASE}/admin/get-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({ clientId }),
+      });
+      if (!resp.ok) throw new Error((await resp.json()).error || 'Failed to load config');
+      const cfg = await resp.json();
+
+      document.getElementById('cfg-headerText').value = cfg.headerText || '';
+      document.getElementById('cfg-welcomeMessage').value = cfg.welcomeMessage || '';
+      document.getElementById('cfg-brandColor').value = cfg.brandColor || '#FFD700';
+      document.getElementById('cfg-headerColor').value = cfg.headerColor || '#001F3F';
+      document.getElementById('cfg-position').value = cfg.position || 'bottom-right';
+      document.getElementById('cfg-personality').value = cfg.personality || '';
+      document.getElementById('cfg-systemPrompt').value = cfg.systemPrompt || '';
+      document.getElementById('cfg-discordWebhook').value = cfg.discordWebhook || '';
+      document.getElementById('cfg-allowedDomains').value = cfg.allowedDomains || '';
+      document.getElementById('cfg-active').checked = cfg.active !== false;
+    } catch (err) {
+      document.getElementById('cfg-systemPrompt').value = '';
+      document.getElementById('chatbot-config-error').textContent = 'Failed to load config: ' + err.message;
+      document.getElementById('chatbot-config-error').style.display = 'block';
+    }
+  }
+
+  document.getElementById('chatbot-config-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('chatbot-config-error');
+    errEl.style.display = 'none';
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(`${API_BASE}/admin/update-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({
+          configId: document.getElementById('cfg-configId').value,
+          headerText: document.getElementById('cfg-headerText').value.trim(),
+          welcomeMessage: document.getElementById('cfg-welcomeMessage').value.trim(),
+          brandColor: document.getElementById('cfg-brandColor').value,
+          headerColor: document.getElementById('cfg-headerColor').value,
+          position: document.getElementById('cfg-position').value,
+          personality: document.getElementById('cfg-personality').value.trim(),
+          systemPrompt: document.getElementById('cfg-systemPrompt').value.trim(),
+          discordWebhook: document.getElementById('cfg-discordWebhook').value.trim(),
+          allowedDomains: document.getElementById('cfg-allowedDomains').value.trim(),
+          active: document.getElementById('cfg-active').checked,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Save failed');
+      document.getElementById('chatbot-modal').style.display = 'none';
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Save Changes';
+      btn.disabled = false;
+    }
+  });
+
+  // Import sitemap
+  document.getElementById('cfg-btn-sitemap')?.addEventListener('click', async () => {
+    const url = document.getElementById('cfg-import-url').value.trim();
+    const statusEl = document.getElementById('cfg-import-status');
+    const textarea = document.getElementById('cfg-systemPrompt');
+    const btn = document.getElementById('cfg-btn-sitemap');
+    if (!url) { statusEl.textContent = 'Enter a sitemap URL first.'; statusEl.style.display = 'block'; return; }
+
+    btn.textContent = 'Importing...';
+    btn.disabled = true;
+    statusEl.textContent = 'Fetching sitemap...';
+    statusEl.style.display = 'block';
+
+    try {
+      const sitemapResp = await fetch(`${API_BASE}/client/import-sitemap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({ url }),
+      });
+      const sitemapData = await sitemapResp.json();
+      const urls = sitemapData.urls || [];
+      if (urls.length === 0) throw new Error('No URLs found in sitemap');
+
+      let combined = textarea.value ? textarea.value + '\n\n' : '';
+      let done = 0;
+      for (const pageUrl of urls.slice(0, 30)) {
+        statusEl.textContent = `Importing page ${++done}/${Math.min(urls.length, 30)}...`;
+        try {
+          const pageResp = await fetch(`${API_BASE}/client/import-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+            body: JSON.stringify({ url: pageUrl }),
+          });
+          const pageData = await pageResp.json();
+          if (pageData.content) combined += pageData.content + '\n\n';
+        } catch {}
+      }
+      textarea.value = combined.trim();
+      statusEl.textContent = `Done. Imported ${done} pages. Review the content above, then save.`;
+    } catch (err) {
+      statusEl.textContent = 'Import failed: ' + err.message;
+    } finally {
+      btn.textContent = 'Import Sitemap';
+      btn.disabled = false;
+    }
+  });
+
+  // Import single page
+  document.getElementById('cfg-btn-page')?.addEventListener('click', async () => {
+    const url = document.getElementById('cfg-import-url').value.trim();
+    const statusEl = document.getElementById('cfg-import-status');
+    const textarea = document.getElementById('cfg-systemPrompt');
+    const btn = document.getElementById('cfg-btn-page');
+    if (!url) { statusEl.textContent = 'Enter a page URL first.'; statusEl.style.display = 'block'; return; }
+
+    btn.textContent = 'Importing...';
+    btn.disabled = true;
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Fetching page...';
+
+    try {
+      const resp = await fetch(`${API_BASE}/client/import-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': idToken },
+        body: JSON.stringify({ url }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Import failed');
+      if (data.content) textarea.value = (textarea.value ? textarea.value + '\n\n' : '') + data.content;
+      statusEl.textContent = 'Page imported. Review the content above, then save.';
+    } catch (err) {
+      statusEl.textContent = 'Import failed: ' + err.message;
+    } finally {
+      btn.textContent = 'Import Page';
+      btn.disabled = false;
+    }
+  });
+
+  // Chatbot modal close handlers
+  document.getElementById('chatbot-modal-close')?.addEventListener('click', () => {
+    document.getElementById('chatbot-modal').style.display = 'none';
+  });
+  document.getElementById('chatbot-modal-cancel')?.addEventListener('click', () => {
+    document.getElementById('chatbot-modal').style.display = 'none';
+  });
+  document.getElementById('chatbot-modal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.style.display = 'none';
   });
 
   // ──── HELPERS ────
