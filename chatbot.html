@@ -362,6 +362,11 @@
       <p class="section-subtitle reveal reveal-up">No hidden fees. No long-term contracts. Cancel anytime.</p>
       <p class="section-subtitle reveal reveal-up" style="margin-top:-16px;font-size:0.9rem;">Pay annually and save 15% &mdash; contact us after signup to apply.</p>
 
+      <div class="promo-banner reveal reveal-up" id="promo-banner" style="background:linear-gradient(135deg,#d4af37,#f5cc50);color:#1a1a1a;border-radius:10px;padding:14px 24px;text-align:center;margin-bottom:28px;font-weight:600;font-size:1rem;">
+        Launch Offer: First 100 customers get the setup fee waived &mdash; pay monthly only.
+        <span id="promo-spots" style="margin-left:8px;background:rgba(0,0,0,0.12);border-radius:20px;padding:2px 12px;font-size:0.9rem;"></span>
+      </div>
+
       <div class="pricing-grid">
         <!-- FREE TRIAL -->
         <div class="pricing-card reveal reveal-up" style="--reveal-delay: 0ms;">
@@ -386,7 +391,11 @@
         <div class="pricing-card featured reveal reveal-up" style="--reveal-delay: 150ms;">
           <div class="pricing-badge">Best Value</div>
           <h3 class="pricing-plan">Standard</h3>
-          <div class="pricing-price"><span class="price-big">$499</span><span class="price-sub">one-time setup</span></div>
+          <div class="pricing-price">
+            <span class="price-big" id="std-setup-price" style="text-decoration:line-through;color:#888;font-size:1.6rem;">$499</span>
+            <span class="price-big promo-free" id="std-setup-free" style="color:#2ecc71;margin-left:8px;">FREE</span>
+            <span class="price-sub">setup</span>
+          </div>
           <div class="pricing-monthly">+ $79<span>/month hosting</span></div>
           <ul class="pricing-features">
             <li>&#10003; Everything in Free Trial</li>
@@ -407,7 +416,11 @@
         <div class="pricing-card reveal reveal-up" style="--reveal-delay: 300ms;">
           <div class="pricing-badge">Full Service</div>
           <h3 class="pricing-plan">Pro</h3>
-          <div class="pricing-price"><span class="price-big">$999</span><span class="price-sub">one-time setup</span></div>
+          <div class="pricing-price">
+            <span class="price-big" id="pro-setup-price" style="text-decoration:line-through;color:#888;font-size:1.6rem;">$999</span>
+            <span class="price-big promo-free" id="pro-setup-free" style="color:#2ecc71;margin-left:8px;">FREE</span>
+            <span class="price-sub">setup</span>
+          </div>
           <div class="pricing-monthly">+ $99<span>/month hosting</span></div>
           <ul class="pricing-features">
             <li>&#10003; Everything in Standard</li>
@@ -520,5 +533,27 @@
 
   <script src="app.js"></script>
   <script src="chatbot.js"></script>
+  <script>
+    (async () => {
+      try {
+        const r = await fetch('https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod/payment/promo-status');
+        const d = await r.json();
+        const banner = document.getElementById('promo-banner');
+        const spots = document.getElementById('promo-spots');
+        const stdFree = document.getElementById('std-setup-free');
+        const stdPrice = document.getElementById('std-setup-price');
+        const proFree = document.getElementById('pro-setup-free');
+        const proPrice = document.getElementById('pro-setup-price');
+        if (d.promoActive) {
+          if (spots) spots.textContent = d.spotsRemaining + ' spots left';
+        } else {
+          if (banner) banner.style.display = 'none';
+          [stdFree, proFree].forEach(el => { if (el) el.style.display = 'none'; });
+          if (stdPrice) { stdPrice.style.textDecoration = 'none'; stdPrice.style.color = ''; stdPrice.style.fontSize = ''; }
+          if (proPrice) { proPrice.style.textDecoration = 'none'; proPrice.style.color = ''; proPrice.style.fontSize = ''; }
+        }
+      } catch (_) {}
+    })();
+  </script>
 </body>
 </html>

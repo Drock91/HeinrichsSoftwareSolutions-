@@ -47,6 +47,9 @@ const STANDARD_MONTHLY_PRICE = process.env.STANDARD_MONTHLY_PRICE || "price_stan
 const PRO_SETUP_PRICE = process.env.PRO_SETUP_PRICE || "price_pro_setup";
 const PRO_MONTHLY_PRICE = process.env.PRO_MONTHLY_PRICE || "price_pro_monthly";
 
+// Launch promo: first 100 paid signups get setup fee waived
+const LAUNCH_PROMO_LIMIT = 100;
+
 async function sendEmail({ from, to, subject, text }) {
   const match = (from || '').match(/^(.*?)\s*<(.+)>$/);
   const senderName  = match ? match[1].trim() : 'Heinrichs Software Solutions';
@@ -185,6 +188,11 @@ export const handler = async (event) => {
       return await createPortalSession(body.clientId);
     }
 
+    // ─── PROMO STATUS (public — no auth needed) ───
+    if (path.endsWith("/promo-status") || body.action === "promo-status") {
+      return await getPromoStatus(requestOrigin);
+    }
+
     // ─── STRIPE WEBHOOK ───
     if (path.endsWith("/webhook")) {
       return await handleWebhook(rawBody, event.headers);
@@ -223,18 +231,20 @@ async function createCheckout(data) {
     }
   }
 
+  // Check launch promo eligibility
+  const paidCount = await getPaidSignupCount();
+  const promoActive = paidCount < LAUNCH_PROMO_LIMIT;
+
   // Determine prices
   let lineItems;
   if (plan === "standard") {
-    lineItems = [
-      { price: STANDARD_SETUP_PRICE, quantity: 1 },   // $499 one-time
-      { price: STANDARD_MONTHLY_PRICE, quantity: 1 },  // $49/month recurring
-    ];
+    lineItems = promoActive
+      ? [{ price: STANDARD_MONTHLY_PRICE, quantity: 1 }]
+      : [{ price: STANDARD_SETUP_PRICE, quantity: 1 }, { price: STANDARD_MONTHLY_PRICE, quantity: 1 }];
   } else if (plan === "pro") {
-    lineItems = [
-      { price: PRO_SETUP_PRICE, quantity: 1 },   // $999 one-time
-      { price: PRO_MONTHLY_PRICE, quantity: 1 },  // $99/month recurring
-    ];
+    lineItems = promoActive
+      ? [{ price: PRO_MONTHLY_PRICE, quantity: 1 }]
+      : [{ price: PRO_SETUP_PRICE, quantity: 1 }, { price: PRO_MONTHLY_PRICE, quantity: 1 }];
   } else {
     return respond(400, { error: "Invalid plan. Use 'standard' or 'pro'." });
   }
@@ -262,10 +272,6 @@ async function createCheckout(data) {
   const sessionParams = {
     customer: stripeCustomerId,
     mode: "subscription",
-    "line_items[0][price]": lineItems[0].price,
-    "line_items[0][quantity]": "1",
-    "line_items[1][price]": lineItems[1].price,
-    "line_items[1][quantity]": "1",
     success_url: `${SITE_URL}/dashboard.html?payment=success&plan=${plan}`,
     cancel_url: `${SITE_URL}/dashboard.html?payment=cancelled`,
     "subscription_data[metadata][clientId]": clientId,
@@ -274,6 +280,11 @@ async function createCheckout(data) {
     "metadata[plan]": plan,
   };
 
+  lineItems.forEach((item, i) => {
+    sessionParams[`line_items[${i}][price]`] = item.price;
+    sessionParams[`line_items[${i}][quantity]`] = "1";
+  });
+
   // Add 30-day free trial if eligible
   if (eligibleForFreeMonth) {
     sessionParams["subscription_data[trial_period_days]"] = "30";
@@ -281,7 +292,37 @@ async function createCheckout(data) {
 
   const session = await stripeRequest("/checkout/sessions", sessionParams);
 
-  return respond(200, { checkoutUrl: session.url, sessionId: session.id });
+  return respond(200, {
+    checkoutUrl: session.url,
+    sessionId: session.id,
+    promoApplied: promoActive,
+    spotsRemaining: Math.max(0, LAUNCH_PROMO_LIMIT - paidCount),
+  });
+}
+
+// ───────────────────────────────────────
+// LAUNCH PROMO HELPERS
+// ───────────────────────────────────────
+async function getPaidSignupCount() {
+  const result = await ddb.send(new ScanCommand({
+    TableName: CLIENTS_TABLE,
+    FilterExpression: "#p = :std OR #p = :pro",
+    ExpressionAttributeNames: { "#p": "plan" },
+    ExpressionAttributeValues: { ":std": "standard", ":pro": "pro" },
+    Select: "COUNT",
+  }));
+  return result.Count || 0;
+}
+
+async function getPromoStatus(origin) {
+  const paidCount = await getPaidSignupCount();
+  const spotsRemaining = Math.max(0, LAUNCH_PROMO_LIMIT - paidCount);
+  return respond(200, {
+    promoActive: paidCount < LAUNCH_PROMO_LIMIT,
+    spotsRemaining,
+    totalSpots: LAUNCH_PROMO_LIMIT,
+    paidCount,
+  }, origin);
 }
 
 // ───────────────────────────────────────
