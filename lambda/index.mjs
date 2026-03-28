@@ -17,7 +17,7 @@
  *   REGION             - default: us-east-2
  */
 
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+// Brevo replaces SES
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -41,8 +41,19 @@ const ANALYTICS_TABLE = process.env.ANALYTICS_TABLE || "HSS-ANALYTICS";
 const SITE_URL = "https://heinrichstech.com";
 const API_URL = process.env.API_URL || "https://pd30lkyyof.execute-api.us-east-2.amazonaws.com/prod";
 
-const ses = new SESClient({ region: REGION });
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
+
+async function sendEmail({ from, to, subject, text }) {
+  const match = (from || '').match(/^(.*?)\s*<(.+)>$/);
+  const senderName  = match ? match[1].trim() : 'Heinrichs Software Solutions';
+  const senderEmail = match ? match[2].trim() : (from || FROM_EMAIL);
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender: { name: senderName, email: senderEmail }, to: [{ email: to }], subject, textContent: text }),
+  });
+  if (!resp.ok) throw new Error(`Brevo: ${await resp.text()}`);
+}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -264,63 +275,24 @@ async function signupTrial(data) {
 
   // 5. Email the customer their embed code + instructions (non-blocking)
   try {
-    await ses.send(new SendEmailCommand({
-      Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-      Destination: { ToAddresses: [email] },
-      Message: {
-        Subject: { Data: `Your AI Chatbot is Ready! — ${businessName}` },
-        Body: {
-          Text: {
-            Data: `Hi!
-
-Your free 14-day AI chatbot trial for ${businessName} is ready!
-
-INSTALLATION (takes 30 seconds):
-1. Copy the code below
-2. Paste it just before </body> on your website
-3. That's it — your chatbot is live!
-
-─── YOUR EMBED CODE ───
-${embedCode}
-───────────────────────
-
-TRIAL DETAILS:
-• Trial expires: ${expiresDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-• Conversations included: 100
-• Your config ID: ${configId}
-
-MANAGE YOUR TRIAL:
-Dashboard: ${SITE_URL}/dashboard.html
-
-The chatbot is already trained on your business type (${industry || "general"}). Want us to customize it further with your specific services, pricing, and FAQs? Just reply to this email with your business details and we'll update it within 24 hours.
-
-Questions? Reply to this email or reach out at contact@heinrichstech.com.
-
-HSS Team
-Heinrichs Software Solutions Company
-${SITE_URL}`,
-          },
-        },
-      },
-    }));
+    await sendEmail({
+      from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+      to: email,
+      subject: `Your AI Chatbot is Ready! — ${businessName}`,
+      text: `Hi!\n\nYour free 14-day AI chatbot trial for ${businessName} is ready!\n\nINSTALLATION (takes 30 seconds):\n1. Copy the code below\n2. Paste it just before </body> on your website\n3. That's it — your chatbot is live!\n\n─── YOUR EMBED CODE ───\n${embedCode}\n───────────────────────\n\nTRIAL DETAILS:\n• Trial expires: ${expiresDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}\n• Conversations included: 100\n• Your config ID: ${configId}\n\nMANAGE YOUR TRIAL:\nDashboard: ${SITE_URL}/dashboard.html\n\nThe chatbot is already trained on your business type (${industry || "general"}). Want us to customize it further? Just reply with your business details.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company\n${SITE_URL}`,
+    });
   } catch (emailErr) {
     console.warn("Failed to send customer email:", emailErr.message);
   }
 
   // 6. Notify admin (non-blocking)
   try {
-    await ses.send(new SendEmailCommand({
-      Source: `HSS Trial System <${FROM_EMAIL}>`,
-      Destination: { ToAddresses: [NOTIFY_EMAIL] },
-      Message: {
-        Subject: { Data: `🎉 New Trial Signup: ${businessName}` },
-        Body: {
-          Text: {
-            Data: `New trial signup!\n\nBusiness: ${businessName}\nEmail: ${email}\nWebsite: ${website || "N/A"}\nIndustry: ${industry || "general"}\nPhone: ${phone || "N/A"}\nConfig ID: ${configId}\nTrial ID: ${trialId}\nExpires: ${expiresDate.toISOString()}\n\nDashboard: ${SITE_URL}/admin.html`,
-          },
-        },
-      },
-    }));
+    await sendEmail({
+      from: `HSS Trial System <${FROM_EMAIL}>`,
+      to: NOTIFY_EMAIL,
+      subject: `🎉 New Trial Signup: ${businessName}`,
+      text: `New trial signup!\n\nBusiness: ${businessName}\nEmail: ${email}\nWebsite: ${website || "N/A"}\nIndustry: ${industry || "general"}\nPhone: ${phone || "N/A"}\nConfig ID: ${configId}\nTrial ID: ${trialId}\nExpires: ${expiresDate.toISOString()}\n\nDashboard: ${SITE_URL}/admin.html`,
+    });
   } catch (emailErr) {
     console.warn("Failed to send admin notification:", emailErr.message);
   }
@@ -814,18 +786,12 @@ async function checkExpirations() {
 
       // Email customer
       try {
-        await ses.send(new SendEmailCommand({
-          Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-          Destination: { ToAddresses: [trial.email] },
-          Message: {
-            Subject: { Data: `Your AI Chatbot Trial Has Ended — ${trial.businessName}` },
-            Body: {
-              Text: {
-                Data: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
-              },
-            },
-          },
-        }));
+        await sendEmail({
+          from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+          to: trial.email,
+          subject: `Your AI Chatbot Trial Has Ended — ${trial.businessName}`,
+          text: `Hi,\n\nYour 14-day free trial for ${trial.businessName}'s AI chatbot has ended.\n\nWant to keep it? Upgrade to a paid plan:\n• Standard: $499 setup + $49/month\n• Pro: $999 setup + $99/month\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Upgrading reactivates it instantly.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+        });
       } catch (emailErr) { console.warn("Expiry email failed:", emailErr.message); }
 
       expired++;
@@ -833,18 +799,12 @@ async function checkExpirations() {
     // Expiring in 3 days — send warning
     else if (daysLeft <= 3 && daysLeft > 0) {
       try {
-        await ses.send(new SendEmailCommand({
-          Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-          Destination: { ToAddresses: [trial.email] },
-          Message: {
-            Subject: { Data: `⏰ Your AI Chatbot Trial Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
-            Body: {
-              Text: {
-                Data: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/contact.html?subject=chatbot-standard\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\ncontact@heinrichstech.com`,
-              },
-            },
-          },
-        }));
+        await sendEmail({
+          from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+          to: trial.email,
+          subject: `⏰ Your AI Chatbot Trial Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}`,
+          text: `Hi,\n\nJust a heads-up: your free chatbot trial for ${trial.businessName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Upgrade to keep it running:\n${SITE_URL}/dashboard.html?tab=billing\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\ncontact@heinrichstech.com`,
+        });
       } catch (emailErr) { console.warn("Warning email failed:", emailErr.message); }
       expiringSoon++;
     }
@@ -853,16 +813,12 @@ async function checkExpirations() {
   // Notify admin
   if (expired > 0 || expiringSoon > 0) {
     try {
-      await ses.send(new SendEmailCommand({
-        Source: `HSS Trial System <${FROM_EMAIL}>`,
-        Destination: { ToAddresses: [NOTIFY_EMAIL] },
-        Message: {
-          Subject: { Data: `Trial Check: ${expired} expired, ${expiringSoon} expiring soon` },
-          Body: {
-            Text: { Data: `Trial expiration check complete.\n\nExpired (deactivated): ${expired}\nExpiring in 3 days (warning sent): ${expiringSoon}\n\nDashboard: ${SITE_URL}/admin.html` },
-          },
-        },
-      }));
+      await sendEmail({
+        from: `HSS Trial System <${FROM_EMAIL}>`,
+        to: NOTIFY_EMAIL,
+        subject: `Trial Check: ${expired} expired, ${expiringSoon} expiring soon`,
+        text: `Trial expiration check complete.\n\nExpired (deactivated): ${expired}\nExpiring in 3 days (warning sent): ${expiringSoon}\n\nDashboard: ${SITE_URL}/admin.html`,
+      });
     } catch (emailErr) { console.warn("Admin notification failed:", emailErr.message); }
   }
 
@@ -925,18 +881,12 @@ async function checkCompExpirations() {
       // Email customer
       if (client.email) {
         try {
-          await ses.send(new SendEmailCommand({
-            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-            Destination: { ToAddresses: [client.email] },
-            Message: {
-              Subject: { Data: `Your Complimentary AI Chatbot Period Has Ended — ${client.businessName || 'Your Business'}` },
-              Body: {
-                Text: {
-                  Data: `Hi,\n\nYour complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} has ended.\n\nWant to keep your AI chatbot running? Subscribe to a paid plan:\n• Standard: $499 setup + $49/month (2,500 conversations)\n• Pro: $999 setup + $99/month (10,000 conversations)\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Subscribing reactivates it instantly.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
-                },
-              },
-            },
-          }));
+          await sendEmail({
+            from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            to: client.email,
+            subject: `Your Complimentary AI Chatbot Period Has Ended — ${client.businessName || 'Your Business'}`,
+            text: `Hi,\n\nYour complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} has ended.\n\nWant to keep your AI chatbot running? Subscribe to a paid plan:\n• Standard: $499 setup + $49/month (2,500 conversations)\n• Pro: $999 setup + $99/month (10,000 conversations)\n\nUpgrade here: ${SITE_URL}/dashboard.html\n\nYour chatbot has been paused but all your data and training is saved. Subscribing reactivates it instantly.\n\nQuestions? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+          });
         } catch (emailErr) { console.warn("Comp expiry email failed:", emailErr.message); }
       }
 
@@ -946,18 +896,12 @@ async function checkCompExpirations() {
     else if (daysLeft <= 3 && daysLeft > 0) {
       if (client.email) {
         try {
-          await ses.send(new SendEmailCommand({
-            Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-            Destination: { ToAddresses: [client.email] },
-            Message: {
-              Subject: { Data: `⏰ Your Complimentary Chatbot Access Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}` },
-              Body: {
-                Text: {
-                  Data: `Hi,\n\nJust a heads-up: your complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Subscribe to keep it running:\n${SITE_URL}/dashboard.html\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\ncontact@heinrichstech.com`,
-                },
-              },
-            },
-          }));
+          await sendEmail({
+            from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+            to: client.email,
+            subject: `Your Complimentary Chatbot Access Expires in ${daysLeft} Day${daysLeft === 1 ? "" : "s"}`,
+            text: `Hi,\n\nJust a heads-up: your complimentary ${client.compedPlan.toUpperCase()} chatbot access for ${client.businessName || 'your business'} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nDon't lose your AI chatbot! Subscribe to keep it running:\n${SITE_URL}/dashboard.html\n\nYour chatbot data and training will be saved either way.\n\nHSS Team\ncontact@heinrichstech.com`,
+          });
         } catch (emailErr) { console.warn("Comp warning email failed:", emailErr.message); }
       }
       expiringSoon++;
@@ -967,16 +911,12 @@ async function checkCompExpirations() {
   // Notify admin
   if (expired > 0 || expiringSoon > 0) {
     try {
-      await ses.send(new SendEmailCommand({
-        Source: `HSS Comp System <${FROM_EMAIL}>`,
-        Destination: { ToAddresses: [NOTIFY_EMAIL] },
-        Message: {
-          Subject: { Data: `Comp Check: ${expired} expired, ${expiringSoon} expiring soon` },
-          Body: {
-            Text: { Data: `Comp expiration check complete.\n\nExpired (deactivated): ${expired}\nExpiring in 3 days (warning sent): ${expiringSoon}\n\nDashboard: ${SITE_URL}/admin.html` },
-          },
-        },
-      }));
+      await sendEmail({
+        from: `HSS Comp System <${FROM_EMAIL}>`,
+        to: NOTIFY_EMAIL,
+        subject: `Comp Check: ${expired} expired, ${expiringSoon} expiring soon`,
+        text: `Comp expiration check complete.\n\nExpired (deactivated): ${expired}\nExpiring in 3 days (warning sent): ${expiringSoon}\n\nDashboard: ${SITE_URL}/admin.html`,
+      });
     } catch (emailErr) { console.warn("Admin notification failed:", emailErr.message); }
   }
 

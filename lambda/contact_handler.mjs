@@ -3,14 +3,30 @@
  * Sends emails via AWS SES for contact form submissions and job applications.
  */
 
-import { SESClient, SendEmailCommand, SendRawEmailCommand } from "@aws-sdk/client-ses";
-
 // ─── CONFIG ───
 const TO_EMAIL = "contact@heinrichstech.com";
-const FROM_EMAIL = "contact@heinrichstech.com"; // SES-verified domain
-const REGION = "us-east-2";
+const FROM_EMAIL = "contact@heinrichstech.com";
 
-const ses = new SESClient({ region: REGION });
+async function sendEmail({ from, to, subject, text, html, replyTo, attachments }) {
+  const match = (from || '').match(/^(.*?)\s*<(.+)>$/);
+  const senderName  = match ? match[1].trim() : 'Heinrichs Software Solutions';
+  const senderEmail = match ? match[2].trim() : (from || FROM_EMAIL);
+  const payload = {
+    sender: { name: senderName, email: senderEmail },
+    to: [{ email: to }],
+    subject,
+    ...(text && { textContent: text }),
+    ...(html && { htmlContent: html }),
+    ...(replyTo && { replyTo: { email: replyTo } }),
+    ...(attachments?.length && { attachment: attachments }),
+  };
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) throw new Error(`Brevo: ${await resp.text()}`);
+}
 
 const ALLOWED_ORIGINS = [
   "https://heinrichstech.com",
@@ -143,59 +159,13 @@ export const handler = async (event) => {
       <p style="color:#888;font-size:12px;">Submitted via HSS Contact Form (Career Inquiry).</p>
     `;
 
-    // If any attachments, send raw email with attachments
+    // If any attachments, send via Brevo with attachment API
     if (resumeB64 || coverLetterB64) {
       try {
-        const boundary = `----=_Part_${Date.now()}`;
-        const parts = [
-          `From: ${FROM_EMAIL}`,
-          `To: ${TO_EMAIL}`,
-          `Reply-To: ${email}`,
-          `Subject: ${subject}`,
-          `MIME-Version: 1.0`,
-          `Content-Type: multipart/mixed; boundary="${boundary}"`,
-          ``,
-          `--${boundary}`,
-          `Content-Type: text/html; charset=UTF-8`,
-          `Content-Transfer-Encoding: 7bit`,
-          ``,
-          htmlBody,
-        ];
-
-        // Add resume attachment
-        if (resumeB64) {
-          parts.push(
-            `--${boundary}`,
-            `Content-Type: application/octet-stream; name="${resumeFilename}"`,
-            `Content-Transfer-Encoding: base64`,
-            `Content-Disposition: attachment; filename="${resumeFilename}"`,
-            ``,
-            resumeB64
-          );
-        }
-
-        // Add cover letter file attachment (optional)
-        if (coverLetterB64) {
-          parts.push(
-            `--${boundary}`,
-            `Content-Type: application/octet-stream; name="${coverLetterFilename}"`,
-            `Content-Transfer-Encoding: base64`,
-            `Content-Disposition: attachment; filename="${coverLetterFilename}"`,
-            ``,
-            coverLetterB64
-          );
-        }
-
-        parts.push(`--${boundary}--`);
-        const rawEmail = parts.join("\r\n");
-
-        await ses.send(
-          new SendRawEmailCommand({
-            Source: FROM_EMAIL,
-            Destinations: [TO_EMAIL],
-            RawMessage: { Data: new TextEncoder().encode(rawEmail) },
-          })
-        );
+        const attachments = [];
+        if (resumeB64) attachments.push({ content: resumeB64, name: resumeFilename });
+        if (coverLetterB64) attachments.push({ content: coverLetterB64, name: coverLetterFilename });
+        await sendEmail({ from: FROM_EMAIL, to: TO_EMAIL, subject, html: htmlBody, replyTo: email, attachments });
 
         return {
           statusCode: 200,
@@ -214,16 +184,7 @@ export const handler = async (event) => {
 
     // Application without resume — send regular email
     try {
-      await ses.send(
-        new SendEmailCommand({
-          Source: FROM_EMAIL,
-          Destination: { ToAddresses: [TO_EMAIL] },
-          Message: {
-            Subject: { Data: subject, Charset: "UTF-8" },
-            Body: { Html: { Data: htmlBody, Charset: "UTF-8" } },
-          },
-        })
-      );
+      await sendEmail({ from: FROM_EMAIL, to: TO_EMAIL, subject, html: htmlBody, replyTo: email });
       return {
         statusCode: 200,
         headers: getCorsHeaders(requestOrigin),
@@ -260,16 +221,7 @@ export const handler = async (event) => {
   `;
 
   try {
-    await ses.send(
-      new SendEmailCommand({
-        Source: FROM_EMAIL,
-        Destination: { ToAddresses: [TO_EMAIL] },
-        Message: {
-          Subject: { Data: subject, Charset: "UTF-8" },
-          Body: { Html: { Data: htmlBody, Charset: "UTF-8" } },
-        },
-      })
-    );
+    await sendEmail({ from: FROM_EMAIL, to: TO_EMAIL, subject, html: htmlBody, replyTo: email });
 
     // Send confirmation receipt to the person who submitted the form
     const confirmationHtml = `
@@ -281,17 +233,7 @@ export const handler = async (event) => {
       <p>— HSS Team<br>Heinrichs Software Solutions Company<br>contact@heinrichstech.com</p>
     `;
     try {
-      await ses.send(
-        new SendEmailCommand({
-          Source: FROM_EMAIL,
-          Destination: { ToAddresses: [email] },
-          ReplyToAddresses: [TO_EMAIL],
-          Message: {
-            Subject: { Data: "We got your message — Heinrichs Software Solutions", Charset: "UTF-8" },
-            Body: { Html: { Data: confirmationHtml, Charset: "UTF-8" } },
-          },
-        })
-      );
+      await sendEmail({ from: FROM_EMAIL, to: email, subject: "We got your message — Heinrichs Software Solutions", html: confirmationHtml, replyTo: TO_EMAIL });
     } catch (confirmErr) {
       console.warn("Confirmation email failed (non-fatal):", confirmErr.message);
     }

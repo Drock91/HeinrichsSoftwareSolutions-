@@ -203,7 +203,7 @@
             </div>
 
             <div style="margin-top:32px;">
-              <a href="dashboard.html" class="btn btn-gold btn-animated">Go to Dashboard</a>
+              <a id="go-to-dashboard-btn" href="dashboard.html" class="btn btn-gold btn-animated">Go to Dashboard</a>
             </div>
           </div>
         </div>
@@ -457,6 +457,11 @@
       // Show success
       document.getElementById('embed-code-display').textContent = data.embedCode;
       document.getElementById('config-id-display').textContent = data.configId;
+      // If user came from a pricing/plan page, send them to billing tab
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('plan')) {
+        document.getElementById('go-to-dashboard-btn').href = 'dashboard.html?tab=billing';
+      }
       showStep(4);
     } catch (err) {
       errEl.textContent = err.message;

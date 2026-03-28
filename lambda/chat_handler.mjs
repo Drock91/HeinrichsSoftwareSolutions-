@@ -6,11 +6,20 @@
  */
 
 import { DynamoDBClient, GetItemCommand, UpdateItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-
 const REGION = process.env.AWS_REGION || "us-east-2";
 const ddb = new DynamoDBClient({ region: REGION });
-const ses = new SESClient({ region: REGION });
+
+async function sendEmail({ from, to, subject, text, html }) {
+  const match = (from || '').match(/^(.*?)\s*<(.+)>$/);
+  const senderName  = match ? match[1].trim() : 'Heinrichs Software Solutions';
+  const senderEmail = match ? match[2].trim() : from;
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender: { name: senderName, email: senderEmail }, to: [{ email: to }], subject, ...(html && { htmlContent: html }), ...(text && { textContent: text }) }),
+  });
+  if (!resp.ok) throw new Error(`Brevo: ${await resp.text()}`);
+}
 
 const TABLE_CONFIGS   = process.env.TABLE_CONFIGS   || "HSS-CHATBOT-CONFIGS";
 const TABLE_CLIENTS   = process.env.TABLE_CLIENTS   || "HSS-CLIENTS";
@@ -986,19 +995,7 @@ View all leads at: https://heinrichstech.com/dashboard.html
   `;
   
   try {
-    await ses.send(new SendEmailCommand({
-      Source: 'HSS AI Chatbot <noreply@heinrichstech.com>',
-      Destination: {
-        ToAddresses: [toEmail],
-      },
-      Message: {
-        Subject: { Data: subject },
-        Body: {
-          Html: { Data: htmlBody },
-          Text: { Data: textBody },
-        },
-      },
-    }));
+    await sendEmail({ from: 'HSS AI Chatbot <noreply@heinrichstech.com>', to: toEmail, subject, html: htmlBody, text: textBody });
     console.log(`Lead notification sent to ${toEmail}`);
   } catch (err) {
     console.error(`Failed to send lead notification: ${err.message}`);

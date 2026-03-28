@@ -19,7 +19,7 @@
  *   Pro Monthly: $99/month         (price ID in PRO_MONTHLY_PRICE)
  */
 
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+// Brevo replaces SES
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -47,7 +47,17 @@ const STANDARD_MONTHLY_PRICE = process.env.STANDARD_MONTHLY_PRICE || "price_stan
 const PRO_SETUP_PRICE = process.env.PRO_SETUP_PRICE || "price_pro_setup";
 const PRO_MONTHLY_PRICE = process.env.PRO_MONTHLY_PRICE || "price_pro_monthly";
 
-const ses = new SESClient({ region: REGION });
+async function sendEmail({ from, to, subject, text }) {
+  const match = (from || '').match(/^(.*?)\s*<(.+)>$/);
+  const senderName  = match ? match[1].trim() : 'Heinrichs Software Solutions';
+  const senderEmail = match ? match[2].trim() : (from || FROM_EMAIL);
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender: { name: senderName, email: senderEmail }, to: [{ email: to }], subject, textContent: text }),
+  });
+  if (!resp.ok) throw new Error(`Brevo: ${await resp.text()}`);
+}
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
 const ALLOWED_ORIGINS = [
@@ -334,18 +344,12 @@ async function cancelSubscription(clientId) {
   }));
 
   // Notify admin
-  await ses.send(new SendEmailCommand({
-    Source: `HSS Billing <${FROM_EMAIL}>`,
-    Destination: { ToAddresses: [NOTIFY_EMAIL] },
-    Message: {
-      Subject: { Data: `Cancellation: ${client.businessName} (${client.plan})` },
-      Body: {
-        Text: {
-          Data: `Client ${client.businessName} (${client.email}) has cancelled their ${client.plan} plan.\n\nAccess continues until: ${new Date(sub.current_period_end * 1000).toLocaleDateString()}\n\nConsider reaching out to retain them.`,
-        },
-      },
-    },
-  }));
+  await sendEmail({
+    from: `HSS Billing <${FROM_EMAIL}>`,
+    to: NOTIFY_EMAIL,
+    subject: `Cancellation: ${client.businessName} (${client.plan})`,
+    text: `Client ${client.businessName} (${client.email}) has cancelled their ${client.plan} plan.\n\nAccess continues until: ${new Date(sub.current_period_end * 1000).toLocaleDateString()}\n\nConsider reaching out to retain them.`,
+  });
 
   return respond(200, {
     message: "Subscription will cancel at end of billing period",
@@ -542,18 +546,12 @@ async function handleCheckoutComplete(session) {
   }
 
   // Notify admin
-  await ses.send(new SendEmailCommand({
-    Source: `HSS Billing <${FROM_EMAIL}>`,
-    Destination: { ToAddresses: [NOTIFY_EMAIL] },
-    Message: {
-      Subject: { Data: `💰 New Payment: ${client?.businessName || clientId} → ${plan}` },
-      Body: {
-        Text: {
-          Data: `New paid signup!\n\nClient: ${client?.businessName}\nEmail: ${client?.email}\nPlan: ${plan}\nSubscription: ${subscriptionId}\n\nDashboard: ${SITE_URL}/admin.html`,
-        },
-      },
-    },
-  }));
+  await sendEmail({
+    from: `HSS Billing <${FROM_EMAIL}>`,
+    to: NOTIFY_EMAIL,
+    subject: `💰 New Payment: ${client?.businessName || clientId} → ${plan}`,
+    text: `New paid signup!\n\nClient: ${client?.businessName}\nEmail: ${client?.email}\nPlan: ${plan}\nSubscription: ${subscriptionId}\n\nDashboard: ${SITE_URL}/admin.html`,
+  });
 
   // Email customer confirmation
   if (client?.email) {
@@ -561,18 +559,12 @@ async function handleCheckoutComplete(session) {
     const monthly = plan === "pro" ? "$99" : "$79";
     const convLimit = plan === "pro" ? "10,000" : "2,500";
 
-    await ses.send(new SendEmailCommand({
-      Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-      Destination: { ToAddresses: [client.email] },
-      Message: {
-        Subject: { Data: `Welcome to ${planName}! Your AI Chatbot is Fully Active` },
-        Body: {
-          Text: {
-            Data: `Hi!\n\nThank you for upgrading to the ${planName} plan! Your AI chatbot for ${client.businessName} is now fully active.\n\nPlan Details:\n• Plan: ${planName}\n• Monthly billing: ${monthly}/month\n• Conversations: ${convLimit}/month\n• Support: ${plan === "pro" ? "Priority" : "Email"}\n\nManage your subscription anytime from your dashboard:\n${SITE_URL}/dashboard.html\n\nNeed help? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
-          },
-        },
-      },
-    }));
+    await sendEmail({
+      from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+      to: client.email,
+      subject: `Welcome to ${planName}! Your AI Chatbot is Fully Active`,
+      text: `Hi!\n\nThank you for upgrading to the ${planName} plan! Your AI chatbot for ${client.businessName} is now fully active.\n\nPlan Details:\n• Plan: ${planName}\n• Monthly billing: ${monthly}/month\n• Conversations: ${convLimit}/month\n• Support: ${plan === "pro" ? "Priority" : "Email"}\n\nManage your subscription anytime from your dashboard:\n${SITE_URL}/dashboard.html\n\nNeed help? Reply to this email or reach out at contact@heinrichstech.com.\n\nHSS Team\nHeinrichs Software Solutions Company`,
+    });
   }
 }
 
@@ -640,33 +632,21 @@ async function handlePaymentFailed(invoice) {
   if (!client) return;
 
   // Notify admin
-  await ses.send(new SendEmailCommand({
-    Source: `HSS Billing <${FROM_EMAIL}>`,
-    Destination: { ToAddresses: [NOTIFY_EMAIL] },
-    Message: {
-      Subject: { Data: `⚠️ Payment Failed: ${client.businessName}` },
-      Body: {
-        Text: {
-          Data: `Payment failed for ${client.businessName} (${client.email}).\n\nStripe will retry automatically. If this continues, the subscription will be canceled.\n\nClient ID: ${client.clientId}\nPlan: ${client.plan}`,
-        },
-      },
-    },
-  }));
+  await sendEmail({
+    from: `HSS Billing <${FROM_EMAIL}>`,
+    to: NOTIFY_EMAIL,
+    subject: `⚠️ Payment Failed: ${client.businessName}`,
+    text: `Payment failed for ${client.businessName} (${client.email}).\n\nStripe will retry automatically. If this continues, the subscription will be canceled.\n\nClient ID: ${client.clientId}\nPlan: ${client.plan}`,
+  });
 
   // Email customer
   if (client.email) {
-    await ses.send(new SendEmailCommand({
-      Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-      Destination: { ToAddresses: [client.email] },
-      Message: {
-        Subject: { Data: "Action Needed: Payment Failed for Your AI Chatbot" },
-        Body: {
-          Text: {
-            Data: `Hi,\n\nWe were unable to process your monthly payment for ${client.businessName}'s AI chatbot.\n\nPlease update your payment method to keep your chatbot running:\n${SITE_URL}/dashboard.html\n\nIf there's an issue, please reach out — we're happy to help.\n\nHSS Team\ncontact@heinrichstech.com`,
-          },
-        },
-      },
-    }));
+    await sendEmail({
+      from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+      to: client.email,
+      subject: "Action Needed: Payment Failed for Your AI Chatbot",
+      text: `Hi,\n\nWe were unable to process your monthly payment for ${client.businessName}'s AI chatbot.\n\nPlease update your payment method to keep your chatbot running:\n${SITE_URL}/dashboard.html\n\nIf there's an issue, please reach out — we're happy to help.\n\nHSS Team\ncontact@heinrichstech.com`,
+    });
   }
 }
 

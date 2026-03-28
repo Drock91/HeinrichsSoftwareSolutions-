@@ -777,11 +777,15 @@ A: Yes, completely free to play!"></textarea>
     document.getElementById('welcome-msg').textContent = `Welcome back, ${userEmail || 'User'}!`;
     document.getElementById('set-email').textContent = userEmail || '—';
 
-    // Check URL for payment result
+    // Check URL for payment result or tab request
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
       document.getElementById('payment-success').style.display = 'flex';
       window.history.replaceState({}, '', 'dashboard.html');
+    }
+    if (params.get('tab') === 'billing') {
+      window.history.replaceState({}, '', 'dashboard.html');
+      switchTab('billing');
     }
 
     await loadDashboard();

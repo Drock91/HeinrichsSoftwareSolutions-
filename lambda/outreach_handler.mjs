@@ -17,7 +17,7 @@
  *   REGION           - AWS region (default: us-east-2)
  */
 
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+// Brevo replaces SES
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -34,7 +34,17 @@ const PROSPECTS_TABLE = process.env.PROSPECTS_TABLE || "HSS-OUTREACH-PROSPECTS";
 const DAILY_LIMIT = parseInt(process.env.DAILY_LIMIT || "25", 10);
 const SITE_URL = "https://heinrichstech.com";
 
-const ses = new SESClient({ region: REGION });
+async function sendEmail({ from, to, subject, text }) {
+  const match = (from || '').match(/^(.*?)\s*<(.+)>$/);
+  const senderName  = match ? match[1].trim() : 'Heinrichs Software Solutions';
+  const senderEmail = match ? match[2].trim() : (from || FROM_EMAIL);
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender: { name: senderName, email: senderEmail }, to: [{ email: to }], subject, textContent: text }),
+  });
+  if (!resp.ok) throw new Error(`Brevo: ${await resp.text()}`);
+}
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
 const CORS_HEADERS = {
@@ -210,14 +220,12 @@ async function sendBatch() {
       }
 
       // Send email
-      await ses.send(new SendEmailCommand({
-        Source: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
-        Destination: { ToAddresses: [prospect.email] },
-        Message: {
-          Subject: { Data: template.subject },
-          Body: { Text: { Data: template.body } },
-        },
-      }));
+      await sendEmail({
+        from: `Heinrichs Software Solutions <${FROM_EMAIL}>`,
+        to: prospect.email,
+        subject: template.subject,
+        text: template.body,
+      });
 
       // Update prospect status
       const newStatus = prospect.status === "followup_ready" ? "followup_sent" : "initial_sent";
@@ -246,18 +254,12 @@ async function sendBatch() {
 
   // Send summary to owner
   if (sent > 0) {
-    await ses.send(new SendEmailCommand({
-      Source: `HSS Outreach Agent <${FROM_EMAIL}>`,
-      Destination: { ToAddresses: [NOTIFY_EMAIL] },
-      Message: {
-        Subject: { Data: `Outreach Report: ${sent} emails sent` },
-        Body: {
-          Text: {
-            Data: `Outreach batch complete.\n\nSent: ${sent}\nErrors: ${errors.length}\nRemaining prospects: ${prospects.length - batch.length}\n\n${errors.length > 0 ? "Errors:\n" + errors.map(e => `  ${e.email}: ${e.error}`).join("\n") : "No errors."}`,
-          },
-        },
-      },
-    }));
+    await sendEmail({
+      from: `HSS Outreach Agent <${FROM_EMAIL}>`,
+      to: NOTIFY_EMAIL,
+      subject: `Outreach Report: ${sent} emails sent`,
+      text: `Outreach batch complete.\n\nSent: ${sent}\nErrors: ${errors.length}\nRemaining prospects: ${prospects.length - batch.length}\n\n${errors.length > 0 ? "Errors:\n" + errors.map(e => `  ${e.email}: ${e.error}`).join("\n") : "No errors."}`,
+    });
   }
 
   return respond(200, {
